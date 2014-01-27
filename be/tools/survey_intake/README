@@ -1,0 +1,22 @@
+Purpose:
+The survey_intake tool is used to streamline the creation of MySQL tables from csv formatted survey results.  It allows for the reuse of existing schemas and tables by looking up tables that have already been created with compatible fields.
+
+
+Set up:
+survey_intake.py assumes that there already exists a database called 'surveys' on the local mysql instance and that the default user credentials are correct.
+
+
+How to use:
+python survey_intake.py <csv_file_name>
+
+Once the code is running the user will be taken through a series of prompts that will define what we want to do with the CSV data.
+
+
+Current Issues:
+MAJOR - Each SQL command is executed/committed independently.  THIS MEANS THAT A PARTIAL RUN WILL RESULT IN DATA INTEGRITY ISSUES!!!
+
+MEDIUM - Error handling / data sanitization / command line args are only barely implemented
+
+MEDIUM - Interface is clunky.  I'm considering replacing the entire prompt system with column proto definitions instead.
+
+MEDIUM - MySQL and datatype code should be cleaned up into their own files and moved away from hard coding
