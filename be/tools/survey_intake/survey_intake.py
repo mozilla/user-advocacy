@@ -4,7 +4,7 @@
 Converts survey result CSV files to MySQL tables.
 """
 
-__author__ = "Rob Knight, Gavin Huttley, and Peter Maxwell"
+__author__ = "Rob Rayborn"
 __copyright__ = "Copyright 2014, The Mozilla Foundation"
 __license__ = "MPLv2"
 __maintainer__ = "Rob Rayborn"
