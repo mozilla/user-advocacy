@@ -11,274 +11,436 @@ __maintainer__ = "Rob Rayborn"
 __email__ = "rrayborn@mozilla.com"
 __status__ = "Development"
 
-import csv
+
+import argparse
+import json
+from pprint import pprint
 import re
 import sys
+import urllib2
 
-# MySQLdb isn't in the default path
-sys.path.append('/usr/lib/python2.7/dist-packages/')
-import MySQLdb
+# TODO(rrayborn): Clean up the path stuff here
+sys.path.append('/home/rrayborn/Documents/moz-dev/user-advocacy/be/lib')
+from simple_db import SimpleDB
 
- 
-# == DATA TYPE STUFF ===========================================================
-# TODO(rrayborn): Make this more robust / class based 
-_TYPES = ['TEXT', 'DATE', 'DATETIME', 'TIME', 'BOOL', 'INT',
-          'FLOAT']
 
-def _convert_to_type(val, data_type):
-  if data_type == 'BOOL':
-    return '1' if val not in ['false','no','n','0',''] else '0'
-  elif data_type in ('TEXT', 'DATE', 'DATETIME', 'TIME', 'INT', 'FLOAT'):
-    return val
-  else:
-    raise Exception('Data type %s is not handled.' % data_type)
+def survey_get_request(survey_id, command, user, password):
+    """ Executes a get requests for Survey Gizmo's API.
 
-# == DATABASE STUFF ============================================================
-# TODO(rrayborn): Make this more robust / class based
-_DB_NAME = 'surveys'
+    Keyword arguments:
+    survey_id -- The survey ID that we want to pull data for
+    command -- The command to execute 
+            (e.g. '', 'surveyquestion', 'surveyresponse')
+    user -- The username of the Survey Gizmo user 
+    password -- The password of the Survey Gizmo user 
+    """
+    base_url = 'https://restapi.surveygizmo.com/head/survey'
+    authstring = 'user:pass=%s:%s' % (user, password)
+    url_data = urllib2.urlopen('%s/%s/%s?%s' % \
+            (base_url, survey_id, command, authstring))
+    return json.load(url_data)['data']
 
-_DATABASE = MySQLdb.connect(host="localhost", db=_DB_NAME)
-_CURSOR = _DATABASE.cursor()
+def to_sql(val, sql_type = 'TEXT'):
+    """ Converts the value to the inline representation that SQL would use.
+    i.e. 'cats' => '"cats"'
+         '0' == FLOAT => 0.0
 
-def execute(sql):
-  code = 0
-  try:
-    _CURSOR.execute(sql)
-    _DATABASE.commit()
-  except:
-    _DATABASE.rollback()
-  return _CURSOR.fetchall()
+    Keyword arguments:
+    val -- the value to convert
+    sql_type -- the SQL type to convert to (default 'TEXT')
+    """
+    if sql_type == 'BOOL':
+        if val and (str(val).lower() != 'false') and (str(val).lower() != 'f') \
+                and (str(val).lower() != '0'):
+            return '1'
+        else:
+            return '0'
+    elif not val:
+        return 'NULL'
+    elif sql_type == 'TEXT' or re.search(r'VARCHAR\(.*\)', sql_type):
+        return '"'+str(val)+'"'
+    elif sql_type == 'INT':
+        return str(int(val))
+    elif sql_type == 'FLOAT':
+        return str(float(val))
+    elif sql_type == 'DATETIME':
+        # TODO(rrayborn): date validation 
+        #       (it's also done in MySQL, so it's not a huge deal to ignore)
+        return '"'+str(val)+'"'
+    else:
+        raise Error('Type %s not recognized.' % sql_type)
+
+
+
+
+class SurveyDefinition():
+    def __init__(self, survey_metadata_json = None, \
+            question_metadata_json = None, responses_json = None):
+        self.metadata_sql_types = {
+                'survey_id':             'INT',
+                'id':                    'INT',
+                'is_test_data':          'BOOL',
+                'contact_id':            'INT',
+                'date_submitted':        'DATETIME',
+                'response_id':           'INT',
+                's_response_comment':    'TEXT',
+                'status':                'VARCHAR(100)',
+                'portal_relationship':   'VARCHAR(100)',
+                'standard_comments':     'TEXT',
+                'standard_geocity':      'VARCHAR(100)',
+                'standard_geocountry':   'VARCHAR(100)',
+                'standard_geodma':       'INT',
+                'standard_geopostal':    'VARCHAR(100)',
+                'standard_georegion':    'VARCHAR(100)',
+                'standard_ip':           'VARCHAR(100)',
+                'standard_lat':          'FLOAT',
+                'standard_long':         'FLOAT',
+                'standard_referer':      'TEXT',
+                'standard_responsetime': 'INT',
+                'standard_useragent':    'VARCHAR(100)'
+            }
+        self.metadata_aliases = {
+                'id': 'id', 
+                'created_on': 'created_on', 
+                'title': 'name', 
+                'internal_title': 'internal_name'
+            }
+
+        self.question_definitions = {}
+        self.metadata = {}
+        self.responses = []
+
+        if survey_metadata_json:
+            self.set_survey_metadata_from_json(survey_metadata_json)
+            if question_metadata_json:
+                self.add_questions_from_json(question_metadata_json)
+                if responses_json:
+                    self.add_responses(responses_json)
+
+    # ==== Metadata ============================================================
+    def set_survey_metadata(self, key, value):
+        if key not in self.metadata_aliases:
+            raise Exception('%s not a valid metadata key (%s)' % \
+                    (key, self.metadata_aliases))
+        self.metadata[key] = to_sql(value)
+
+    def set_survey_metadata_from_json(self, survey_metadata_json):
+        self.metadata = dict((self.metadata_aliases[k],v) \
+                for k, v in survey_metadata_json.iteritems() \
+                if k in self.metadata_aliases)
+
+    # ==== Questions ===========================================================
+    def get_question(self, question_id, option_id):
+        question_id = str(question_id)
+        option_id = str(option_id)
+        if question_id not in self.question_definitions:
+            raise Exception('Question ID: $s not found' % question_id)
+        elif option_id not in self.question_definitions[question_id]:
+            if len(self.question_definitions[question_id]) == 1:
+                return self.question_definitions[question_id].values()[0]
+            else:
+                raise Exception(
+                        'Repeated Option ID:%s for same Question ID: %s' 
+                        % (question_id, option_id)
+                    )
+        else:
+            return self.question_definitions[question_id][option_id]
+
+    def _add_question(self, question_dict):
+        question_id = str(question_dict['question_id'])
+        option_id = str(question_dict['option_id'])
+        if question_id not in self.question_definitions:
+            self.question_definitions[question_id] = {}
+        self.question_definitions[question_id][option_id] = question_dict
+
+    def add_question(self, question_id, question_internal_name, question_name, 
+                     survey_type, option_id, option_name, option_internal_name, 
+                     field_name, sql_type):
+        self._add_question({
+                'question_id':            str(question_id),
+                'question_internal_name': str(question_internal_name),
+                'question_name':          str(question_name),
+                'survey_type':            str(survey_type),
+                'option_id':              str(option_id),
+                'option_name':            str(option_name),
+                'option_internal_name':   str(option_internal_name),
+                'field_name':             str(field_name),
+                'sql_type':               str(sql_type)
+            })
+
+    def add_questions_from_json(self, question_metadata_json):
+        for question in question_metadata_json:
+            question_id = question['id']
+            question_internal_name = \
+                    str(question['shortname']).replace('"','\'')
+            question_name = str(question['title']['English']).replace('"','\'')
+            survey_type = question['_subtype']
+
+
+            if survey_type == 'checkbox':
+                for option in question['options']:
+                    option_id = option['id']
+                    option_name = option['title']['English']
+                    option_internal_name = option['value']
+                    field_name = question_internal_name + '_' + \
+                            option_internal_name
+                    sql_type = 'BOOL'
+
+                    self.add_question(question_id, question_internal_name, 
+                        question_name, survey_type, option_id, option_name, 
+                        option_internal_name, field_name, sql_type)
+
+                    if 'other' in option['properties']:
+                        field_name = '_'.join([question_internal_name, 
+                                               option_internal_name ,'comment'])
+                        sql_type = 'TEXT'
+                        option_id = str(option_id) + '-other'
+
+                        self.add_question(question_id, question_internal_name, 
+                                          question_name, survey_type, option_id,
+                                          option_name, option_internal_name,
+                                          field_name, sql_type)
+            else:
+                option_id = ''
+                option_name = ''
+                option_internal_name = ''
+                field_name = question_internal_name
+                sql_type = ''
+
+                if survey_type in ['textbox', 'essay', 'radio', 'menu']:
+                    sql_type =  'TEXT'
+                elif survey_type == 'slider':
+                    sql_type =  'INT'
+                elif survey_type in ['instructions']:
+                    continue
+                else:
+                    raise Exception('Question type: %s not currently supported.'
+                                    % survey_type)
+
+                self.add_question(question_id, question_internal_name,
+                                  question_name, survey_type, option_id, 
+                                  option_name, option_internal_name, field_name,
+                                  sql_type)
+
+    # ==== Responses ===========================================================
+    def add_responses(self, responses_json):
+        for response_json in responses_json:
+
+            response = SurveyResponse()
+            response.set_metadata_from_json(response_json)
+            response.set_id(response_json['id'])
+
+            data = {}
+
+            for question_key_json, question_value_json in \
+                    response_json.iteritems():
+                question_id_re = re.search(r'\[question\(([0-9]+)\).*',
+                                           question_key_json)
+                if not question_id_re:
+                    continue
+                question_id = question_id_re.group(1)
+
+                option_id = ''
+                option_id_re = r'.*option\("{0,1}([0-9A-Za-z\-]+)"{0,1}\).*'
+                option_id_result = re.search(option_id_re, question_key_json)
+                if option_id_result
+                    option_id = option_id_result.group(1)
+
+                question = self.get_question(question_id, option_id)
+                response.set_data(question['field_name'], 
+                                  to_sql(question_value_json, 
+                                         question['sql_type']))
+
+            self.responses.append(response)
+
+        return self.responses
+
+    # ==== Object ==============================================================
+    def save(self, db):
+
+        # Create Response Metadata Table
+        response_metadata_table = \
+                '%s_response_metadata' % self.metadata['internal_name']
+
+        db.drop_table(response_metadata_table)
+        sql = 'CREATE TABLE %s (\n' % response_metadata_table
+        for k,v in self.metadata_sql_types.iteritems():
+            sql += '  %s %s,\n' % (k, v)
+        sql += 'PRIMARY KEY (id));'
+        db.execute(sql)
+
+
+
+        # Create Response Data Table
+        response_data_table = \
+                '%s_response_data' % self.metadata['internal_name']
+        db.drop_table(response_data_table)
+        # Create Table
+        sql = 'CREATE TABLE %s (\n' % response_data_table
+        sql += '  id INT,\n'
+        for question_id in self.question_definitions:
+            for option_id in self.question_definitions[question_id]:
+                question = self.question_definitions[question_id][option_id]
+                sql += '  %s %s,\n' % \
+                        (question['field_name'], question['sql_type'])
+        sql += 'PRIMARY KEY (id));'
+        db.execute(sql)
+
+        # Save Responses
+        for response in self.responses:
+            response.save(db, self.metadata['internal_name'])
+
+        # Create Meta tables
+        # TODO(rrayborn): Create metadata tables to audit our mappings later.  
+        # Not required for MVP
+"""
+if not db.execute('SHOW TABLES WHERE tables_in_surveys = "survey_metadata";'):
+    db.execute(
+            '''CREATE TABLE survey_metadata(
+            id INT NOT NULL,
+            created_on DATETIME NOT NULL,
+            name TEXT,
+            internal_name VARCHAR(50) NOT NULL,
+            PRIMARY KEY (id)
+            );'''
+      )
+if not db.execute('SHOW TABLES WHERE tables_in_surveys = "question_metadata";'):
+    db.execute(
+            '''CREATE TABLE question_metadata(
+            survey_id INT NOT NULL,
+            question_id INT NOT NULL,
+            internal_name VARCHAR(50) NOT NULL,
+            name TEXT,
+            python_type VARCHAR(50),
+            survey_type VARCHAR(50),
+            FOREIGN KEY (survey_id) 
+                REFERENCES survey_metadata(id)
+                ON DELETE CASCADE
+            );'''
+        )
+
+    db.execute(
+            '''CREATE TABLE %s (
+            survey_id INT,
+            question_id INT,
+            internal_name VARCHAR(100),
+            name TEXT,
+            python_type VARCHAR(100),
+            survey_type VARCHAR(100),
+            ''' % response_data_table
+        )
+"""
+
+
+
+class SurveyResponse():
+    def __init__(self):
+        self.aliases = {
+                'survey_id':        'survey_id',                       
+                'id':               'id',                              
+                'is_test_data':     'is_test_data',                    
+                'contact_id':       'contact_id',                      
+                'datesubmitted':    'date_submitted',                   
+                'responseID':       'response_id',                      
+                'sResponseComment': 's_response_comment',                
+                'status':           'status',                          
+                '[variable("PORTAL_RELATIONSHIP")]':   'portal_relationship',  
+                '[variable("STANDARD_COMMENTS")]':     'standard_comments',    
+                '[variable("STANDARD_GEOCITY")]':      'standard_geocity',     
+                '[variable("STANDARD_GEOCOUNTRY")]':   'standard_geocountry',  
+                '[variable("STANDARD_GEODMA")]':       'standard_geodma',      
+                '[variable("STANDARD_GEOPOSTAL")]':    'standard_geopostal',   
+                '[variable("STANDARD_GEOREGION")]':    'standard_georegion',   
+                '[variable("STANDARD_IP")]':           'standard_ip',          
+                '[variable("STANDARD_LAT")]':          'standard_lat',         
+                '[variable("STANDARD_LONG")]':         'standard_long',        
+                '[variable("STANDARD_REFERER")]':      'standard_referer',     
+                '[variable("STANDARD_RESPONSETIME")]': 'standard_responsetime',
+                '[variable("STANDARD_USERAGENT")]':    'standard_useragent',  
+            }
+        self.metadata = {}
+        self.data = {}
+
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return str([self.metadata, self.data])
+
+    def _set_metadata(self, k, v):
+        self.metadata[k] = to_sql(v)
+
+    def set_metadata(self, k, v):
+        if k in self.aliases.values():
+            self._set_metadata(k, v)
+
+    def set_metadata_from_json(self, new_metadata):
+        for k,v in new_metadata.iteritems():
+            if k in self.aliases:
+                self._set_metadata(self.aliases[k], v)
+
+    def set_id(self, value):
+        self.data['id'] = value
+
+    def set_data(self, field_name, value):
+        self.data[field_name] = value
+
+    def set_data_from_json(self, new_data):
+        self.data = new_data
+
+    def save(self, db, internal_name):
+        response_metadata_table = \
+                '%s_response_metadata' % internal_name
+        response_data_table = \
+                '%s_response_data' % internal_name
+
+        db.insert_row(response_metadata_table, self.metadata, True)
+        db.insert_row(response_data_table, self.data, True)
+
+    
 
 
 
 def main():
+    # Command line args
+    parser = argparse.ArgumentParser(
+    description='Loads CSV data to MySQL based on user defined rules')
+    parser.add_argument('--user', metavar='u', type=str, 
+                        help='Survey Gizmo username')
+    parser.add_argument('--password', metavar='p', type=str, 
+                        help='Survey Gizmo password')
+    parser.add_argument('--survey', metavar='s', type=int, 
+                        help='Survey ID')
 
-  # Get CSV name from terminal argument
-  csv_name = sys.argv[1] # TODO(rrayborn): make this robust
-  
-  # Load data
-  header = ''
-  with open(csv_name, 'rb') as f:
-    header = re.escape(f.readline())
+    args = vars(parser.parse_args())
+    user = args['user']
+    password = args['password']
+    survey_id = args['survey']
 
-  data = []
-  with open(csv_name, 'rb') as f:
-    data_reader = csv.reader(f)
-    for row in data_reader:
-      data.append(row)
-  parsed_header = data.pop(0)
+    # Create DB
+    db = SimpleDB('surveys')
 
-  # run
-  setup()
-  Table(header, parsed_header, data)
+    # JSON requests
+    survey_metadata_json = survey_get_request(survey_id, '', 
+                                              user, password)
+    question_metadata_json = survey_get_request(survey_id, 'surveyquestion', 
+                                                user, password)
+    response_data_json = survey_get_request(survey_id, 'surveyresponse', 
+                                            user, password)
 
+    # Survey defining
+    survey_definition = SurveyDefinition(survey_metadata_json, 
+                                         question_metadata_json, 
+                                         response_data_json)
 
-def setup():
-  if not execute('SHOW TABLES WHERE tables_in_%s = "survey_table_metadata";' % (_DB_NAME)):
-    execute(
-        '''CREATE TABLE survey_table_metadata(
-          id INT NOT NULL AUTO_INCREMENT,
-          name VARCHAR(50) NOT NULL,
-          header TEXT NOT NULL,
-          PRIMARY KEY ( id )
-        );'''
-      )
-  if not execute('SHOW TABLES WHERE tables_in_%s = "survey_column_metadata";' % (_DB_NAME)):
-    execute(
-        '''CREATE TABLE survey_column_metadata(
-          id INT NOT NULL AUTO_INCREMENT,
-          name TEXT NOT NULL,
-          field VARCHAR(50) NOT NULL,
-          type VARCHAR(50) NOT NULL,
-          survey_table_metadata_id INT NOT NULL,
-          PRIMARY KEY ( id ),
-          FOREIGN KEY (survey_table_metadata_id) 
-              REFERENCES survey_table_metadata(id)
-              ON DELETE CASCADE
-        );
-        '''
-      )
+    # Survey saving
+    survey_definition.save(db)
+
+    # Commit DB
+    db.commit()
+
+ 
+if __name__ == "__main__":
+    main()
 
 
-class Table(object):
-
-  def __init__(self, header, parsed_header, data):
-    # get list of existing table that match our data header
-    sql = 'SELECT id, name FROM survey_table_metadata WHERE header = "%s";' \
-        % (header)
-    potential_tables = execute(sql)
-    potential_table_names = map(lambda row: row[1], potential_tables)
-
-    if potential_table_names:
-      print "The following tables have identical headers to your input CSV:"
-      print "\t%s" % (',\n\t'.join(potential_table_names))
-    else:
-      print("No existing tables match the headers of your input CSV.")
-    # prompt the user for a new/existing table name
-    table_name = raw_input("What table would you like to use? ") # TODO check that this is a valid table name
-
-    # get a list of existing tables with our selected name
-    actual_tables = execute('SHOW TABLES WHERE tables_in_%s = "%s";'
-                      % (_DB_NAME, table_name))
-    actual_table_names = map(lambda row: row[0], actual_tables)
-
-    # Define table overwrite behaviour
-    if table_name in actual_table_names:
-      if table_name not in potential_table_names:
-        raise Exception(
-            'Table %s exists in the database %s ' % (table_name, _DB_NAME) +
-                    'independently of this program. Please manage this ' +
-                    'conflict in MySQL.'
-          )
-      else:
-        delete_table_input = raw_input(
-              "\nYou have selected an existing table name. " +
-              "Would you like to DELETE the existing table and " +
-              "overwrite it's information? (Y/n, default:n) "
-            ).lower() or ['n']
-        if 'y' == delete_table_input[0]:
-          execute("TRUNCATE TABLE %s" % (table_name) )
-
-    # Create table
-    if table_name in potential_table_names:
-      table_id = next(x[0] for x in potential_tables if x[1] == table_name)
-
-      result = execute(
-        'SELECT id FROM survey_table_metadata WHERE id = %s;' % (table_id))
-      if len(result) == 0: #TODO validate this logic
-        raise Exception(
-            'Table ID %s can\'t be found in survey_table_metadata.' % (table_id))
-
-      self.name = table_name
-      self.header = header
-      self.id = table_id
-      self.columns = {}
-
-      self._load_metadata()
-      self._insert_data(parsed_header, data)
-    else: # table_name not in potential_table_names
-      result = execute(
-          'SELECT id FROM survey_table_metadata WHERE name = "%s"' % (table_name))
-      if len(result)>0:
-        raise Exception("Table %s already exists." % table_name)
-
-      execute('INSERT INTO survey_table_metadata (name, header) ' + 
-              'VALUES ("%s","%s");' % (table_name, header))
-      result = execute(
-          'SELECT id FROM survey_table_metadata WHERE name = "%s";' % (table_name))
-      table_id = result[0][0]
-
-      self.name = table_name
-      self.header = header
-      self.id = table_id
-      self.columns = {}
-
-      self._create_metadata(parsed_header, data)
-      self._insert_data(parsed_header, data)
-
-  def _load_metadata(self):
-    # load_metadata
-    result = execute('SELECT name, field, type FROM survey_column_metadata ' +
-                     'WHERE survey_table_metadata_id = %s;' % self.id)
-    for row in result:
-      self.columns[row[0]] = Column(row[0], row[1], row[2])
-
-  def _create_metadata(self, parsed_header, data):
-    if self.columns:
-      raise Exception("Table %s already has populated metadata." % self.name)
-
-    # generate new column info 
-    num_rows = len(data)
-    num_columns = len(parsed_header)
-
-    for col_num in range(num_columns):
-      column_name = parsed_header[col_num]
-
-      num_examples = 0
-      column_text = column_name + '\n'
-      for row_num in range(num_rows):
-        entry = data[row_num][col_num]
-        if entry != '':
-          column_text += '\t' + entry + '\n'
-          num_examples += 1
-          if num_examples == 10:
-            break
-
-
-      print '\n'+ 80 * '='
-      print 'EXAMPLE COLUMN: \n\t%s' % (column_text)
-
-      field = raw_input(
-          'What field name do we want to use for the following column (blank to ignore column):\n\t' +
-          '"%s" \n' % (column_name)
-        ) # TODO check that this is a valid name
-      if field == '':
-        continue
-
-      data_type = ''
-      while data_type not in _TYPES:
-        data_type = raw_input('What type is the field "%s"?  ' % (field) +
-                              '(Valid input types: %s): ' % (', '.join(_TYPES))
-                             ).upper()
-
-      self.columns[column_name] = Column(column_name, field, data_type)
-      sql = '''INSERT INTO survey_column_metadata (name, field, type, survey_table_metadata_id) 
-               VALUES ("%s", "%s", "%s", "%s")''' % (column_name, field, data_type, self.id)
-      execute(sql)
-
-    # create new table
-    fields = ',\n'.join(map(lambda col: col.field_def(), self.columns.values()))
-    sql = 'CREATE TABLE %s (\n%s\n);' % (self.name,  fields)
-    execute(sql)
-
-
-  def _create_table(self):
-    # create new table
-    fields = ',\n'.join(map(lambda col: col.field_def(), self.columns.values()))
-    sql = 'CREATE TABLE %s (\n%s\n);' % (self.name,  fields)
-    execute(sql)
-
-  def _insert_data(self, parsed_header, data):
-    if not execute('SHOW TABLES WHERE tables_in_%s = "%s";' % (_DB_NAME, self.name)):
-      self._create_table()
-
-    for row in data:
-      #row = data[row_num]
-      fields = []
-      values = []
-      for col_num in range(len(parsed_header)):
-        column_name = parsed_header[col_num]
-
-        if column_name not in self.columns:
-          continue
-        else:
-          column_metadata = self.columns[column_name]
-          entry = _convert_to_type(row[col_num], column_metadata.data_type)
-          fields.append(column_metadata.field)
-          values.append(entry)
-
-      sql ='INSERT INTO %s (%s) VALUES ("%s");' % (self.name,
-                                                      ', '.join(fields),
-                                                      '\", \"'.join(values)
-                                                     )
-      execute(sql)
-
-  def  __str__(self):
-    return str(self.id) + ', ' + self.name
-
-class Column(object):
-  def __init__(self, name, field, data_type):
-    self.name = name
-    self.field = field
-    self.data_type = data_type
-
-  def  __str__(self):
-    return self.field + ', ' + self.data_type + ', ' + self.name
-
-  def field_def(self):
-    return self.field + ' ' + self.data_type
-
-
-
-if __name__ == '__main__':
-  main()
