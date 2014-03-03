@@ -243,7 +243,7 @@ class SurveyDefinition():
                 option_id = ''
                 option_id_re = r'.*option\("{0,1}([0-9A-Za-z\-]+)"{0,1}\).*'
                 option_id_result = re.search(option_id_re, question_key_json)
-                if option_id_result
+                if option_id_result:
                     option_id = option_id_result.group(1)
 
                 question = self.get_question(question_id, option_id)
