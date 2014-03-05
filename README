@@ -1,15 +1,3 @@
-This directory exists to contain all of User-Advocacy@Mozilla.com projects.
+This directory exists to contain all of the user-advocacy@mozilla.com projects.
 
-It is organized as such; we can add subfolders for individual projects:
-user-advocacy
-  fe - front-end code
-    css
-    doc
-    img
-    js
-    lib - shared front-end libraries
-  be - back-end code
-    data - data storage
-    lib - shared back-end libraries
-    pipelines - data pipeline scripts
-    tools - ad hoc back-end tools
+Please take a look at the best-practices directory for a better idea of how the code is organized and what is expected prior to code submissions.
