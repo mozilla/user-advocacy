@@ -1,0 +1,93 @@
+.measure-table td {
+    border: 1px solid #ccc;
+    padding: 10px 10px;
+    width: 30%;
+}
+
+.measure-table tr {
+    background-color: #fff;
+}
+
+.measure-table table {
+    font: 16px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 100;
+    margin: 0;
+}
+
+.measure-table th {
+    font: 20px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 500;
+    padding: 0px 10px;
+}
+
+.measure-table td p {
+    text-align: right;
+    margin: 0;
+}
+
+.measure-table h3 {
+    font: 24px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 300;
+    margin: 15px 0 2px -10px;
+}
+
+.table-error {
+    font: 24px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 300;
+    width: 70%;
+    margin: 30% auto;
+}
+
+.measure-name {
+    font: 24px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 500;
+    margin: px 0 2px -10px;
+}
+
+.measure-description {
+    font: 16px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 100;
+    margin: -5px 0px;
+}
+
+#controls h4 {
+    font: 18px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 500;
+    margin: 15px 0 10px 0px;
+}
+
+#controls .btn {
+    font: 14px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 300;
+}
+
+#controls .btn-group-vertical {
+    margin-left: 10px;
+    margin-top: 0px;
+    width: 100%;
+}
+
+#controls select {
+    margin-left: 10px;
+    width: 100%;
+}
+
+#controls .form-group > label {
+    font: 16px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 300;
+    margin: 5px 0 0 0;
+}
+
+#controls .form-group > button {
+    margin: 10px 0 0 10px;
+    width: 100%;
+}
+
+#controls .btn-group {
+    margin: 0px 0 0 10px;
+    width: 100%;
+}
+
+.btn-group#form-timeframe > label {
+    width: 50%;
+}

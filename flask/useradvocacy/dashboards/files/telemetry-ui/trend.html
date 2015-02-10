@@ -1,0 +1,162 @@
+{% extends "layout.html" %}
+{% block css %}
+  <link href="../static/css/charts.css" rel="stylesheet">
+  <link href="trend.css" rel="stylesheet">
+{% endblock %}
+{% block page_title %}
+Telemetry UI dashboard
+{% endblock %}
+
+{% block content %}
+
+    <div class='row'>
+        <div class='col-md-2' id='controls'>
+        <div class='hidden-xs' id='sidebar'>
+        
+<h4 onclick="toggleForm()">Data: <span class="small">[show/hide]</span></h4>
+<form class="form" id='data-form'>
+<fieldset>
+
+<div class="form-group">
+  <label class="form-label" for="form-timeframe" id="form-label-timeframe">Timeframe</label>
+  <div class="btn-group-vertical" data-toggle="buttons" id="form-timeframe"> 
+    <label class="btn btn-default" for="default">
+      <input name="timeframe" id="timeframe-week" value="week" type="radio">
+      Week
+    </label> 
+    <label class="btn btn-default" for="version">
+      <input name="timeframe" id="timeframe-version" value="version" type="radio">
+      Version
+    </label> 
+  </div>
+</div>
+
+
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="form-label" for="start_date" id="form-label-start_date">Start Week</label>
+  <div>
+    <select id="start_date" name="start_date" class="form-control btn btn-default dropdown-toggle" data-toggle="dropdown">
+    </select>
+  </div>
+</div>
+
+
+
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="form-label" for="end_date" id="form-label-end_date">End Week</label>
+  <div>
+    <select id="end_date" name="end_date" class="form-control btn btn-default dropdown-toggle" data-toggle="dropdown">
+    </select>
+  </div>
+</div>
+
+
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="form-label" for="start_version" id="form-label-start_version">Start Version</label>
+  <div>
+    <select id="start_version" name="start_version" class="form-control btn btn-default dropdown-toggle" data-toggle="dropdown">
+    </select>
+  </div>
+</div>
+
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="form-label" for="end_version" id="form-label-end_version">End Version</label>
+  <div>
+    <select id="end_version" name="end_version" class="form-control btn btn-default dropdown-toggle" data-toggle="dropdown">
+    </select>
+  </div>
+</div>
+
+
+<!-- Multiple Radios (inline) -->
+<div class="form-group">
+  <label class="form-label" for="OS" id="form-label-os">OS</label>
+  <div class="btn-group-vertical" data-toggle="buttons"> 
+    <label class="btn btn-default" for="default">
+      <input name="OS" id="os-default" value="default" type="radio">
+      All
+    </label> 
+    <label class="btn btn-default" for="windows">
+      <input name="OS" id="os-windows" value="windows" type="radio">
+      Windows
+    </label> 
+    <label class="btn btn-default" for="mac">
+      <input name="OS" id="os-mac" value="mac" type="radio">
+      OSX
+    </label> 
+    <label class="btn btn-default" for="linux">
+      <input name="OS" id="os-linux" value="linux" type="radio">
+      Linux
+    </label>
+  </div>
+<!-- Multiple Radios (inline) -->
+<div class="form-group">
+  <label class="form-label" for="channel" id="form-label-channel">Channel</label>
+  <div class="btn-group-vertical" data-toggle="buttons"> 
+    <label class="btn btn-default" for="release">
+      <input name="channel" id="channel-release" value="release" type="radio">
+      Release
+    </label> 
+    <label class="btn btn-default" for="beta">
+      <input name="channel" id="channel-beta" value="beta" type="radio">
+      Beta
+    </label> 
+    <label class="btn btn-default" for="aurora">
+      <input name="channel" id="channel-aurora" value="aurora" type="radio">
+      Aurora
+    </label> 
+    <label class="btn btn-default" for="nightly">
+      <input name="channel" id="channel-nightly" value="nightly" type="radio">
+      Nightly
+    </label>
+  </div>
+<br/>
+<button type="button" class="btn btn-success" onclick="submitForm()">Make it so!</button>
+</fieldset>
+</form>
+        </div> 
+        </div>
+        
+        <div class="col-md-10" id="main">
+        <h2 id="title-string">Detail view.
+        </h2>
+        <div id="warning-message" class="text-warning">
+        </div>
+        <div id="results">
+        </div>
+        </div>
+                <div class="col-md-6 col-md-offset-2 jumbotron" id="error-message">
+        <h2>Something went wrong:</h2>
+        <p class="text-center" id="blank-text">No relevant measures.</p>
+        <p class="text-center" id="error-text"></p>
+        </div>
+        <div class="col-md-10 jumbotron" id="loading-throbber">
+        <h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>
+        <p>We're trying to get you your data, or at least some kind of valid error message. If you see this for an extended period of time, try a shift-refresh.</p>
+        </div>
+        </div>
+<svg>  
+    <defs>
+    <linearGradient id="rainbow" x1="0" y1="0" x2="30" y2="150" spreadMethod="repeat" gradientUnits="userSpaceOnUse">
+        <stop stop-opacity="1" stop-color="hsl(135,100%,50%)" offset="0%"></stop>
+        <stop stop-opacity="1" stop-color="hsl(180,100%,50%)" offset="10%"></stop>
+        <stop stop-opacity="1" stop-color="hsl(225,100%,50%)" offset="23%"></stop>
+        <stop stop-opacity="1" stop-color="hsl(270,100%,50%)" offset="37%"></stop>
+        <stop stop-opacity="1" stop-color="hsl(315,100%,50%)" offset="50%"></stop>
+        <stop stop-opacity="1" stop-color="hsl(0,100%,50%)" offset="62%"></stop>
+        <stop stop-opacity="1" stop-color="hsl(45,100%,50%)" offset="77%"></stop>
+        <stop stop-opacity="1" stop-color="hsl(90,100%,50%)" offset="90%"></stop>
+        <stop stop-opacity="1" stop-color="hsl(135,100%,50%)" offset="100%"></stop>
+    </linearGradient>
+    </defs>
+</svg>
+{% endblock %}
+{% block js %}
+    <script src="jquery-deparam.min.js"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script src="trend.js"></script>
+{% endblock%}

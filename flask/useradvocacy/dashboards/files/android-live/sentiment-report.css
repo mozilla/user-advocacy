@@ -1,0 +1,378 @@
+body {
+	background: #ffffff;
+	color: #5c6473;
+	font-family: Georgia, serif;
+	font-size: 15px;
+	margin: 6px;
+}
+
+.holder {
+	background: #d7d3c8;
+	float: left;
+	position: relative;
+	width: 100%;
+}
+
+.header h1 {
+	color: #000;
+	font-family: "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+	font-size: 35px;
+	font-weight: 600;
+	margin-bottom: 10px;
+	margin-top: 0px;
+}
+
+.center-block {
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 750px;
+	text-align: left;
+	width: 80%;
+}
+
+.moz-image {
+	color: #447bc4;
+	display: block;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-size: 14px;
+	text-decoration: none;
+}
+
+.subheader {
+	display: flex;
+	align-items: baseline;
+}
+
+.email-line {
+	color: #447bc4;
+	flex-grow: 0;
+	font-family: 'Gill Sans','Gill Sans MT',Calibri,Tahoma,sans-serif;
+	font-size: 12px;
+	text-align: right;
+	text-decoration: none;
+}
+
+.email-line a {
+	text-decoration: none;
+}
+
+.date-line {
+	color: #ffffff;
+	flex-grow: 1;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-size: 20px;
+	font-style: normal;
+	font-weight: normal;
+}
+
+.large-red-text {
+	color: #c13832;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-size: 36px;
+	font-style: normal;
+	font-weight: 100;
+}
+
+.large-grey-text {
+	color: #7c7c7c;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-size: 36px;
+	font-style: normal;
+	font-weight: 600;
+}
+
+.menu {
+	float: left;
+	padding: 20px 0 20px 0;
+	width: 33.3%;
+}
+
+.menu-title {
+	background-color: #c13832;
+	color: #ffffff;
+	font-family: georgia, serif;
+	font-size: 16px;
+	font-style: italic;
+	font-weight: normal;
+	padding: 10px 20px;
+}
+
+.menu-item {
+	border-bottom: 1px dotted #9f9f9f;
+	color: #5C6473;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-size: 14px;
+	padding: 10px 20px;
+}
+
+.menu-item a {
+	color: #0095dd;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-size: 14px;
+	text-decoration: none;
+}
+
+.content h2 {
+	background-color: #C13832;
+	color: #FFF;
+	font-family: "Gill Sans",Tahoma,sans-serif;
+	font-size: 28px;
+	font-style: normal;
+	font-weight: normal;
+	margin-bottom: 14px;
+	margin-top: 0px;
+	padding: 4px 50px;
+	transform: translate(-50px, 0px);
+	width: calc(100% + 85px);
+}
+
+
+.content > .summary-section {
+	background: #fff;
+	border-collapse: collapse;
+	margin: 20px 15px 20px 15px;
+	padding: 20px;
+}
+
+
+.content img {
+	background: #fff;
+	border: 2px solid #5c6473;
+	display: block;
+}
+
+
+.content h3 {
+	color: #313131;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-size: 20px;
+	font-style: normal;
+	font-weight: normal;
+	margin-bottom: 12px;
+	margin-top: 20px;
+}
+
+.content h4 {
+	color: #c13832;
+	font-size: 15px;
+	font-style: normal;
+	font-weight: bold;
+	margin-bottom: 6px;
+	margin-top: 0;
+}
+
+.content h5 {
+	font-weight: bold;
+	margin-bottom: 0;
+	margin-top: 0;
+}
+
+.content strong {
+	color: #000;
+	font-weight: 600;
+}
+
+.content em {
+	font-style: italic;
+}
+
+.chart {
+	padding: 4px;
+}
+
+
+.content blockquote {
+	display: inline;
+	border: none;
+	font-size: 0;
+	padding: 0;
+}
+
+.content blockquote p {
+    font-size: 14px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	margin-left: 60px;
+	margin-right: 100px;
+	text-align: justify;
+}
+
+.content blockquote p:first-child:before {
+    color: #ccc; 
+    content: "\201C"; 
+    font-family: 'Gill Sans', Tahoma,sans-serif;
+    font-size: 2em; 
+    line-height: 0.1em; 
+    margin-right: 0.1em;
+    margin-left: -0.5em;
+    vertical-align: -0.4em;
+}
+
+.content blockquote p + p {
+	margin-top: 6px;
+}
+
+.content blockquote p:last-child:after {
+    color: #ccc; 
+    content: "\201D"; 
+    font-family: 'Gill Sans', Tahoma,sans-serif;
+    font-size: 2em; 
+    line-height: 0.1em; 
+    margin-left: 0.1em; 
+    vertical-align: -0.4em;
+}
+
+.footer {
+	padding: 40px 20px 50px;
+}
+
+.footer span {
+	color: rgb(193, 56, 50);
+	font-weight: bold;
+}
+
+.content table {
+	margin-bottom: 40px;
+	margin-top: 50px;
+}
+
+.content tr:nth-child(even) {
+	background: #e5d3d5;
+}
+
+.content tr:nth-child(odd) {
+	background: #eae7e8;
+}
+
+.content tr:nth-child(1) {
+	background: none;
+}
+
+.content ul {
+	margin-bottom: 10px;
+	margin-top: 10px;
+}
+
+.content li {
+	padding-bottom: 4px;
+	padding-top: 4px;
+}
+
+.content hr {
+	border: none;
+	border-top: 1px solid #5c6473;
+	color: #5c6473;
+	margin-bottom: 20px;
+	margin-top: 20px;
+	padding: 0;
+	text-align: center;
+	width: 70%;
+}
+
+.content hr:after {
+	background: #fff;
+	color: #5c6473;
+	content: '\272E\2003\272E\2003\272E';
+	font-size: 1.5em;
+	padding: 0 1em;
+	position: relative;
+	top: -0.7em;
+}
+
+#footnote-section .footnote-backref {
+    position: relative;
+    top: -0.5em;
+    font-size: 70%;
+    color: #c13832;
+    text-decoration: none;
+}
+
+#footnote-section>ol {
+    padding-left: 10px;
+    font-size: 90%;
+}
+
+#footnote-section p {
+    margin-bottom: 0;
+}
+
+.content .citation {
+    margin-top: -10px;
+    margin-right: 100px;
+    margin-left: 70px;
+    margin-bottom: 10px;
+    font-size: 80%;  
+}
+
+.content sup .footnote-ref {
+    color: #c13832;
+}
+
+.chart-header {
+    height: 150px;
+    padding: 0 5% 0 5%;
+}
+
+.chart-header p {
+    font: 15px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+}
+
+.chart-div {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.chart-group {
+    background: #fff;
+    padding: 10px;
+    margin: 20px 0px 20px 0px;
+}
+
+.chart-row {
+    margin: -10px 0px -10px 0px;
+}
+
+/* Chart styles */
+
+.axis {
+    font: 10px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 300;
+}
+
+.axis-label {
+    font: 12px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 500;
+}
+
+.chart-title {
+    font: 14px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 500;
+}
+
+.chart-text {
+    font: 12px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 500;
+    cursor: default;
+}
+
+.legend {
+    font: 12px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 300;
+    cursor: default;
+}
+
+.annotations line {
+  fill: none;
+  stroke: #ccc;
+  shape-rendering: crispEdges;
+  stroke-width: 1;
+}
+
+.annotations text {
+      font: 10px "Gill Sans Condensed","Gill Sans", "Gill Sans MT",Calibri,Tahoma,sans-serif;
+      text-anchor: end;
+      color: #ccc;
+      font-weight: 100;
+      cursor: default;
+    }
+

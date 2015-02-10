@@ -1,0 +1,33 @@
+
+{% extends "layout.html" %}
+{% block content %}
+<div class="jumbotron">
+  <h1>I know you want an account...</h1>
+    <h3>But you are probably in the wrong place.</h3>
+    <p><em>Accounts on this site are for UA team members</em>. You don't need to have an account to use the many great dashboards and view the dozens of reports on this site. Click <a href="{{ url_for('public.home') }}">here</a> to go back and try to find what you're really looking for.</p>
+    </div>
+    <div class="container-narrow">
+    <form id="registerForm" class="form form-register" method="POST" action="" role="form">
+    <h3>If you're sure you know what you're doing, we'll need some details...</h3>
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{form.username.label}}
+                {{form.username(placeholder="Username", class_="form-control")}}
+            </div>
+            <div class="form-group">
+                {{form.email.label}}
+                {{form.email(placeholder="Email", class_="form-control")}}
+            </div>
+            <div class="form-group">
+                {{form.password.label}}
+                {{form.password(placeholder="Password", class_="form-control")}}
+            </div>
+            <div class="form-group">
+                {{form.confirm.label}}
+                {{form.confirm(placeholder="Password (again)", class_="form-control")}}
+            </div>
+            <p><input class="btn btn-default btn-submit" type="submit" value="Register"></p>
+    </form>
+    <p><em>Already registered?</em> Click <a href="{{ url_for('public.login') }}">here</a> to login.</p>
+</div>
+{% endblock %}

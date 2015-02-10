@@ -1,0 +1,226 @@
+{% extends "layout.html" %}
+{% block css %}
+  <link href="../static/css/charts.css" rel="stylesheet">
+  <link href="telemetry.css" rel="stylesheet">
+{% endblock %}
+{% block page_title %}
+Telemetry UI dashboard
+{% endblock %}
+
+{% block content %}
+    <div class='row'>
+        <div class='col-md-2' id='controls'>
+        <div class='hidden-xs' id='sidebar'>
+        
+<h4 onclick="toggleForm()">Data: <span class="small">[show/hide]</span></h4>
+<form class="form" id='data-form'>
+<fieldset>
+
+<div class="form-group">
+  <label class="form-label" for="for-timeframe" id="form-label-timeframe">Timeframe</label>
+  <div class="btn-group-vertical" data-toggle="buttons" id="form-timeframe"> 
+    <label class="btn btn-default" for="default">
+      <input name="timeframe" id="timeframe-week" value="week" type="radio">
+      Week
+    </label> 
+    <label class="btn btn-default" for="version">
+      <input name="timeframe" id="timeframe-version" value="version" type="radio">
+      Version
+    </label> 
+  </div>
+</div>
+
+
+<!-- Multiple Radios (inline) -->
+<div class="form-group">
+  <label class="form-label" for="type" id="form-label-type">Type</label>
+  <div class="btn-group-vertical" data-toggle="buttons" id="form-type"> 
+    <label class="btn btn-default show-week" for="cs-week">
+      <input name="type" id="type-cs-week" value="cs-week" type="radio">
+      Single Week
+    </label> 
+    <label class="btn btn-default show-version" for="cs-version">
+      <input name="type" id="type-version" value="cs-version" type="radio">
+      Single Version
+    </label> 
+    <label class="btn btn-default show-week" for="week-diff">
+      <input name="type" id="type-week-diff" value="week-diff" type="radio">
+      Week comparison
+    </label>
+    <label class="btn btn-default show-version" for="version-diff">
+      <input name="type" id="type-version-diff" value="version-diff" type="radio">
+      Version comparison
+    </label>
+  </div>
+</div>
+
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="form-label" for="date" id="form-label-date">Week</label>
+  <div>
+    <select id="date" name="date" class="form-control btn btn-default dropdown-toggle" data-toggle="dropdown">
+    </select>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="form-label" for="base_date" id="form-label-base_date">Previous Week</label>
+  <div>
+    <select id="base_date" name="base_date" class="form-control btn btn-default dropdown-toggle" data-toggle="dropdown">
+    </select>
+  </div>
+</div>
+
+
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="form-label" for="version" id="form-label-version">Version</label>
+  <div>
+    <select id="version" name="version" class="form-control btn btn-default dropdown-toggle" data-toggle="dropdown">
+    </select>
+  </div>
+</div>
+
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="form-label" for="base_version" id="form-label-base_version">Previous Version</label>
+  <div>
+    <select id="base_version" name="base_version" class="form-control btn btn-default dropdown-toggle" data-toggle="dropdown">
+    </select>
+  </div>
+</div>
+
+
+<!-- Multiple Radios (inline) -->
+<div class="form-group">
+  <label class="form-label" for="OS" id="form-label-os">OS</label>
+  <div class="btn-group-vertical" data-toggle="buttons"> 
+    <label class="btn btn-default" for="default">
+      <input name="OS" id="os-default" value="default" type="radio">
+      All
+    </label> 
+    <label class="btn btn-default" for="windows">
+      <input name="OS" id="os-windows" value="windows" type="radio">
+      Windows
+    </label> 
+    <label class="btn btn-default" for="mac">
+      <input name="OS" id="os-mac" value="mac" type="radio">
+      OSX
+    </label> 
+    <label class="btn btn-default" for="linux">
+      <input name="OS" id="os-linux" value="linux" type="radio">
+      Linux
+    </label>
+  </div>
+<!-- Multiple Radios (inline) -->
+<div class="form-group">
+  <label class="form-label" for="channel" id="form-label-channel">Channel</label>
+  <div class="btn-group-vertical" data-toggle="buttons"> 
+    <label class="btn btn-default" for="release">
+      <input name="channel" id="channel-release" value="release" type="radio">
+      Release
+    </label> 
+    <label class="btn btn-default" for="beta">
+      <input name="channel" id="channel-beta" value="beta" type="radio">
+      Beta
+    </label> 
+    <label class="btn btn-default" for="aurora">
+      <input name="channel" id="channel-aurora" value="aurora" type="radio">
+      Aurora
+    </label> 
+    <label class="btn btn-default" for="nightly">
+      <input name="channel" id="channel-nightly" value="nightly" type="radio">
+      Nightly
+    </label>
+  </div>
+<br/>
+<button type="button" class="btn btn-success" onclick="submitForm()">Make it so!</button>
+</fieldset>
+</form>
+
+<h4 onclick="toggleDisplay()">Display options: <span class="small">[show/hide]</span></h4>
+<div id='display-settings'>
+<h4>Sort by:</h4>
+            <div class="btn-group-vertical">
+            <button class="btn btn-default control-sort"  onclick="changeParam('sort_order', 'default')" id="sort-ctrl-default" 
+                title="Sort by predefined sort order, then category, then alphabetical">Default</button>
+            <button class="btn btn-default control-sort no-diff"  onclick="changeParam('sort_order', 'oddity')" id="sort-ctrl-oddity"
+            title="Sort by how distributed (non-default aka interesting) a field is">Oddity</button>
+            <button class="btn btn-default control-sort diff-only"  onclick="changeParam('sort_order', 'total_diff')" id="sort-ctrl-total_diff" 
+            title="Sort by how much change there is between the before state and the after state">Largest Change</button>
+            <button class="btn btn-default control-sort"  onclick="changeParam('sort_order', 'alpha')" id="sort-ctrl-alpha"             
+            title="Sort by eh, I'm sure you can figure this out">Alphabetical</button>
+            <button class="btn btn-default control-sort"  onclick="changeParam('sort_order', 'percent')" id="sort-ctrl-percent"             
+            title="Sort by Percent usage">Percent usage</button>
+            <button class="btn btn-default control-sort"  onclick="changeParam('sort_order', 'average')" id="sort-ctrl-average"             
+            title="Sort by Actions per session">Actions per session</button>
+            <button class="btn btn-default control-sort"  onclick="changeParam('sort_order', 'nonzero')" id="sort-ctrl-nonzero"             
+            title="Sort by Actions per active session">Actions per active session</button>
+            </div>
+<h4>Filter:</h4>
+            <div class="btn-group-vertical" id="filter-controls">
+            </div>
+<h4>UI Category:</h4>
+            <div class="btn-group-vertical" id="category-controls">
+            </div>
+<h4>Display:</h4>
+            <div class="btn-group-vertical">
+            <button class="btn btn-default control-value no-diff"
+            onclick="changeParam('show_value', 'summary')" id="value-ctrl-summary" 
+                title="Show summary of each measure">Summary</button>
+            <button class="btn btn-default control-value diff-only"
+            onclick="changeParam('show_value', 'summary_count')" id="value-ctrl-summary_count" 
+                title="Show summary with absolute value change between dates">Summary (Counts)</button>
+            <button class="btn btn-default control-value diff-only"
+            onclick="changeParam('show_value', 'summary_percent')" id="value-ctrl-summary_percent" 
+                title="Show percentage point change between summary values">Summary (Percents)</button>
+            <button class="btn btn-default control-value"
+            onclick="changeParam('show_value', 'count')" id="value-ctrl-count" 
+                title="Show number of sessions">Count</button>
+            <button class="btn btn-default control-value"
+            onclick="changeParam('show_value', 'percent')" id="value-ctrl-percent" 
+                title="Show percentage of sessions">Percentage</button>
+            <button class="btn btn-default control-value diff-only"
+            onclick="changeParam('show_value', 'diff')" id="value-ctrl-diff" 
+                title="Show percentage change between sessions">Percentage Change</button>
+            <button class="btn btn-default control-value diff-only"
+            onclick="changeParam('show_value', 'base_count')" id="value-ctrl-base_count" 
+                title="Show previous session count">Previous Count</button>
+            <button class="btn btn-default control-value diff-only"
+            onclick="changeParam('show_value', 'base_percent')" id="value-ctrl-base_percent" 
+                title="Show previous percentage">Previous Percentage</button>
+            </div>
+            </div>
+        </div>  
+        </div>
+        <div class="col-md-10" id="main">
+        <h2 id="title-string">Title string.
+        </h2>
+        <div id="warning-message" class="text-warning">
+        </div>
+        <div id="full-list">
+        </div>
+        </div>
+        <div class="col-md-6 col-md-offset-2 jumbotron" id="error-message">
+        <h2>Something went wrong:</h2>
+        <p class="text-center" id="blank-text">No data for this period yet. Try some other parameters.</p>
+        <p class="text-center" id="error-text"></p>
+        </div>
+        <div class="col-md-10 jumbotron" id="loading-throbber">
+        <h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>
+        <p>We're trying to get you your data, or at least some kind of valid error message. If you see this for an extended period of time, try a shift-refresh.</p>
+        </div>
+        </div>
+{% endblock %}
+{% block js %}
+    <script src="jquery-deparam.min.js"></script>
+    <script src="telemetry.js"></script>
+{% endblock%}

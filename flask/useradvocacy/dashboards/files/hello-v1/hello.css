@@ -1,0 +1,11 @@
+body {
+	background: #ffffff;
+	color: #5c6473;
+	font-family: Georgia, serif;
+	font-size: 15px;
+	margin: 6px;
+}
+
+#inputlist li {
+    font: 15px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+}

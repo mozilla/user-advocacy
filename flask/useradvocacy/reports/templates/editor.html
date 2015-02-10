@@ -1,0 +1,74 @@
+{% extends "layout.html" %} 
+{% block css %}
+<link rel="stylesheet" href="../../css/dropzone.css">
+{% endblock %}
+{% block content %} 
+
+
+    <form method = "POST"> 
+    {{ form.csrf_token() }} {{ form.project_field() }} {{ form.filename_field() }}
+
+<h3> Now editing: {{ project }}/{{ filename }}</h3>
+
+<div class="row" style="margin-bottom: 5px">
+<div class="col-sm-1">
+{{ form.template_field.label }}:
+</div>
+<div class="col-sm-2">
+{{ form.template_field(class="form-control input-sm") }}
+</div>
+<div class="col-sm-3">
+<label class="btn btn-default btn-sm" title="Whether this page is visible outside the team (overrides Listed)">
+{{ form.published_field(class="check-button", id="publish-button") }}
+Published
+</label>
+<label class="btn btn-default btn-sm" title="Whether to show in the Reports listing (only applies if Published)">
+{{ form.listed_field(class="check-button", id="listed-button") }}
+Listed
+</label>
+</div>
+</div>
+<div class="row">
+<div class="col-lg-6" id="edit-box">
+{{ form.markdown_field.label }}: <a href="#" class="btn btn-default btn-xs preview-show" onclick="submit_preview()" style="display: none">preview in new tab <i class="fa fa-external-link"></i></a>
+<a href="#" class="btn btn-default btn-xs preview-noshow pull-right" onclick="submit_preview()">preview now <i class="fa fa-share-square-o"></i></a>
+<a href="#" class="btn btn-default btn-xs preview-show pull-right" onclick="show_preview()" style="display: none">show preview <i class="fa fa-chevron-right"></i></a><br/>
+{{ form.markdown_field(class="main_md form-control", style="height: 450px; font-family: monospace; width: 100%") }}
+</div>
+<div class="col-lg-6" id="preview-box">
+<span style="cursor: pointer;" onclick="submit_preview()">
+<strong>Preview:</strong>
+</span> 
+<a href="#" class="btn btn-default btn-xs pull-right" onclick="hide_preview()"><i class="fa fa-chevron-left"></i> hide preview</a>
+<iframe src="" id="preview-area" style="height:450px; width: 100%; border: 0;" name="preview-frame">
+Insert preview here
+</iframe>
+</div>
+</div>
+<div class="row">
+    <div class="col-md-4">
+    <h4> Save this as a new report... </h4>
+        <div class="row">
+        <div class="col-sm-6">{{ form.new_project_field.label(class="sr-only") }}
+        {{ form.new_project_field(class="form-control input-sm", placeholder="Project") }}</div><div class="col-sm-6">{{ form.new_filename_field.label(class="sr-only") }}{{ form.new_filename_field(class="form-control input-sm", placeholder="Filename") }}</div></div><div class="row" style="margin-top: 10px"><div class="col-xs-2 col-xs-offset-9">
+{{ form.saveas_button(class="btn-sm btn btn-warning") }}  </div></div></div>
+    <div class="col-sm-4 col-sm-offset-1">
+        <h4>Or you can ... </h4> {{ form.save_button(class="btn-sm btn btn-success") }} <h4> and <a href = "/reports/{{ project }}/{{ filename }}/" target = "_blank"> go to your report </a>.</h4> </div></div>
+
+</div>
+</form>
+<div class="col-md-10 col-md-offset-1">
+<h4> You have the following files associated with this document (drag files in): </h4>
+<div id="uploader" class="dropzone" style="margin-top: 20px;">
+</div></div>
+
+    <!-- Dummy form for handling previews -->
+    <form id="preview" action="preview" method="POST" target="preview-frame"> {{ preview_form.markdown_preview_field() }} 
+{{ preview_form.template_preview_field() }} </form>
+{% endblock %}
+{% block js %}
+<script src="../../js/dropzone.js"></script>
+<script src="../../js/editor.js"></script>
+{% endblock %}
+
+

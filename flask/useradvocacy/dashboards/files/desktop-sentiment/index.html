@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <meta charset="utf-8">
+<head>
+    <title>User Sentiment Report -- Firefox 31 Desktop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="{{ url_for('static', filename='libs/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet" media="screen">
+    <link href="sentiment-report.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="holder">
+        <div class="container content">
+
+            <div class="row summary-section">
+                <div class="col-md-12">
+                    <h2>Firefox Desktop 32 User Sentiment Report</h2>
+                    <p>The release of Firefox 32 was a bit more dramatic than we are accustomed to, with 3 chemspills in the first few weeks of release:</p>
+                    <ul>
+                        <li>0.1: Fixed several crashes, a WebRTC issue, and SSL UX bug.</li>
+                        <li>0.2: Fixed a bug where some installations would not start up after updating Firefox.</li>
+                        <li>0.3: Fixed a critical zero-day security bug.</li>
+                    </ul>
+                    <p>While we did release 3 chemspills, the chemspills were rolled out quickly enough to have minimal impact on user sentiment.  These chemspills were unfortunate, but they do an important job of keeping users safe and providing the best experience we can.</p>
+                    <p>Firefox 32 contained some awesome improvements as well, including:</p>
+                    <ul>
+                        <li>Improved performance including crash recovery by improving the HTTP caching</li>
+                        <li>Ability to view historical information for entries stored in the password manager</li>
+                        <li>Easier back, forward, reload, and bookmarking through the context menu</li>
+                        <li><a href="https://www.mozilla.org/en-US/firefox/32.0.3/releasenotes/">And more!</a></li>
+                    </ul>
+                    <p><br>
+                    <em>This report will soon be a dashboard with live data and is based on our web API.  <a href="mailto:user-advocacy@mozilla.com">Let us know</a> if you have questions or comments about either project!</em></p>
+                </div>
+            </div>
+
+
+            <div class="row chart-row">
+                <div class="col-md-6 chart-col">
+                    <div class="chart-group">
+                        <div class="row">
+                            <div class="col-xs-12 chart-header">
+                                <h3>Input Sentiment Score over time (all versions)</h3>
+                                <p>This chart shows the input sentiment over time for all versions of Firefox Desktop. Score is on a scale of 0 (indicating all negative feedback) to 100 (for all positive feedback). Dark line is 7-day rolling average.</p>
+                            </div>
+                        </div>
+                        <div class="row chart">
+                            <div id="chart1"></div>
+                        </div>
+                        <div class="row chart-discuss">
+                            <!-- Insert chart discussion here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 chart-col">
+                    <div class="chart-group">
+                        <div class="row">
+                            <div class="col-xs-12 chart-header">
+                                <h3>Input volume over time</h3>
+                                <p>This chart shows the input volume per million ADI over time for all versions of Firefox Desktop. Color indicates the sentiment score (red = completely sad, green = completely happy).</p>
+                            </div>
+                        </div>
+                        <div class="row chart">
+                            <div id="chart2"></div>
+                        </div>
+                        <div class="row chart-discuss">
+                            <!-- Insert chart discussion here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row chart-row">
+                <div class="col-md-6 chart-col">
+                    <div class="chart-group">
+                        <div class="row">
+                            <div class="col-xs-12 chart-header">
+                                <h3>Version-specific sentiment score</h3>
+                                <p>This chart indicates the sentiment score for specific versions of Firefox desktop while they are on the release channel. Values are much lower than above because we have substantially higher sentiment ratings on non-current Firefox versions.</p>
+                            </div>
+                        </div>
+                        <div class="row chart">
+                            <div id="chart3"></div>
+                        </div>
+                        <div class="row chart-discuss">
+                            <!-- Insert chart discussion here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 chart-col">
+                    <div class="chart-group">
+                        <div class="row">
+                            <div class="col-xs-12 chart-header">
+                                <h3>Support site visits</h3>
+                                <p>This is the number of in-product visits to the support site each week over the past release (in thousands).</p>
+                            </div>
+                        </div>
+                        <div class="row chart">
+                            <div id="chart4"></div>
+                        </div>
+                        <div class="row chart-discuss">
+                            <!-- Insert chart discussion here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='libs/jQuery/dist/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='libs/d3/d3.min.js') }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='libs/lodash/lodash.js') }}"></script>
+    <script src="{{ url_for('static', filename='libs/bootstrap/dist/js/bootstrap.min.js') }}"></script> 
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script src="desktop-sentiment.js"></script>
+</body>
+
+</html>

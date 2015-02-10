@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <meta charset="utf-8">
+<head>
+    <title>User Sentiment Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="{{ url_for('static', filename='libs/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet" media="screen">
+    <link href="sentiment-report.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="holder">
+        <div class="container content">
+
+            <div class="row summary-section">
+                <div class="col-md-12">
+                    <h2>Firefox Desktop User Sentiment Report</h2>
+                </div>
+            </div>
+
+
+            <div class="row chart-row">
+                <div class="col-md-6 chart-col">
+                    <div class="chart-group">
+                        <div class="row">
+                            <div class="col-xs-12 chart-header">
+                                <h3>Input Sentiment Score over time (all versions)</h3>
+                                <p>This chart shows the input sentiment over time for all versions of Firefox Desktop. Score is on a scale of 0 (indicating all negative feedback) to 100 (for all positive feedback). Dark line is 7-day rolling average.</p>
+                            </div>
+                        </div>
+                        <div class="row chart">
+                            <div id="chart1"></div>
+                        </div>
+                        <div class="row chart-discuss">
+                            <!-- Insert chart discussion here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 chart-col">
+                    <div class="chart-group">
+                        <div class="row">
+                            <div class="col-xs-12 chart-header">
+                                <h3>Input volume over time</h3>
+                                <p>This chart shows the input volume per million ADI over time for all versions of Firefox Desktop. Color indicates the sentiment score (red = 100% sad, green = 50% happy which is higher than the best we've ever seen).</p>
+                            </div>
+                        </div>
+                        <div class="row chart">
+                            <div id="chart2"></div>
+                        </div>
+                        <div class="row chart-discuss">
+                            <!-- Insert chart discussion here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row chart-row">
+                <div class="col-md-6 chart-col">
+                    <div class="chart-group">
+                        <div class="row">
+                            <div class="col-xs-12 chart-header">
+                                <h3>Version-specific sentiment score</h3>
+                                <p>This chart indicates the sentiment score for specific versions of Firefox desktop while they are on the release channel. Values are much lower than above because we have substantially higher sentiment ratings on non-current Firefox versions.</p>
+                            </div>
+                        </div>
+                        <div class="row chart">
+                            <div id="chart3"></div>
+                        </div>
+                        <div class="row chart-discuss">
+                            <!-- Insert chart discussion here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 chart-col">
+                    <div class="chart-group">
+                        <div class="row">
+                            <div class="col-xs-12 chart-header">
+                                <h3>Support site visits</h3>
+                                <p>This is the number of in-product visits to the support site each week over the past release (in thousands).</p>
+                            </div>
+                        </div>
+                        <div class="row chart">
+                            <div id="chart4"></div>
+                        </div>
+                        <div class="row chart-discuss">
+                            <!-- Insert chart discussion here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='libs/jQuery/dist/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='libs/d3/d3.min.js') }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='libs/lodash/lodash.js') }}"></script>
+    <script src="{{ url_for('static', filename='libs/bootstrap/dist/js/bootstrap.min.js') }}"></script> 
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script src="desktop-sentiment.js"></script>
+</body>
+
+</html>

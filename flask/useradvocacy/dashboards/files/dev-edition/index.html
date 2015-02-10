@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block css %}
+  <link href="../static/css/charts.css" rel="stylesheet">
+  <link href="deved.css" rel="stylesheet">
+{% endblock %}
+{% block page_title %}
+Dev Edition feedback
+{% endblock %}
+
+{% block content %}
+        <div class="row">
+        <div class="col-md-6">
+        <div class="chart-group center-block">
+            <div class="row">
+                <div class="col-xs-12 chart-header">
+                    <h3>Dev edition feedback</h3>
+                    <p>Running display of most recent Firefox Developer Edition feedback. Now saving your refresh finger: Dashboard updates every 5 minutes!</p>
+                </div>
+            </div>
+            <div class="row feedback">
+                <ul id="feedback"></div>
+            </div>
+            </div>
+        </div>
+{% endblock %}
+{% block js %}
+    <script src="dev-edition.js"></script>
+{% endblock%}

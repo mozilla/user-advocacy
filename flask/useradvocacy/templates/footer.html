@@ -1,0 +1,17 @@
+<footer>
+  <small>
+  <ul class="company">
+    <li></li>
+  </ul>
+
+    <ul class="footer-nav">
+
+      <li><a href="{{ url_for('public.about') }}">About</a></li>
+      <li><a href="mailto:user-advocacy@mozilla.com">Contact</a></li>
+      {% if current_user and current_user.is_authenticated() %}
+      {% else %}
+      <li><a href="{{ url_for('public.login') }}">Login</a></li>
+      {% endif %}
+    </ul>
+  </small>
+</footer>

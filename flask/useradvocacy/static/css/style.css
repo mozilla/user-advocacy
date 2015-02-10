@@ -1,0 +1,137 @@
+/* =============================================================================
+   App specific CSS file.
+   ========================================================================== */
+
+/* universal */
+
+html {
+  overflow-y: scroll;
+}
+
+body {
+  padding-top: 60px;
+}
+
+section {
+  overflow: auto;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.container-narrow{
+  margin: 0 auto;
+  max-width: 700px;
+}
+
+.container-medium{
+  margin: 0 auto;
+  max-width: 940px;
+}
+
+.whimsy .jumbotron {
+  background: linear-gradient(135deg, hsla(135,100%,50%, 0.1), hsla(180,100%,50%, 0.1),hsla(225,100%,50%, 0.1),hsla(270,100%,50%, 0.1), hsla(315,100%,50%, 0.1),hsla(0,100%,50%, 0.1), hsla(45,100%,50%, 0.1), hsla(90,100%,50%, 0.1), hsla(135,100%,50%, 0.1));
+  
+  text-shadow: 0 0 1px #fff, 0 0 3px #fff, 0 0 5px #fff, 0 0 7px #fff;
+}
+
+
+.large-red-text {
+	color: #c13832;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-style: normal;
+	font-weight: 100;
+}
+
+.large-grey-text {
+	color: #7c7c7c;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-style: normal;
+	font-weight: 600;
+}
+
+.tight {
+    line-height: 75%;
+}
+
+
+/* Forms */
+
+.navbar-form input[type="text"],
+.navbar-form input[type="password"] {
+  width: 180px;
+}
+
+
+.form-register {
+  width: 50%;
+  margin: auto;
+}
+
+.form-register .form-control {
+  position: relative;
+  font-size: 16px;
+  height: auto;
+  padding: 10px;
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+}
+
+/* footer */
+
+footer {
+  margin-top: 45px;
+  padding-top: 5px;
+  border-top: 1px solid #eaeaea;
+  color: #999999;
+}
+
+footer a {
+  color: #999999;
+}
+
+footer p {
+  float: right;
+  margin-right: 25px;
+}
+
+footer ul {
+  list-style: none;
+}
+
+footer ul li {
+  float: left;
+  margin-left: 10px;
+}
+
+footer .company {
+  float: left;
+  margin-left: 25px;
+}
+
+footer .footer-nav {
+  float: right;
+  margin-right: 25px;
+  list-style: none;
+}
+
+/* Header */
+
+.navbar-brand .large-red-text {
+	color: #c13832;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-size: 24px;
+	font-style: normal;
+	font-weight: 100;
+}
+
+.navbar-brand .large-grey-text {
+	color: #7c7c7c;
+	font-family: 'Gill Sans', Tahoma,sans-serif;
+	font-size: 24px;
+	font-style: normal;
+	font-weight: 600;
+}
+

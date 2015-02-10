@@ -1,0 +1,72 @@
+.chart {
+	padding: 4px;
+}
+
+
+.chart-header {
+    padding: 0 5% 0 5%;
+}
+
+.chart-header p {
+    font: 15px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+}
+
+.chart-div {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.chart-group {
+    background: #fff;
+    padding: 10px;
+    margin: 20px 0px 20px 0px;
+}
+
+.chart-row {
+    margin: -10px 0px -10px 0px;
+}
+
+/* Chart styles */
+
+.axis {
+    font: 10px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 300;
+}
+
+.axis-label {
+    font: 12px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 500;
+}
+
+.chart-title {
+    font: 14px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 500;
+}
+
+.chart-text {
+    font: 12px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 500;
+    cursor: default;
+}
+
+.legend {
+    font: 12px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 300;
+    cursor: default;
+}
+
+.annotations line {
+  fill: none;
+  stroke: #ccc;
+  shape-rendering: crispEdges;
+  stroke-width: 1;
+}
+
+.annotations text {
+      font: 10px "Gill Sans Condensed","Gill Sans", "Gill Sans MT",Calibri,Tahoma,sans-serif;
+      text-anchor: end;
+      color: #ccc;
+      font-weight: 100;
+      cursor: default;
+    }
+

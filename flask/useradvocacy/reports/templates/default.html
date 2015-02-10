@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<link href='http://fonts.googleapis.com/css?family=Philosopher:400,400italic,700,700italic|Lemon|Lobster+Two:400,400italic,700,700italic' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" type="text/css" href="{{ url_for('reports.serve_css', file='default-styles.css') }}" />
+{% if css %}
+<link rel="stylesheet" type="text/css" href="{{css}}" />
+{% endif %}
+
+<script src="{{ url_for('static', filename='libs/d3/d3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/jQuery/dist/jquery.min.js') }}"></script>
+
+<meta charset="UTF-8">
+<title>User Advocacy - {{title}}</title>
+</head>
+<body> 
+
+<div class="holder">
+{% if warning %}
+<div class="warning-banner">{{ warning }}</div>
+{% endif %}
+	<div class="center-block">
+ 
+ 		<div class="header">
+		<!--Start Tab Image -->
+
+            <a href="http://mozilla.org/" class="moz-image" target="_blank" style="moz-image" title="mozilla tab">
+            <img src="../../img/j3h2kggt.png"  alt="Mozilla" align="right" border="0" style="display:block" height="42" width="147"/></a>
+      <!--End Tab Image -->
+			
+      
+      <!--Start Title info -->   
+            <a href="{{ url_for('public.home')}}" id="wordmark"><span class="large-grey-text">User</span><span class="large-red-text">Advocacy</span></a>
+            <div class="subheader">
+                    <div class="date-line">{{date}}</div>
+                    <div class="email-line">Questions? Comments? Email: <a href="mailto:{{email}}">{{author}}</a></div>
+            </div>
+            <h1>{{title}}</h1>
+       <!--End title info -->
+
+</div>
+<div class="content">
+{{content|safe}}
+</div>
+      <!--Start footer -->
+
+      <div class="footer">
+
+      </div>
+			
+
+<!--End footer -->
+
+  </div>
+  </div>
+
+</body>
+<script src="../../js/default.js"></script>
+<script src="{{ url_for('static', filename='libs/lodash/lodash.js') }}"></script>
+</html>

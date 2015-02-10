@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block css %}
+  <link href="../static/css/charts.css" rel="stylesheet">
+  <link href="hello.css" rel="stylesheet">
+{% endblock %}
+{% block page_title %}
+Hello feedback category
+{% endblock %}
+
+{% block content %}
+        <div class="row">
+        <div class="col-md-8">
+        <div class="chart-group center-block">
+            <div class="row">
+                <div class="col-xs-12 chart-header">
+                    <h3>Hello feedback by category</h3>
+                    <p>Post-call feedback for Hello each week broken down by self-reported category. Click an "Other" box to see the feedback corresponding to that week. Data for this graph is updated every day.</p>
+                    <p><a
+                    href="/data/static/json/hello.csv.gz" 
+                    download="">
+                    Gzipped CSV of the last 42 days of raw data
+                    </a></p>
+                </div>
+            </div>
+            <div class="row chart">
+                <div id="chart"></div>
+            </div>
+            <div class="row chart">
+                <div id="chart2"></div>
+            </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+        <div id="spacer" class="visible-lg-block visible-md-block"></div>
+        <h4 id="listheader"></h4>
+        <ul id="inputlist">
+        </ul>
+        </div>
+        </div>
+{% endblock %}
+{% block js %}
+    <script src="hello.js"></script>
+{% endblock%}

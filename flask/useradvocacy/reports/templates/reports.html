@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+
+{% block css %}
+<link rel="stylesheet" href="css/reports.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+<h2><span class="fa-stack fa">
+  <i class="fa fa-circle fa-stack-2x"></i>
+  <i class="fa fa-file-text fa-stack-1x fa-inverse"></i>
+</span>User Advocacy Reports</h2>
+<p>Have questions? Need a report for one of your projects? Contact your friendly local UA team member today!</p>
+</div>
+<div class="container-medium">
+<div class="row">
+<div class='col-sm-3'>
+<div class='hidden-xs' id='sidebar-filter'>
+<h4>Filters:</h4>
+<div class="btn-group-vertical">
+<a class="btn btn-default side-filter" href="#" id="filter-All">All</a>
+{% for proj in projects if ((current_user and current_user.is_authenticated() and current_user.is_admin) or proj.shown) %}
+<a class="btn btn-default side-filter" href="#{{ proj.name }}" id="filter-{{ proj.name }}">{{ proj.name }}</a>
+{% endfor %}
+</div>
+</div>
+</div>
+<div class="list-group report-list col-sm-9">
+<div class='hidden-sm hidden-md hidden-lg' id='top-filter'>
+<strong>Filter:</strong>
+<div class='btn-group'>
+<button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown" id="filter-button">
+<span id="filter-menu" class="text-info">All</span> <span class="caret"></span>
+</button>
+<ul class="dropdown-menu" role="menu">
+<li id="fbutton-All"><a class="" href="#">All</a></li>
+{% for proj in projects if ((current_user and current_user.is_authenticated() and current_user.is_admin) or proj.shown) %}
+<li id="fbutton-{{ proj.name }}"><a class="" href="#{{ proj.name }}">{{ proj.name }}</a></li>
+{% endfor %}
+</div>
+</div>
+<div class="jumbotron" id="empty-warning"><p class="text-center">I find your lack of reports disturbing.</p></div>
+{% for item in list if ((current_user and current_user.is_authenticated() and current_user.is_admin) or item.shown) %}
+<div class="list-group-item report-item report-item-{{ item.project }}" onclick="location.href='{{ item.project }}/{{ item.filename }}'">
+{% if current_user and current_user.is_authenticated() and current_user.is_admin %}
+<a href="{{ item.project }}/{{ item.filename }}/edit" class="edit-link"><i class="fa fa-edit text-info"></i></a>
+{% endif %}
+<span class="label label-default pull-right">{{ item.project }}</span>
+{{ item.title }}
+{% if not item.published %}
+<span class="small text-danger">(not&nbsp;published)</span>
+{% elif not item.listed %}
+<span class="small text-warning">(not&nbsp;listed)</span>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</div>
+</div>
+{% endblock %}
+{% block js %}
+<script src="js/reports.js"></script>
+{% endblock %}
