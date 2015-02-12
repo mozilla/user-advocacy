@@ -8,6 +8,8 @@ import csv
 import json
 import requests
 import datetime
+from email.mime.text import MIMEText
+from subprocess import Popen, PIPE
 
 _TIMEFRAME = 12 # Hours
 _PAST_TIMEFRAME = 3 # Weeks
@@ -36,7 +38,7 @@ def main():
 
     for row in results:
         # Process stuff here
-        print row
+        # print row
         
         
     new_data_sql = """
@@ -58,8 +60,16 @@ def main():
 
     for row in results:
         # Process stuff here
-        print row
-        
+        # print row
+
+
+    msg = MIMEText("Here is the body of my message")
+    msg["From"] = "cww@mozilla.com"
+    msg["To"] = "cww@mozilla.com"
+    msg["Subject"] = "This is the subject."
+    p = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
+    p.communicate(msg.as_string())
+    
 
 if __name__ == '__main__':
     main()
