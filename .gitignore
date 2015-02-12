@@ -52,8 +52,8 @@ env
 env*
 
 # Raw data
-*.csv
-*.tsv
+#*.csv
+#*.tsv
 
 # Secret Files [Should be env vars anyway]
 *.cnf

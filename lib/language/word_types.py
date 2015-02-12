@@ -13,63 +13,65 @@ __status__ = "Development"
 
 # import external language library
 import csv
+from os import path
 
 # globals
-_ABUSIVE_WORDS_CSV = "abusive_words.csv"
-_UNIMPORTANT_WORDS_CSV = "unimportant_words.csv"
-_COMMON_WORDS_CSV = "common_words.csv"
-_WORD_MAPPINGS_CSV = "word_mappings.csv"
+_PATH = path.dirname(path.realpath(__file__))+'/'
+_SPAM_WORDS_CSV    = _PATH + "spam_words.csv"
+_COMMON_WORDS_CSV  = _PATH + "common_words.csv"
+_WORD_MAPPINGS_CSV = _PATH + "word_mappings.csv"
 
 
-class WordTypes(object):
+class WordClassifier(object):
     def __init__(self, 
-                abusive_csv = ABUSIVE_CSV, 
-                unimportant_csv = UNIMPORTANT_CSV, 
-                common_csv = COMMON_CSV, 
+                spam_csv    = _SPAM_WORDS_CSV, 
+                common_csv  = _COMMON_WORDS_CSV, 
                 mapping_csv = _WORD_MAPPINGS_CSV):
         
-        self._abusive_words_trie = LevenDict()
-        self._abusive_words_trie.load_csv(abusive_csv)
+        self.spam_words = self._parse_csv(spam_csv)
+        self.common_words = self._parse_csv(common_csv)
+        self.word_mappings = {}
+        self._load_mapping_csv(mapping_csv)
 
-        self._unimportant_words_trie = LevenDict()
-        self._unimportant_words_trie.load_csv(unimportant_csv)
 
-        self._common_words_trie = LevenDict()
-        self._common_words_trie.load_csv(common_csv)
-
-        self.load_mapping_csv(mapping_csv)
-
-    """
-    def get_abusive_words_trie():
-        return self._abusive_words_trie
-
-    def get_unimportant_words_trie():
-        return self._unimportant_words_trie
-
-    def get_common_words_trie():
-        return self._common_words_trie
-    """
-
-    def is_abusive(self, word):
-        return self._abusive_words_trie.search(word)
-
-    def is_unimportant(self, word):
-        return self._unimportant_words_trie.search(word)
+    def is_spam(self, word):
+        return word in self.spam_words
 
     def is_common(self, word):
-        return self._common_words_trie.search(word)
+        return word in self.common_words
 
-    def load_mapping_csv(self, filename):
-        self._word_mappings = {}
+    def translate_mapping(self, word):
+        return self.word_mappings[word] if (word in self.word_mappings.keys()) else word
+
+    def _load_mapping_csv(self, filename):
         with open(filename, 'rb') as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',', quotechar='\"')
             for row in csv_reader:
                 if len(row) == 2:
-                    self._word_mappings[row[0]] = row[1]
+                    self.word_mappings[row[0]] = row[1]
                 else: 
-                    raise Warning("File %s does not match the pattern \".*,.*\"." % filename)
+                    raise Warning("File %s does not have 2 columns as required" % filename)
 
-    def translate_mapping(self, word):
-        return self._word_mappings[word] if (word in self._word_mappings.keys()) else word
+    def _parse_csv(self, filename):
+        ret = set()
+        with open(filename, 'rb') as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',', quotechar='\"')
+            for row in csv_reader:
+                if len(row) == 1:
+                    ret.add(row[0])
+                else:
+                    raise Warning("File %s does not have 1 column as required" % filename)
+        return ret
 
 
+#def main():
+#    wc = WordClassifier()
+#    print ["wc.is_spam('palemoon')          ", wc.is_spam('palemoon')]
+#    print ["wc.is_spam('palemoom')          ", wc.is_spam('palemoom')]
+#    print ["wc.is_common('a')               ", wc.is_common('a')]
+#    print ["wc.is_common('apple')           ", wc.is_common('apple')]
+#    print ["wc.translate_mapping('ff')      ", wc.translate_mapping('ff')]
+#    print ["wc.translate_mapping('firefox') ", wc.translate_mapping('firefox')]
+#    print ["wc.translate_mapping('cats')    ", wc.translate_mapping('cats')]
+#if __name__ == '__main__':
+#    main()

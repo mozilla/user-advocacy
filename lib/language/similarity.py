@@ -15,105 +15,107 @@ __status__ = "Development"
 from nltk.stem import WordNetLemmatizer
 from nltk.stem.snowball import SnowballStemmer
 
-#TODO: Make sure that our stemmer/lemmatizer support custom mapping.  
-# 	If not implement a preprocessing function that does so (might be easier to
-# 	do this approach regardless)
-
-#TODO: organize this
-_STEMMER = SnowballStemmer("english")
-_WNL = WordNetLemmatizer()
-
-
-def get_language_stemmer(language):
-    return SnowballStemmer(language)
+def main():
+    s = Simplifier()
+    for word in ['cats','cat','car','disses']:
+        print ['stem %s' % word,      s.stem(word)]
+        print ['lemmatize %s' % word, s.lemmatize(word)]
+        print ['simplify %s' % word,  s.simplify(word)]
 
 
-def stem_list(words, language_stemmer = _STEMMER):
-    stem_lambda = lambda w: stem(w,language_stemmer)
-    return map(stem_lambda, words)
+class Simplifier(object):
+
+    def __init__(self, stemmer = SnowballStemmer("english"), 
+                 lemmatizer = WordNetLemmatizer()):
+        self.stemmer    = stemmer
+        self.lemmatizer = lemmatizer
 
 
-def lemmatize_list(words):
-    return map(lemmatize, words)
+    def stem(self, word):
+        """
+        Stems a word
+
+        Args:
+            word (string): The word that needs stemming
+
+        Returns:
+            str: The stemmed word
+
+        Examples:
+            >>> stem("cars")
+            "cars"
+        """
+        return self.stemmer.stem(word)
 
 
-def simplify_list(words, language_stemmer = _STEMMER):
-    simplify_lambda = lambda w: simplify(w,language_stemmer)
-    return map(simplify_lambda, words)
+    def lemmatize(self, word):
+        """
+        Lemmatize a word
+
+        Args:
+            word (string): The word that needs lemmatized
+
+        Returns:
+            str: The lemmatized word
+
+        Examples:
+            >>> lemmatize("better")
+            "good"
+        """
+        return self.lemmatizer.lemmatize(word)
 
 
-def stem(word, language_stemmer = _STEMMER):
-	"""
-	Stems a word
+    def simplify(self, word):
+        """
+        Simplfies a word using the most advanced methods we have implemented at the 
+        moment.    This allows us a layer of abstraction to not have to refactor our 
+        code if we come up with a better grouping methodology
 
-	Args:
-		word (string): The word that needs stemming
+        Args:
+            word (string): The word that needs simplified
 
-	Returns:
-		str: The stemmed word
+        Returns:
+            str: The simplified word
 
-	Examples:
-		>>> stem("cars")
-		"cars"
-	"""
-	return stemmer.stem(translate_mappings(word))
+        Examples:
+            >>> simplify("better")
+            "good"
+        """
+        return self.stem(self.lemmatize(word))
 
+if __name__ == '__main__':
+    main()
 
-def lemmatize(word):
-	"""
-	Lemmatize a word
-
-	Args:
-		word (string): The word that needs lemmatized
-
-	Returns:
-		str: The lemmatized word
-
-	Examples:
-		>>> lemmatize("better")
-		"good"
-	"""
-	return _WNL.lemmatize(translate_mappings(word))
-
-
-def simplify(word, language_stemmer = _STEMMER):
-	"""
-	Simplfies a word using the most advanced methods we have implemented at the 
-	moment.	This allows us a layer of abstraction to not have to refactor our 
-	code if we come up with a better grouping methodology
-
-	Args:
-		word (string): The word that needs simplified
-
-	Returns:
-		str: The simplified word
-
-	Examples:
-		>>> simplify("better")
-		"good"
-	"""
-	return stem(lemmatize(word), language_stemmer)
-
-
-def simplify_and_count(words, fn = simplify_list):
-    #TODO: Test this and fix any issues
-    """
-    Applies a simplifying function to a list of words and counts the result.
-
-    Args:
-        word (string): The word that needs simplified
-
-    Returns:
-        TODO
-
-    Examples:
-        TODO
-    """
-    counter = CountDict()
-
-    for word in simplify_list(words):
-        #TODO: make this exist
-        counter.insert(word)
-    
-    return counter.get_dict()
-
+#TODO(rrayborn): I'm not worrying about this more advanced functionality for now
+#    def stem_list(self, words):
+#        stem_lambda = lambda w: stem(w, self.stemmer)
+#        return map(self.stem_lambda, words)
+#
+#    def lemmatize_list(self, words):
+#        return map(self.lemmatize, words)
+#
+#    def simplify_list(self, words):
+#        simplify_lambda = lambda w: simplify(w, self.stemmer)
+#        return map(self.simplify_lambda, words)
+#
+#    def simplify_and_count(self, words, fn = self.simplify_list):
+#        #TODO: Test this and fix any issues
+#        """
+#        Applies a simplifying function to a list of words and counts the result.
+#
+#        Args:
+#            word (string): The word that needs simplified
+#
+#        Returns:
+#            TODO
+#
+#        Examples:
+#            TODO
+#        """
+#        counter = DefaultDict(0)
+#
+#        for word in fn(words):
+#            counter[word] += 1
+#        
+#        return dict(counter)
+#
