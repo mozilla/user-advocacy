@@ -1,12 +1,8 @@
 
 #TODO: add gflags
-#TODO: add SQL lib
-#
 #TODO: test
 
-#TODO(rrayborn): Fix this
-import sys; sys.path.append('/home/shared/code/lib/database/')
-from simple_db import SimpleDB
+from lib.database.backend_db import Db
 
 from datetime import date,timedelta
 from dateutil.relativedelta import relativedelta
@@ -26,6 +22,10 @@ _DEFAULT_ALL= '/home/shared/code/pipelines/google_play/data/' + \
 _SQL_FILE   = _PIPELINE_PATH + 'update.sql'
 _REVIEW_FILE_PATTERN = environ['GS_PLAY_BUCKET'] + \
         '/reviews/reviews_org.mozilla.*%s.csv'
+
+
+#This should be handled better...
+_INPUT_DB = Db('input')
 
 
 #FLAGS = gflags.FLAGS
@@ -91,15 +91,14 @@ def update(pull_date = date.today() - relativedelta(days = 1)):
     # Database stuff
     _execute_sql()
 
-
-def _execute_sql(csv_file = _LATEST_CSV):
+def _execute_sql(csv_file = _LATEST_CSV, max_date = '2000-01-01'):
     with open(_SQL_FILE, 'r') as sql:
         if sql:
-            query = sql.read().replace(_DEFAULT_ALL,_LATEST_CSV)
+            query = 'SET @max_date="%s";\n' % max_date + \
+                    'SET @csv_file="%s";\n' % csv_file + \
+                    sql.read()
 
-            db = SimpleDB('sentiment', config_file=_SQL_CONFIG)
-            db.execute(query)
-            db.commit()
+    return _INPUT_DB.execute_sql(query)
 
 
 def _download_convert_merge(file_date, destroy=False, new_file=_LATEST_CSV):
