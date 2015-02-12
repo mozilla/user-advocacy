@@ -32,9 +32,7 @@ def main():
         AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'OS X')
     """
     
-    results = input_db.execute_sql(old_data_sql, { 
-        'old' : _PAST_TIMEFRAME, 'new' : _TIMEFRAME 
-        })
+    results = input_db.execute_sql(old_data_sql, old=_PAST_TIMEFRAME, new=_TIMEFRAME )
 
     for row in results:
         # Process stuff here
@@ -56,7 +54,7 @@ def main():
         AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'OS X')
     """
     
-    results = input_db.execute_sql(new_data_sql, { 'new' : _TIMEFRAME })
+    results = input_db.execute_sql(new_data_sql, new=_TIMEFRAME)
 
     for row in results:
         # Process stuff here

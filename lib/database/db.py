@@ -22,12 +22,12 @@ class Database(object):
         self.database_name = database_name
     
 
-    def execute_sql(self, sql_string, **params):
+    def execute_sql(self, sql_string, *multiparams, **params):
         """Explicitly executes a SQL command."""
         sql = text(sql_string)
         conn = self.engine.connect()
         conn.execute('use '+ self.database_name)
-        return conn.execute(sql, params)
+        return conn.execute(sql, *multiparams, **params)
 
     def connect(self):
         """Returns a DB connection with a new default DB"""
@@ -39,7 +39,7 @@ class Database(object):
         """Executes a sql object (can be made with sqlalchemy.sql)"""
         conn = self.engine.connect()
         conn.execute('use '+ self.database_name)
-        return conn.execute(object, multiparams, params)
+        return conn.execute(object, *multiparams, **params)
         
 
 
