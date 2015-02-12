@@ -5,8 +5,13 @@ This is a generic wrapper for sqlalchemy engines to add a database object that y
 specify. Database objects behave like engines but sets a default DB each time.
 """
 
+import logging
 import sqlalchemy
 from sqlalchemy.sql import text, select
+
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 
 def init_engine (uri):
     return sqlalchemy.create_engine(uri, echo=False, encoding='utf-8')
