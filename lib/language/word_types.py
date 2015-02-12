@@ -13,7 +13,10 @@ __status__ = "Development"
 
 # import external language library
 import csv
+import re
+from collections import defaultdict
 from os import path
+from lib.language.similarity import Simplifier
 
 # globals
 _PATH = path.dirname(path.realpath(__file__))+'/'
@@ -64,6 +67,37 @@ class WordClassifier(object):
         return ret
 
 
+def tokenize(comment, wc = None):
+    if not wc:
+        wc = WordClassifier()
+
+    comment = comment.lower()
+    # Tokenize
+    words      = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment)
+    value      = 10
+    s          = Simplifier()
+    words_dict = defaultdict(set)
+    for word in words:
+        print word
+        if word is None or word=='': #TODO(rrayborn): this shouldn't happen but it is
+            continue
+        # Apply Mappings
+        new_word = wc.translate_mapping(word)
+        # Remove common [Pre]
+        if wc.is_common(new_word):
+            continue
+        # Check for spam
+        if wc.is_spam(new_word):
+            value = 0
+        # Stem
+        new_word = s.simplify(new_word)
+        # Remove common [Post]
+        if wc.is_common(new_word):
+            continue
+        words_dict[new_word].add(word)
+
+    return words_dict, value
+
 #def main():
 #    wc = WordClassifier()
 #    print ["wc.is_spam('palemoon')          ", wc.is_spam('palemoon')]
@@ -73,5 +107,9 @@ class WordClassifier(object):
 #    print ["wc.translate_mapping('ff')      ", wc.translate_mapping('ff')]
 #    print ["wc.translate_mapping('firefox') ", wc.translate_mapping('firefox')]
 #    print ["wc.translate_mapping('cats')    ", wc.translate_mapping('cats')]
+#    a,b = tokenize('Firefox is crashing. I hate when it crashes')
+#    print a
+#    print b
+#
 #if __name__ == '__main__':
 #    main()
