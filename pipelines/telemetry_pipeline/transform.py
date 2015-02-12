@@ -10,11 +10,11 @@ from pprint      import pprint
 from os          import path
 
 #TODO(rrayborn): Fix this import
-sys.path.append('/home/shared/code/lib/database/')
-from simple_db import SimpleDB
+sys.path.append(path.normpath(path.join(path.dirname(__file__), '..', '..')))
+from lib.database.simple_db import SimpleDB
 
 _PIPELINE_PATH = path.dirname(path.realpath(__file__))+'/'
-_DATA_PATH  = '/home/shared/code/pipelines/telemetry_pipeline/data/' # _PIPELINE_PATH
+_DATA_PATH  = '/home/shared/code/pipelines/telemetry_pipeline/data/' # _PIPELINE_PATH TODO(rrayborn): fix this too.
 _UPDATE_SQL_FILE = _PIPELINE_PATH + 'update.sql'
 _INTERMEDIATE_CSV = _DATA_PATH + '.tmp.csv'
 _CHANNELS = ['release', 'beta', 'aurora', 'nightly']
