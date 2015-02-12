@@ -5,9 +5,9 @@ SELECT
 FROM
     input.remote_feedback_response
 WHERE
-    DATE(created) >= @start_date
-    AND DATE(created) <= @end_date
-    AND product = 'Loop'
+    product = 'Loop'
+    AND DATE(created) >= :start_date
+    AND DATE(created) <= :end_date
 GROUP BY 1,2
 ORDER BY 1
 ;

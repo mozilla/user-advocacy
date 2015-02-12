@@ -14,8 +14,8 @@ SELECT
 FROM
     input.remote_feedback_response
 WHERE
-    LEFT(created,10) = LEFT(@end_date,10)
-    AND product = 'Loop'
+    product = 'Loop'
+    AND DATE(created) = :end_date
 GROUP BY 1,2
 ORDER BY 1
 ;
