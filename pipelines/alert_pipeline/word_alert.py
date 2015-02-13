@@ -80,9 +80,9 @@ def main():
         v.set_thresholds(diff_pct = _DIFF_PERCENT, diff_abs = _DIFF_ABS)
         v.set_potentials(base = base_total, after = after_total)
         if v.is_significant:
-            print "ALERT FOR %s: Before: %.2f /1000; After %.2f /1000; "\
+            print "ALERT FOR %s: Before: %.2f/1000; After %.2f/1000; "\
                   "Diff: %.2f; %%diff: %.2f" % (
-                ', '.join(v.after.sorted_metadata[0:3]),
+                ', '.join(zip(*v.after.sorted_metadata[0:3])[0]),
                 v.base_pct * 10,
                 v.after_pct * 10,
                 v.diff_abs * 10,
