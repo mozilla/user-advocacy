@@ -47,7 +47,7 @@ def main():
         (word_dict, value) = tokenize(row.description)
         if value == 0:
             continue
-        for (key, word_set) in word_dict:
+        for (key, word_set) in word_dict.iteritems():
             delta[key].base.insert(key = key, link = row.id, meta = word_set)
         base_total += 1
 
@@ -72,7 +72,7 @@ def main():
         (word_dict, value) = tokenize(row.description)
         if value == 0:
             continue
-        for (key, word_set) in word_dict:
+        for (key, word_set) in word_dict.iteritems():
             delta[key].after.insert(key = key, link = row.id, meta = word_set)
         after_total += 1
 

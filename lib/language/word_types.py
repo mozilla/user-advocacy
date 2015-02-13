@@ -78,7 +78,7 @@ def tokenize(comment, wc = None):
     s          = Simplifier()
     words_dict = defaultdict(set)
     for word in words:
-        print word
+        # print word
         if word is None or word=='': #TODO(rrayborn): this shouldn't happen but it is
             continue
         # Apply Mappings
