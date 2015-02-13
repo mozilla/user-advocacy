@@ -18,7 +18,7 @@ from lib.language.word_types import tokenize
 _TIMEFRAME = 12 # Hours
 _PAST_TIMEFRAME = 3 # Weeks
 _DIFF_PERCENT = 100
-_DIFF_ABS = 50
+_DIFF_ABS = 5
 
 def main():
     input_db = Db('input')
