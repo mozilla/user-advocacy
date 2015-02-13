@@ -1,4 +1,5 @@
 #!/usr/local/bin/python
+# -*- coding: utf-8 -*-
 
 """
 Data structures that classify word types
@@ -14,6 +15,9 @@ __status__ = "Development"
 # import external language library
 import csv
 import re
+import string
+import unicodedata
+
 from collections import defaultdict
 from os import path
 from lib.language.similarity import Simplifier
@@ -71,16 +75,23 @@ def tokenize(comment, wc = None):
     if not wc:
         wc = WordClassifier()
 
+    # Lower and convert accented letters
     comment = comment.lower()
+    comment = ''.join(
+            c for c in unicodedata.normalize('NFD', comment.decode('utf-8'))
+                  if unicodedata.category(c) != 'Mn')
+
     # Tokenize
-    words      = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment)
-    value      = 10
-    s          = Simplifier()
-    words_dict = defaultdict(set)
+    words       = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment)
+    helpfulness = 10
+    s           = Simplifier()
+    words_dict  = defaultdict(set)
+    word_regex  = re.compile(r'\W+')
     for word in words:
-        # print word
         if word is None or word=='': #TODO(rrayborn): this shouldn't happen but it is
             continue
+        # Remove non-alphanumberic
+        new_word = word_regex.sub('', word)
         # Apply Mappings
         new_word = wc.translate_mapping(word)
         # Remove common [Pre]
@@ -88,7 +99,7 @@ def tokenize(comment, wc = None):
             continue
         # Check for spam
         if wc.is_spam(new_word):
-            value = 0
+            helpfulness = 0
         # Stem
         new_word = s.simplify(new_word)
         # Remove common [Post]
@@ -96,7 +107,7 @@ def tokenize(comment, wc = None):
             continue
         words_dict[new_word].add(word)
 
-    return words_dict, value
+    return words_dict, helpfulness
 
 #def main():
 #    wc = WordClassifier()
@@ -107,7 +118,7 @@ def tokenize(comment, wc = None):
 #    print ["wc.translate_mapping('ff')      ", wc.translate_mapping('ff')]
 #    print ["wc.translate_mapping('firefox') ", wc.translate_mapping('firefox')]
 #    print ["wc.translate_mapping('cats')    ", wc.translate_mapping('cats')]
-#    a,b = tokenize('Firefox is crashing. I hate when it crashes')
+#    a,b = tokenize('Firefox is crashing. I don\'t like when it crashes. Tést')
 #    print a
 #    print b
 #
