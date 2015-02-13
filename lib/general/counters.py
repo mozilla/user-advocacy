@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-from collections import defaultdict
+from collections import defaultdict, Counter
 from warnings import warn
 
 class ItemCounterDelta(object):
@@ -103,7 +103,7 @@ class ItemCounter(object):
     def __init__(self, key = None):
         self.key             = key
         self.count           = 0
-        self.metadata        = defaultdict(int) # stuff like versions, real words etc.
+        self.metadata        = Counter() # stuff like versions, real words etc.
         self.link_list       = set() # can be comment IDs, or URLs of other things
 
     def insert(self, link = None, meta = None, key = None):
@@ -114,15 +114,8 @@ class ItemCounter(object):
             elif self.key != key:
                 warn("Redefining key in ItemCounter from " + self.key + " to " + key)
                 self.key = key
-            
-        if isinstance(meta, dict):
-            for (k,v) in meta.iteritems():
-                self.metadata[k] += v
-        elif isinstance(meta, (set, list)):
-            for i in meta:
-                self.metadata[i] += 1
-        else:
-            self.metadata[meta] += 1
+        
+        self.metadata.update(meta)
             
         if isinstance(link, (set, list)):
             for i in link:
@@ -140,4 +133,4 @@ class ItemCounter(object):
 
     @property
     def sorted_metadata(self):
-        return sorted(self.metadata, key=self.metadata.__getitem__, reverse=True)
+        return self.metadata.most_common()
