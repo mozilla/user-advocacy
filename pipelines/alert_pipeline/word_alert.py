@@ -2,31 +2,33 @@
 
 import sys
 from os import path
-#sys.path.append(path.normpath(path.join(path.dirname(__file__), '..', '..')))
-#from lib.database.backend_db import Db
+from lib.database.backend_db import Db
 import csv
 import json
 import requests
 import datetime
+from warnings import warn
 
 import operator
-import re
-from collections import defaultdict
 
-sys.path.append('/home/rrayborn/user-advocacy')
-from lib.language.similarity import Simplifier
-from lib.language.word_types import WordClassifier
+from collections import defaultdict
+from lib.general.counters import ItemCounterDelta
+from lib.language.word_types import tokenize
 
 _TIMEFRAME = 12 # Hours
 _PAST_TIMEFRAME = 3 # Weeks
-
-
+_DIFF_PERCENT = 100
+_DIFF_ABS = 50
 
 def main():
     input_db = Db('input')
     
+    delta = defaultdict(ItemCounterDelta)
+    base_total = 0
+    after_total = 0
+    
     old_data_sql = """
-        SELECT description
+        SELECT description, id
         FROM remote_feedback_response fr
         WHERE
         created > DATE_SUB(NOW(), INTERVAL :old WEEK) AND
@@ -37,21 +39,20 @@ def main():
         AND (campaign IS NULL or campaign = '')
         AND (source IS NULL or source = '')
         AND (version NOT RLIKE '[^a.0-9]')
-        AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'OS X')
+        AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'Linux')
     """
     
-    results = telemetry_db.execute_sql(old_data_sql, { 
-        'old' : _PAST_TIMEFRAME, 'new' : _TIMEFRAME 
-        })
+    results = input_db.execute_sql(old_data_sql, old=_PAST_TIMEFRAME, new=_TIMEFRAME)
+    for row in results:
+        (word_dict, value) = tokenize(row.description)
+        if value == 0:
+            continue
+        for (key, word_set) in word_dict:
+            delta[key].base.insert(key = key, link = row.id, meta = word_set)
+        base_total += 1
 
-
-    {stemmed_word:<Word object>} = CommentWordCounter().process(results)
-#    for row in results:
-#        # Process stuff here
-#        print row
-        
     new_data_sql = """
-        SELECT description
+        SELECT description, id
         FROM remote_feedback_response fr
         WHERE
         created > DATE_SUB(NOW(), INTERVAL :new HOUR) AND
@@ -62,114 +63,33 @@ def main():
         AND (campaign IS NULL or campaign = '')
         AND (source IS NULL or source = '')
         AND (version NOT RLIKE '[^a.0-9]')
-        AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'OS X')
+        AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'Linux')
     """
     
-    results = telemetry_db.execute_sql(new_data_sql, { 'new' : _TIMEFRAME })
+    results = input_db.execute_sql(new_data_sql, new=_TIMEFRAME)
 
     for row in results:
-        # Process stuff here
-        print row
+        (word_dict, value) = tokenize(row.description)
+        if value == 0:
+            continue
+        for (key, word_set) in word_dict:
+            delta[key].after.insert(key = key, link = row.id, meta = word_set)
+        after_total += 1
 
-
-
-
-class CommentWordCounter(object):
-
-    def __init__(self):
-        self.words = defaultdict(Word)
-        self.classifier = WordClassifier()
-
-
-    def process(self, comments):
-        wc = self.classifier
-        for comment_id, comment in comments.iteritems():
-
-            words_dict = self._parse_comment(comment)
-            for key, words in words_dict.iteritems():
-                self.words[key].insert(words,comment_id)
-
-        # Finalize data
-        for key, word in self.words.iteritems():
-            word.finalize(key)
-        return self.words
-
-
-    #TODO(rrayborn): remove any non [a-z] characters, replacing accented  
-    #  characters with non-accented counterparts, if possible.
-    def _parse_comment(self, comment):
-        comment = comment.lower()
-        # Tokenize
-        words      = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment)
-
-        is_spam    = False
-        s          = Simplifier()
-        words_dict = defaultdict(set)
-        wc = self.classifier 
-        for word in words:
-            if word is None or word=='': #TODO(rrayborn): this shouldn't happen but it is
-                continue
-            # Apply Mappings
-            new_word = wc.translate_mapping(word)
-            # Remove common [Pre]
-            if wc.is_common(new_word):
-                continue
-            # Check for spam
-            if wc.is_spam(new_word):
-                return None
-            # Stem
-            new_word = s.simplify(new_word)
-            # Remove common [Post]
-            if wc.is_common(new_word):
-                continue
-            words_dict[new_word].add(word)
-
-        return words_dict
-
-
-class Word(object):
-    def __init__(self, key = None):
-        self.key             = key
-        self.max_word        = '' # determined by vote in finalize
-        self.count           = 0
-        self.words           = defaultdict(int)
-        self.ids             = set()
-
-    def insert(self, words, comment_id, key = None):
-        if key:
-            self.key = key
-        for word in words:
-            self.words[word] += 1
-        self.ids.add(comment_id)
-        self.count       += 1
-
-    def finalize(self, key = None):
-        if key:
-            self.key = key
-        
-        self.max_word = max(self.words.iteritems(), 
-                            key=operator.itemgetter(1))[0]
-
-    def __str__(self):
-        return 'Word with key %s, max_word %s, count %d, words %s, ids, %s' % (
-                self.key,
-                self.max_word,
-                self.count,
-                list(self.words),
-                list(self.ids)
+    for (k,v) in delta.iteritems():
+        v.set_thresholds(diff_pct = _DIFF_PERCENT, diff_abs = _DIFF_ABS)
+        v.set_potentials(base = base_total, after = after_total)
+        if v.is_significant:
+            print "ALERT FOR $s: Before: %2f /1000; After %2f /1000; "\
+                  "Diff: %2f; %%diff: %2f" % (
+                v.after.sorted_metadata[0:3],
+                v.base_pct * 10,
+                v.after_pct * 10,
+                v.diff_abs * 10,
+                v.diff_pct
             )
-
-
 
 if __name__ == '__main__':
 
-#    cwc = CommentWordCounter()
-#    words = cwc.process({
-#            1:'hello it is crashing, I hate when it crashes so crashed',
-#            2:'hello it is crashing, and it is slow',
-#            3:'I\'m having issues with sync',
-#        })
-#    for key,word in words.iteritems():
-#        print [key,str(word)]
     main()
 
