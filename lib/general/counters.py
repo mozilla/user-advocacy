@@ -35,7 +35,7 @@ class ItemCounterDelta(object):
         
 
     
-    def set_potentials(self, base = None, after = None):
+    def set_potentials (self, base = None, after = None):
         """
         Set the total number of processed entries for before and after (needed for
         calculations)
@@ -45,7 +45,7 @@ class ItemCounterDelta(object):
         if not after is None:
             self.after_potential = after
 
-    def set_thresholds(self, diff_pct = None, diff_abs = None):
+    def set_thresholds (self, diff_pct = None, diff_abs = None):
         """
         Set the total number of processed entries for before and after (needed for
         calculations)
@@ -68,7 +68,7 @@ class ItemCounterDelta(object):
         return self.after_pct / self.base_pct * 100 - 100
     
     @property
-    def diff_abs
+    def diff_abs (self):
         return self.after_pct - self.base_pct
 
     @property
