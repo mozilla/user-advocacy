@@ -17,8 +17,8 @@ from lib.language.word_types import tokenize
 
 _TIMEFRAME = 12 # Hours
 _PAST_TIMEFRAME = 3 # Weeks
-_DIFF_PERCENT = 100
-_DIFF_ABS = 5
+_DIFF_PERCENT = 100 # Percentage increase (0 for any increase)
+_DIFF_ABS = 5 # Percentage point change
 
 def main():
     input_db = Db('input')
@@ -82,7 +82,7 @@ def main():
         if v.is_significant:
             print "ALERT FOR $s: Before: %2f /1000; After %2f /1000; "\
                   "Diff: %2f; %%diff: %2f" % (
-                v.after.sorted_metadata[0:3],
+                ', '.join(v.after.sorted_metadata[0:3]),
                 v.base_pct * 10,
                 v.after_pct * 10,
                 v.diff_abs * 10,

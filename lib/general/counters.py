@@ -65,7 +65,7 @@ class ItemCounterDelta(object):
 
     @property
     def diff_pct (self):
-        return self.after_pct / self.base_pct * 100 - 100
+        return self.after_pct / float(self.base_pct) * 100 - 100
     
     @property
     def diff_abs (self):
