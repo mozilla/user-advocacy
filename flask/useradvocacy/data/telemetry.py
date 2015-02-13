@@ -441,7 +441,7 @@ def _stat_query(measures, elements, groupings, os, channel, timestep,
 
                 SUM(stats.measure_average*stats.potential_users)/
                     SUM(stats.potential_users) AS `average`,
-                SUM(stats.measure_average*stats.active_users)/
+                SUM(stats.measure_average*stats.potential_users)/
                     SUM(stats.active_users)    AS `nonzero_average`,
                 stats.measure_value        AS value,
                 SUM(stats.active_users)    AS active_users,
@@ -706,7 +706,7 @@ def _stats_query(week, version, os, channel, target = None):
 
                 SUM(stats.measure_average*stats.potential_users)/
                     SUM(stats.potential_users) AS `average`,
-                SUM(stats.measure_average*stats.active_users)/
+                SUM(stats.measure_average*stats.potential_users)/
                     SUM(stats.active_users)    AS `nonzero_average`,
                 stats.measure_value        AS value,
                 SUM(stats.active_users)    AS active_users,
