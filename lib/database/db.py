@@ -46,7 +46,12 @@ class Database(object):
         conn = self.engine.connect()
         conn.execute('use '+ self.database_name)
         return conn.execute(object, *multiparams, **params)
-        
+    
+    def get_table (self, table_name):
+        """ Returns a sqlalchemy table (needed for building queries)"""
+        if not '.' in table_name:
+            return self.Metadata.tables[self.database_name + '.' + table_name]
+        return sqlalchemy.schema.MetaData(bind=engine).tables[table_name]
 
 
     

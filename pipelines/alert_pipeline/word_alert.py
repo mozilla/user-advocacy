@@ -98,7 +98,7 @@ def main():
     email_body = ''
     shortwords = []
     
-    rfr = input_db.Metadata.tables['remote_feedback_response']
+    rfr = input_db.get_table('remote_feedback_response')
         
     for v in email_list:
         email_body += "===== ALERT FOR %s: =====\n" % (v.after.sorted_metadata[0])
@@ -112,14 +112,15 @@ def main():
             )
         email_body += "Input Links:"
         for link_id in v.after.link_list :
-            email_body += "\n<https://input.mozilla.org/dashboard/response/%s>:" % \
+            email_body += "\n<https://input.mozilla.org/dashboard/response/%s>:\n" % \
                 (str(link_id))
-            rows = input_db.execute(sql.select(rfr).where(rfr.id == link_id))
+            rows = input_db.execute(sql.select([rfr]).where(rfr.c.id == link_id))
             for item in rows:
-                if len(item.description) < 350:
+                if len(item.description) < 500:
                     email_body += item.description
-                else
-                    email_body += item.description[300] + "..."
+                else:
+                    email_body += item.description[:450] + "..."
+            rows.close()
         email_body += "\n\n"
         shortwords.append(v.after.sorted_metadata[0])
     
