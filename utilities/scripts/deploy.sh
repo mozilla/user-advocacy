@@ -6,8 +6,8 @@ if ( (( EUID != 0 )) || [ ! "$BASH_VERSION" ] ); then
     exit 1
 fi
 
-export WORKON_HOME=$HOME/.virtualenvs
-export PROJECT_HOME=$HOME
+export WORKON_HOME=/root/.virtualenvs
+export PROJECT_HOME=/root/
 source $WORKON_HOME/uabackend/bin/virtualenvwrapper.sh
 
 workon uabackend
