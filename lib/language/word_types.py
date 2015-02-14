@@ -78,7 +78,7 @@ def tokenize(comment, wc = None):
     # Lower and convert accented letters
     comment = comment.lower()
     comment = ''.join(
-            c for c in unicodedata.normalize('NFD', comment.decode('utf-8'))
+            c for c in unicodedata.normalize('NFD', comment)
                   if unicodedata.category(c) != 'Mn')
 
     # Tokenize
