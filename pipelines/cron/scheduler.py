@@ -28,7 +28,7 @@ def main(user = 'root'):
         time    = entry[0]
         command = entry[1] \
             .replace('$CODE_PATH', os.environ['CODE_PATH']) \
-            .replace('python ', os.environ['CODE_PATH'] + \ 
+            .replace('python ', os.environ['CODE_PATH'] + \
                 'pipelines/cron/cronwrapper.sh ')
         tag     = entry[2]
         
