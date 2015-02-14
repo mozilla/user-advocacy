@@ -6,7 +6,7 @@ if ( (( EUID != 0 )) || [ ! "$BASH_VERSION" ] ); then
     exit 1
 fi
 
-workon uabackend 
+source /root/.virtualenvs/uabackend/bin/activate
 
 python $CODE_PATH/pipelines/cron/scheduler.py
 
