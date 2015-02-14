@@ -84,14 +84,14 @@ def main():
         v.set_thresholds(diff_pct = _DIFF_PERCENT, diff_abs = _DIFF_ABS)
         v.set_potentials(base = base_total, after = after_total)
         if v.is_significant:
-            print ("ALERT FOR %s: Before: %.2f/1000; After %.2f/1000; "\
+            print "ALERT FOR %s: Before: %.2f/1000; After %.2f/1000; "\
                   "Diff: %.2f; %%diff: %.2f" % (
                 ', '.join(zip(*v.after.sorted_metadata[0:3])[0]),
                 v.base_pct * 10,
                 v.after_pct * 10,
                 v.diff_abs * 10,
                 v.diff_pct
-            )).encode('utf-8')
+            )
             email_list.add(v)
     
     email_body = ''
@@ -108,22 +108,21 @@ def main():
                 v.diff_abs * 10,
                 v.diff_pct
             )
-        email_body += "\nInput Links:\n"
+        email_body += "\nInput Links:"
         for link_id in v.after.link_list :
-            email_body += "https://input.mozilla.org/dashboard/response/" + link_id
-        email_body += "\n\n"
+            email_body += "\nhttps://input.mozilla.org/dashboard/response/" + str(link_id)
+        email_body += "\n"
         shortwords.append(v.after.sorted_metadata[0][0])
     
     email_from = environ['ALERT_EMAIL_FROM']
     email_to = environ['ALERT_EMAIL']
     
-    msg = MIMEText(email_body.encode('utf-8'))
+    msg = MIMEText(email_body)
     msg['Subject'] = "Alert for: " + ", ".join(shortwords)
     msg['From'] = email_from
     msg['To'] = email_to
     server = smtplib.SMTP('localhost')
-    server.set_debuglevel(1)
-    server.sendmail(email_from, email_to.split(','), msg)
+    server.sendmail(email_from, email_to.split(','), msg.as_string())
     server.quit()
     
     

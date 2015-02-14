@@ -74,9 +74,8 @@ class WordClassifier(object):
 def tokenize(comment, wc = None):
     """
     Takes a comment in str or unicode, returns dict of stemmed words and realwords as
-    unicode object
+    str object
     """
-    
     if isinstance(comment, str):
         comment = comment.decode('utf-8')
     elif (not isinstance(comment, unicode)):
@@ -92,7 +91,7 @@ def tokenize(comment, wc = None):
                   if unicodedata.category(c) != 'Mn')
 
     # Tokenize
-    words       = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment)
+    words       = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment.encode('utf-8'))
     helpfulness = 10
     s           = Simplifier()
     words_dict  = defaultdict(set)
