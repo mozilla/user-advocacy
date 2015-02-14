@@ -14,7 +14,6 @@ workon uabackend
 
 if [[ -n $CODE_PATH ]]
 then
-    python $CODE_PATH/pipelines/cron/scheduler.py
 
     # Check out $CODE_PATH
     cd $CODE_PATH
@@ -27,6 +26,9 @@ then
     cp -r $CODE_PATH/flask/* server
     chgrp -f     -R advocacy        server
     chmod 775 -f -R                 server
+
+    python $CODE_PATH/pipelines/cron/scheduler.py
+
 
 else
     exit 1
