@@ -134,6 +134,6 @@ class ItemCounter(object):
     @property
     def sorted_metadata(self):
         """
-        List of tuples of most common meta data with counts
+        List of most common meta data
         """
-        return self.metadata.most_common()
+        return zip(*self.metadata.most_common())[0]

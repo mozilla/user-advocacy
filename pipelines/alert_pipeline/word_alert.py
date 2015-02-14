@@ -10,6 +10,7 @@ import datetime
 from warnings import warn
 import smtplib
 from email.mime.text import MIMEText
+from sqlalchemy import sql
 
 import operator
 
@@ -86,7 +87,7 @@ def main():
         if v.is_significant:
             print "ALERT FOR %s: Before: %.2f/1000; After %.2f/1000; "\
                   "Diff: %.2f; %%diff: %.2f" % (
-                ', '.join(zip(*v.after.sorted_metadata[0:3])[0]),
+                ', '.join(v.after.sorted_metadata[0:3]),
                 v.base_pct * 10,
                 v.after_pct * 10,
                 v.diff_abs * 10,
@@ -97,10 +98,11 @@ def main():
     email_body = ''
     shortwords = []
     
+    rfr = input_db.Metadata.tables['remote_feedback_response']
+        
     for v in email_list:
-        email_body += "ALERT FOR %s: \n" % (
-            ', '.join(zip(*v.after.sorted_metadata)[0])
-        )
+        email_body += "===== ALERT FOR %s: =====\n" % (v.after.sorted_metadata[0])
+        email_body += "Words: " + ", ".join(v.after.sorted_metadata)
         email_body += "Before: %.2f/1000; After %.2f/1000; Diff: %.2f; %%diff: %.2f\n"\
             % (                
                 v.base_pct * 10,
@@ -108,22 +110,30 @@ def main():
                 v.diff_abs * 10,
                 v.diff_pct
             )
-        email_body += "\nInput Links:"
+        email_body += "Input Links:"
         for link_id in v.after.link_list :
-            email_body += "\nhttps://input.mozilla.org/dashboard/response/" + str(link_id)
-        email_body += "\n"
-        shortwords.append(v.after.sorted_metadata[0][0])
+            email_body += "\n<https://input.mozilla.org/dashboard/response/%s>:" % \
+                (str(link_id))
+            rows = input_db.execute(sql.select(rfr).where(rfr.id == link_id))
+            for item in rows:
+                if len(item.description) < 350:
+                    email_body += item.description
+                else
+                    email_body += item.description[300] + "..."
+        email_body += "\n\n"
+        shortwords.append(v.after.sorted_metadata[0])
     
-    email_from = environ['ALERT_EMAIL_FROM']
-    email_to = environ['ALERT_EMAIL']
+    if len(email_list) > 0:
+        email_from = environ['ALERT_EMAIL_FROM']
+        email_to = environ['ALERT_EMAIL']
     
-    msg = MIMEText(email_body)
-    msg['Subject'] = "Alert for: " + ", ".join(shortwords)
-    msg['From'] = email_from
-    msg['To'] = email_to
-    server = smtplib.SMTP('localhost')
-    server.sendmail(email_from, email_to.split(','), msg.as_string())
-    server.quit()
+        msg = MIMEText(email_body)
+        msg['Subject'] = "Alert for: " + ", ".join(shortwords)
+        msg['From'] = email_from
+        msg['To'] = email_to
+        server = smtplib.SMTP('localhost')
+        server.sendmail(email_from, email_to.split(','), msg.as_string())
+        server.quit()
     
     
 
