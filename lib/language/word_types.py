@@ -72,6 +72,16 @@ class WordClassifier(object):
 
 
 def tokenize(comment, wc = None):
+    """
+    Takes a comment in str or unicode, returns dict of stemmed words and realwords as
+    unicode object
+    """
+    
+    if isinstance(comment, str):
+        comment = comment.decode('utf-8')
+    elif (not isinstance(comment, unicode)):
+        raise TypeError("comment should be str or unicode. Got " + type(comment))
+
     if not wc:
         wc = WordClassifier()
 
