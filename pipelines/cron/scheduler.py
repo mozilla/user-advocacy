@@ -16,7 +16,7 @@ _JOBLIST = [
             'python pipelines/hello_pipeline/pipeline.py >/tmp/hello_cron 2>&1 && sudo chmod -R 775 /var/server/server', 
             'Hello Pipeline'],
         ['0 */6 * * *',
-            'python pipelines/alert_pipelines/word_alert.py >/tmp/alert_cron 2>&1',
+            'python pipelines/alert_pipeline/word_alert.py >/tmp/alert_cron 2>&1',
             'Alert Pipeline']
     ]
 
