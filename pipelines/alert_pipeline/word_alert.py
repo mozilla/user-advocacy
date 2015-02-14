@@ -1,13 +1,15 @@
 #!/usr/local/bin/python
 
 import sys
-from os import path
+from os import path, environ
 from lib.database.backend_db import Db
 import csv
 import json
 import requests
 import datetime
 from warnings import warn
+import smtplib
+from email.mime.text import MIMEText
 
 import operator
 
@@ -75,7 +77,9 @@ def main():
         for (key, word_set) in word_dict.iteritems():
             delta[key].after.insert(key = key, link = row.id, meta = word_set)
         after_total += 1
-
+    
+    email_list = set()
+    
     for (k,v) in delta.iteritems():
         v.set_thresholds(diff_pct = _DIFF_PERCENT, diff_abs = _DIFF_ABS)
         v.set_potentials(base = base_total, after = after_total)
@@ -88,6 +92,41 @@ def main():
                 v.diff_abs * 10,
                 v.diff_pct
             )
+            email_list.add(v)
+    
+    email_body = ''
+    shortwords = []
+    
+    for v in email_list:
+        email_body += "ALERT FOR %s: \n" % (
+            ', '.join(zip(*v.after.sorted_metadata)[0])
+        )
+        email_body += "Before: %.2f/1000; After %.2f/1000; Diff: %.2f; %%diff: %.2f\n"\
+            % (                
+                v.base_pct * 10,
+                v.after_pct * 10,
+                v.diff_abs * 10,
+                v.diff_pct
+            )
+        email_body += "\nInput Links:\n"
+        for link_id in v.after.link_list :
+            email_body += "https://input.mozilla.org/dashboard/response/" + link_id
+        email_body += "\n\n"
+        shortwords.append(v.after.sorted_metadata[0][0])
+    
+    email_from = environ['ALERT_EMAIL_FROM']
+    email_to = environ['ALERT_EMAIL']
+    
+    msg = MIMEText(email_body)
+    msg['Subject'] = "Alert for: " + ", ".join(shortwords)
+    msg['From'] = email_from
+    msg['To'] = email_to
+    server = smtplib.SMTP('localhost')
+    server.set_debuglevel(1)
+    server.sendmail(email_from, email_to.split(','), msg)
+    server.quit()
+    
+    
 
 if __name__ == '__main__':
 
