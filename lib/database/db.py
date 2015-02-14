@@ -14,7 +14,7 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 
 def init_engine (uri):
-    return sqlalchemy.create_engine(uri, echo=False, encoding='utf-8', use_unicode=True)
+    return sqlalchemy.create_engine(uri, echo=False, encoding='utf-8')
 
 class Database(object):
     """Database object. Represents an explicitly named DB accessed from a given engine."""
