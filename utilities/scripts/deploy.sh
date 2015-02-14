@@ -6,7 +6,11 @@ if ( (( EUID != 0 )) || [ ! "$BASH_VERSION" ] ); then
     exit 1
 fi
 
-source /root/.virtualenvs/uabackend/bin/activate
+export WORKON_HOME=$HOME/.virtualenvs
+export PROJECT_HOME=$HOME
+source $WORKON_HOME/uabackend/bin/virtualenvwrapper.sh
+
+workon uabackend
 
 python $CODE_PATH/pipelines/cron/scheduler.py
 
