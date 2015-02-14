@@ -12,19 +12,26 @@ source $WORKON_HOME/uabackend/bin/virtualenvwrapper.sh
 
 workon uabackend
 
-python $CODE_PATH/pipelines/cron/scheduler.py
+if [[ -n $CODE_PATH ]]
+then
+    python $CODE_PATH/pipelines/cron/scheduler.py
 
-# Check out $CODE_PATH
-cd $CODE_PATH
-git pull
-chgrp -f     -R advocacy ..
-chmod 771 -f -R          ..
+    # Check out $CODE_PATH
+    cd $CODE_PATH
+    git pull
+    chgrp -f     -R advocacy ..
+    chmod 771 -f -R          ..
 
-# Check out /var/server/server
-cd /var/server/
-cp -r $CODE_PATH/flask/* server
-chgrp -f     -R advocacy        server
-chmod 775 -f -R                 server
+    # Check out /var/server/server
+    cd /var/server/
+    cp -r $CODE_PATH/flask/* server
+    chgrp -f     -R advocacy        server
+    chmod 775 -f -R                 server
+
+else
+    exit 1
+
+fi
 
 deactivate
 
