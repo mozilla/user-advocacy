@@ -107,7 +107,6 @@ def main():
     shortwords = []
     
     rfr = input_db.get_table('remote_feedback_response')
-    comment_sql = sql.select([rfr.c.description]).where(rfr.c.id == link_id)
         
     for v in email_list:
         email_body += "===== ALERT FOR %s: =====\n" % (v.after.sorted_metadata[0])
@@ -122,15 +121,16 @@ def main():
             )
         email_body += "\n\nInput Links:"
         for link_id in v.after.link_list :
+            comment_sql = sql.select([rfr.c.description]).where(rfr.c.id == link_id)
             email_body += "\n<https://input.mozilla.org/dashboard/response/%s>:\n" % \
                 (str(link_id))
             try:
                 rows = input_db.execute(comment_sql)
                 for item in rows:
-                if len(item.description) < 500:
-                    email_body += item.description
-                else:
-                    email_body += item.description[:450] + "..."
+                    if len(item.description) < 500:
+                        email_body += item.description
+                    else:
+                        email_body += item.description[:450] + "..."
                 rows.close()
 
             except (OperationalError):
@@ -152,7 +152,7 @@ def main():
         server.quit()
     
     print "Run complete. %d alerts issued. %d before and %d after comments processed." % \
-        (len(email_list), before_total, after_total)
+        (len(email_list), base_total, after_total)
     
 
 if __name__ == '__main__':
