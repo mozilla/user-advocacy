@@ -112,14 +112,15 @@ def main():
     for v in email_list:
         email_body += "===== ALERT FOR %s: =====\n" % (v.after.sorted_metadata[0])
         email_body += "Words: " + ", ".join(v.after.sorted_metadata)
-        email_body += "Before: %.2f/1000; After %.2f/1000; Diff: %.2f; %%diff: %.2f\n"\
+        email_body += "\n\n"
+        email_body += "Before: %.2f/1000; After %.2f/1000; Diff: %.2f; %%diff: %.2f"\
             % (                
                 v.base_pct * 10,
                 v.after_pct * 10,
                 v.diff_abs * 10,
                 v.diff_pct
             )
-        email_body += "Input Links:"
+        email_body += "\n\nInput Links:"
         for link_id in v.after.link_list :
             email_body += "\n<https://input.mozilla.org/dashboard/response/%s>:\n" % \
                 (str(link_id))
