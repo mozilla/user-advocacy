@@ -44,8 +44,12 @@ def main():
         AND (version NOT RLIKE '[^a.0-9]')
         AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'Linux')
     """
+    try:
+        results = input_db.execute_sql(old_data_sql, old=_PAST_TIMEFRAME, new=_TIMEFRAME)
+    except (OperationalError):
+        print "Database timed out executing base sql."
+        return
     
-    results = input_db.execute_sql(old_data_sql, old=_PAST_TIMEFRAME, new=_TIMEFRAME)
     for row in results:
         (word_dict, value) = tokenize(row.description)
         if value == 0:
@@ -69,7 +73,11 @@ def main():
         AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'Linux')
     """
     
-    results = input_db.execute_sql(new_data_sql, new=_TIMEFRAME)
+    try:
+        results = input_db.execute_sql(new_data_sql, new=_TIMEFRAME)
+    except (OperationalError):
+        print "Database timed out executing after sql."
+        return
 
     for row in results:
         (word_dict, value) = tokenize(row.description)
@@ -99,6 +107,7 @@ def main():
     shortwords = []
     
     rfr = input_db.get_table('remote_feedback_response')
+    comment_sql = sql.select([rfr.c.description]).where(rfr.c.id == link_id)
         
     for v in email_list:
         email_body += "===== ALERT FOR %s: =====\n" % (v.after.sorted_metadata[0])
@@ -114,13 +123,18 @@ def main():
         for link_id in v.after.link_list :
             email_body += "\n<https://input.mozilla.org/dashboard/response/%s>:\n" % \
                 (str(link_id))
-            rows = input_db.execute(sql.select([rfr]).where(rfr.c.id == link_id))
-            for item in rows:
+            try:
+                rows = input_db.execute(comment_sql)
+                for item in rows:
                 if len(item.description) < 500:
                     email_body += item.description
                 else:
                     email_body += item.description[:450] + "..."
-            rows.close()
+                rows.close()
+
+            except (OperationalError):
+                email_body = "<DB timeout fetching this input.>"
+                
         email_body += "\n\n"
         shortwords.append(v.after.sorted_metadata[0])
     
@@ -136,6 +150,8 @@ def main():
         server.sendmail(email_from, email_to.split(','), msg.as_string())
         server.quit()
     
+    print "Run complete. %d alerts issued. %d before and %d after comments processed." % \
+        (len(email_list), before_total, after_total)
     
 
 if __name__ == '__main__':
