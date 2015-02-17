@@ -21,8 +21,10 @@ _JOBLIST = [
     ]
 
 
-def main(user = 'root'):
-    cron = CronTab(user=os.environ['USER'])
+def main(user = None):
+    if not user:
+        user = os.environ['USER']
+    cron = CronTab(user=user)
 
     for entry in _JOBLIST:
         time    = entry[0]
