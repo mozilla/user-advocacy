@@ -21,8 +21,12 @@ _JOBLIST = [
     ]
 
 
-def main(user = 'root'):
-    cron = CronTab(user=os.environ['USER'])
+def main(user = None):
+    if not user:
+        user = os.environ['USER']
+    else:
+        raise Exception('User value not populated.')
+    cron = CronTab(user=user)
 
     for entry in _JOBLIST:
         time    = entry[0]
@@ -49,4 +53,4 @@ def main(user = 'root'):
 
 
 if __name__ == '__main__':
-    main()
+    main(user = 'root')
