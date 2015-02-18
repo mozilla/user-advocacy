@@ -8,6 +8,10 @@ workon uabackend
 
 cd $CODE_PATH
 
+echo CODE_PATH IS $CODE_PATH
+
+pwd
+
 python $1
 
 deactivate
