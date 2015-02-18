@@ -28,9 +28,11 @@ blueprint = Blueprint('reports', __name__, static_folder="./static",
 
 def upload_path():
     try:
-        return os.path.join(os.environ['UPLOAD_PATH'], 'reports')
+        upload = os.path.join(os.environ['UPLOAD_PATH'], 'reports')
     except KeyError:
-        return os.path.join(current_app.root_path, 'reports', 'uploads')
+        upload = os.path.join(current_app.root_path, 'reports', 'uploads')
+    print upload
+    return upload
 
 def validate_project_filename(fn):
     @wraps(fn)
