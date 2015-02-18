@@ -27,7 +27,7 @@ blueprint = Blueprint('reports', __name__, static_folder="./static",
         url_prefix="/reports", template_folder="./templates")
 
 def upload_path():
-    if current_app.config.['UPLOAD_PATH']:
+    if current_app.config['UPLOAD_PATH']:
         upload = os.path.join(current_app.config['UPLOAD_PATH'], 'reports')
     else:
         upload = os.path.join(current_app.root_path, 'reports', 'uploads')
