@@ -23,9 +23,11 @@ _JOBLIST = [
 
 def main(user = None):
     if not user:
-        user = os.environ['USER']
-    else:
-        raise Exception('User value not populated.')
+        if os.environ['USER']:
+            user = os.environ['USER']
+        else:
+            raise Exception('User value not populated.')
+    
     cron = CronTab(user=user)
 
     for entry in _JOBLIST:
