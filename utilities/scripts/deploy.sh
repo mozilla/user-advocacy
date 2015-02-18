@@ -28,9 +28,9 @@ then
     chmod 775 -f -R                 server
     if [[ -n $UPLOAD_PATH ]]
     then
-        chown -R apache2:www-data $UPLOAD_PATH
+        chown -R www-data:www-data $UPLOAD_PATH
     else
-        chown -R apache2:www-data server/reports/uploads
+        chown -R www-data:www-data server/useradvocacy/reports/uploads
     fi
 
     python $CODE_PATH/pipelines/cron/scheduler.py
