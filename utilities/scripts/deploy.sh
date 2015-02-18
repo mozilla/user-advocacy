@@ -26,9 +26,14 @@ then
     cp -r $CODE_PATH/flask/* server
     chgrp -f     -R advocacy        server
     chmod 775 -f -R                 server
+    if [[ -n $UPLOAD_PATH ]]
+    then
+        chown -R apache2:www-data $UPLOAD_PATH
+    else
+        chown -R apache2:www-data server/reports/uploads
+    fi
 
     python $CODE_PATH/pipelines/cron/scheduler.py
-
 
 else
     exit 1

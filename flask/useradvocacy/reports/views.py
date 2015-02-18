@@ -26,6 +26,12 @@ from flask.ext.login import login_required
 blueprint = Blueprint('reports', __name__, static_folder="./static", 
         url_prefix="/reports", template_folder="./templates")
 
+
+if (os.environ['UPLOAD_PATH']):
+    upload_folder = os.path.join(os.environ['UPLOAD_PATH'], 'reports')
+else:
+    upload_folder = os.path.join(current_app.root_path, 'reports', 'uploads')
+
 def validate_project_filename(fn):
     @wraps(fn)
     def new_fn(project, filename, *args, **kwargs):
@@ -146,9 +152,9 @@ def edit(project, filename):
                     md_content = form.md_content, author = save_user,
                     listed = form.listed, published = form.published)
                 report.save_render_html()
-                old_path = os.path.join(current_app.root_path, 'reports', 'uploads', form.old_project,
+                old_path = os.path.join(upload_folder, form.old_project,
                     form.old_filename)
-                new_path = os.path.join(current_app.root_path, 'reports', 'uploads', form.project,
+                new_path = os.path.join(upload_folder, form.project,
                     form.filename)
                 # Move files along with copying data
                 try:
@@ -181,11 +187,11 @@ def upload_file(project, filename):
     if file and allowed_file(file.filename):
         file_save = secure_filename(file.filename)
         try:
-            os.makedirs(os.path.join(current_app.root_path, 'reports', 'uploads', project, filename))
+            os.makedirs(os.path.join(upload_folder, project, filename))
         except OSError:
             pass
         try:
-            file.save(os.path.join(current_app.root_path, 'reports', 'uploads', project, filename, file_save))
+            file.save(os.path.join(upload_folder, project, filename, file_save))
         except (IOError, OSError) as err:
             raise Conflict("Can't save file: " + err.strerror)
             flash("Can't save file: " + err.strerror, 'error')
@@ -218,14 +224,14 @@ def preview_file(project, filename):
 @check_admin
 def list_files(project, filename):
     try:
-        files = os.listdir(os.path.join(current_app.root_path, 'reports', 'uploads', project, filename))
+        files = os.listdir(os.path.join(upload_folder, project, filename))
     except OSError:
         return Response(flask.json.dumps([]), status=200, mimetype='application/json')
     out_list = []
     for file_name in files:
         file_item = {
             "name": file_name,
-            "size": os.path.getsize(os.path.join(current_app.root_path, 'reports', 'uploads', project, 
+            "size": os.path.getsize(os.path.join(upload_folder, project, 
                 filename))
             }
         out_list.append(file_item)
@@ -245,8 +251,7 @@ def display_md(project, filename):
 @blueprint.route("/<project>/<filename>/<file>", methods=["GET"])
 @validate_project_filename
 def file_server(project, filename, file):
-    return send_from_directory(os.path.join(current_app.root_path, 'reports', 'uploads', project, 
-            filename), file)
+    return send_from_directory(os.path.join(upload_folder, project, filename), file)
 
 
 @blueprint.route("/<project>/<filename>/<file>/delete", methods=["DELETE"])
@@ -256,8 +261,8 @@ def file_server(project, filename, file):
 def delete_file(project, filename, file):
     if not allowed_file(file):
         raise BadRequest()
-    if os.path.exists(os.path.join(current_app.root_path, 'reports', 'uploads', project, filename,file)):
-        os.remove(os.path.join(current_app.root_path, 'reports', 'uploads', project, filename,file))
+    if os.path.exists(os.path.join(upload_folder, project, filename,file)):
+        os.remove(os.path.join(upload_folder, project, filename,file))
         return "File removed", 200
     else:
         raise NotFound()
