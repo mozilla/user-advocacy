@@ -14,7 +14,7 @@ sys.path.append(path.normpath(path.join(path.dirname(__file__), '..', '..')))
 from lib.database.simple_db import SimpleDB
 
 _PIPELINE_PATH = path.dirname(path.realpath(__file__))+'/'
-_DATA_PATH  = '/home/shared/code/pipelines/telemetry_pipeline/data/' # _PIPELINE_PATH TODO(rrayborn): fix this too.
+_DATA_PATH  = _PIPELINE_PATH + '/data/'
 _UPDATE_SQL_FILE = _PIPELINE_PATH + 'update.sql'
 _INTERMEDIATE_CSV = _DATA_PATH + '.tmp.csv'
 _CHANNELS = ['release', 'beta', 'aurora', 'nightly']
@@ -22,11 +22,13 @@ _CHANNELS = ['release', 'beta', 'aurora', 'nightly']
 
 def bootstrap():
     #TODO(rrayborn)
-    raise Exception("Not implemented:Mmust run create.sql then populate the " \
+    raise Exception("Not implemented:Must run create.sql then populate the " \
             + "telemetry_measures and telemetry_screens tables.")
 
 def run(date_str, channel, file_in):
     """
+    Pulls in CSV for a given date/channel and generates a measure list for it.
+    
     date_str = 'YYYY-MM-DD'
     file_in = '<PATH>/<FILE>'
     """
@@ -38,7 +40,7 @@ def run(date_str, channel, file_in):
     # Transform
     measures = MeasureList()
     measures.load_csv(file_in)
-    measures.save_csv()
+    measures.save_csv() #TODO(rrayborn): refactor this to avoid saving an intermediate CSV
 
     # Load to MySQL
     _telem_parsed_to_sql(date_str, channel)
@@ -51,8 +53,9 @@ def _telem_parsed_to_sql(date_str,
                          version = None,
                          file_in    = _INTERMEDIATE_CSV, 
                          query_file = _UPDATE_SQL_FILE):
+    """ Loads _INTERMEDIATE_CSV into the sentiment database """
 
-    db = SimpleDB('sentiment')
+    db = SimpleDB('sentiment') # TODO(rrayborn): Switch off of SimpleDB to db.py
 
     #version query
     if not version:
@@ -82,7 +85,13 @@ def _telem_parsed_to_sql(date_str,
 
 
 class MeasureList:
-    _typo_dict = {'bookmark3Bar': 'bookmarksBar'}
+    """
+    Contains a dict of Measures with values and a dict that stores how many sessions have 
+    been seen for each OS. Use the load_csv method to parse a CSV (talk to Ilana about
+    formatting of said CSV.) 
+    """
+    
+    _typo_dict = {'bookmark3Bar': 'bookmarksBar'} #TODO(rrayborn): Make this non-static??
     _os_map = {'winnt': 'windows', 'darwin': 'mac', 'linux': 'linux'}
 
     def __init__(self):
@@ -238,6 +247,12 @@ class MeasureList:
 
 
 class Measure:
+    """ 
+    Contains different kinds of measures, the type of measure and values therefor.
+    Each measure consists of a dict of OSMeasure objects which contain values for a single
+    OS.
+    """
+    
     _other_dict = {
             'bucket':  '0-0',
             'string': 'other',
@@ -316,6 +331,7 @@ class Measure:
 
 
 class OSMeasure:
+    """ Measure <-> value pairing."""
     _inactive_types = ['removed']
 
     def __init__(self, measure_name, os, other_value, is_numeric):
