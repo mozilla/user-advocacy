@@ -64,8 +64,8 @@ env*
 
 # UA server stuff
 migrations/versions
-useradvocacy/reports/uploads
+useradvocacy/uploads
 useradvocacy/static/libs
 useradvocacy/data/static_json/**.json
-home/shared/code/flask/useradvocacy.wsgi
-home/shared/code/flask/useradvocacy/static/libs
+
+*.wsgi
