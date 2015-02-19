@@ -40,10 +40,16 @@ class ItemCounterDelta(object):
         Set the total number of processed entries for before and after (needed for
         calculations)
         """
-        if not base is None:
-            self.base_potential = base
-        if not after is None:
-            self.after_potential = after
+        if (not base is None):
+            if (base > 0):
+                self.base_potential = base
+            else
+                warn("Base potential can't be zero or negative")
+        if (not after is None):
+            if (after > 0):
+                self.after_potential = after
+            else
+                warn("After potential can't be zero or negative")
 
     def set_thresholds (self, diff_pct = None, diff_abs = None):
         """
@@ -65,6 +71,12 @@ class ItemCounterDelta(object):
 
     @property
     def diff_pct (self):
+        if self.base_pct == 0:
+            return float("inf")
+        if (self.base_pct < 0):
+            warn("Base potential not defined")
+        if (self.after_pct < 0):
+            warn("After potential not defined")
         return self.after_pct / float(self.base_pct) * 100 - 100
     
     @property
