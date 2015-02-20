@@ -43,12 +43,12 @@ class ItemCounterDelta(object):
         if (not base is None):
             if (base > 0):
                 self.base_potential = base
-            else
+            else:
                 warn("Base potential can't be zero or negative")
         if (not after is None):
             if (after > 0):
                 self.after_potential = after
-            else
+            else:
                 warn("After potential can't be zero or negative")
 
     def set_thresholds (self, diff_pct = None, diff_abs = None):
