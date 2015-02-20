@@ -40,7 +40,7 @@ ALERT_TOKEN = environ['ALERT_TOKEN']
 def main():
     input_db = Db('input')
     
-    delta = defaultdict(ItemCounterDelta)
+    delta = defaultdict(WordDeltaCounter)
     base_total = 0
     after_total = 0
     
