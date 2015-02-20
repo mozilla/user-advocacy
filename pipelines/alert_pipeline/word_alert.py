@@ -182,7 +182,7 @@ def emit_alert (v):
     }
     links = []
     for link_id in v.after.link_list:
-        links.append('https://input.mozilla.org/dashboard/response/'+link_id)
+        links.append('https://input.mozilla.org/dashboard/response/'+str(link_id))
     description = dedent("""
     
         Trending words: %s
