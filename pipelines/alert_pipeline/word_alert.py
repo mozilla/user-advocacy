@@ -254,7 +254,7 @@ class WordDeltaCounter (ItemCounterDelta):
             return -1
         if value > 10:
             return 10
-        return floor(value)
+        return int(floor(value))
         
 def safe_log (value):
     if value <= 0:
