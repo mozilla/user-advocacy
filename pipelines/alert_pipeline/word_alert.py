@@ -13,6 +13,8 @@ from email.mime.text import MIMEText
 from sqlalchemy import sql
 from textwrap import dedent
 from math import log, floor
+import httplib
+httplib.HTTPConnection.debuglevel = 1
 
 import operator
 
@@ -123,6 +125,9 @@ def main():
             print "Emitting alert for %s" % v.after.sorted_metadata[0]
             alert_count += 1
             emit_alert(v)
+    
+    if alert_count <= 0:
+        print "No alerts today"
             
     # Now send an email, looking up each piece of feedback.
     email_list = set()
