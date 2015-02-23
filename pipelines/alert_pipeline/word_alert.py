@@ -120,6 +120,7 @@ def main():
     email_results(email_list)
 
 def email_results(email_list):
+    input_db = Db('input')
     email_body = ''
     shortwords = []
     
@@ -178,11 +179,14 @@ def emit_alert (v):
     headers = {
         'content-type': 'application/json',
         'accept': 'application/json; indent=4',
-        'authorization': 'token '+ALERT_TOKEN,
+        'Fjord-Authorization': 'Token ' + ALERT_TOKEN,
     }
     links = []
     for link_id in v.after.link_list:
-        links.append('https://input.mozilla.org/dashboard/response/'+str(link_id))
+        links.append({
+            'name'  : 'Input Link',
+            'url'   : 'http://input.mozilla.org/dashboard/response/'+str(link_id)
+        })
     description = dedent("""
     
         Trending words: %s
