@@ -33,7 +33,7 @@ _MIN_COUNT_THRESHOLD = 3
 _MIN_DENOM_THRESHOLD = 20
 
 _EMAIL_SEV_MIN = 5 # Severity level above which we send email
-_ALERT_SEV_MIN = 2 # Severity level above which we send alerts (-1 = send everything)
+_ALERT_SEV_MIN = 0 # Severity level above which we send alerts (-1 = send everything)
 
 ALERT_EMAIL_FROM = environ['ALERT_EMAIL_FROM']
 ALERT_EMAIL = environ['ALERT_EMAIL']
@@ -107,17 +107,23 @@ def main():
         after_total += 1   
     
     if (after_total < _MIN_DENOM_THRESHOLD or base_total < _MIN_DENOM_THRESHOLD):
-        warn("NOT ENOUGH FEEDBACK %d before and %d after") % (base_total, after_total)
+        warn("NOT ENOUGH FEEDBACK %d before and %d after" % (base_total, after_total))
+        print "NOT ENOUGH FEEDBACK %d before and %d after" % (base_total, after_total)
         return
     
     #Generate alerts
+    
+    alert_count = 0
     
     for (k,v) in delta.iteritems():
         v.set_thresholds(diff_pct = _DIFF_PCT_MIN, diff_abs = _DIFF_ABS_MIN)
         v.set_potentials(base = base_total, after = after_total)
         if (v.is_significant and v.severity >= _ALERT_SEV_MIN 
             and v.after.count >= _MIN_COUNT_THRESHOLD):
+            print "Emitting alert for %s" % v.after.sorted_metadata[0]
+            alert_count += 1
             emit_alert(v)
+            
     # Now send an email, looking up each piece of feedback.
     email_list = set()
     
