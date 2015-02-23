@@ -29,6 +29,9 @@ _DIFF_ABS_SCALE = 70 # Scaling factor between rel and abs diff
 _SEV_SCALE = 10 # Factor by which to expand the log of the product of the logs.
 _SEV_SUB = 3.3 # Magic. Just magic. Deal
 
+_MIN_COUNT_THRESHOLD = 3
+_MIN_DENOM_THRESHOLD = 20
+
 _EMAIL_SEV_MIN = 5 # Severity level above which we send email
 _ALERT_SEV_MIN = 2 # Severity level above which we send alerts (-1 = send everything)
 
@@ -45,7 +48,7 @@ def main():
     after_total = 0
     
     old_data_sql = """
-        SELECT description, id
+        SELECT description, MIN(id) as id
         FROM remote_feedback_response fr
         WHERE
         created > DATE_SUB(NOW(), INTERVAL :old WEEK) AND
@@ -57,6 +60,7 @@ def main():
         AND (source IS NULL or source = '')
         AND (version NOT RLIKE '[^a.0-9]')
         AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'Linux')
+        GROUP BY 1
     """
     try:
         results = input_db.execute_sql(old_data_sql, old=_PAST_TIMEFRAME, new=_TIMEFRAME)
@@ -73,7 +77,7 @@ def main():
         base_total += 1
 
     new_data_sql = """
-        SELECT description, id
+        SELECT description, MIN(id) as id
         FROM remote_feedback_response fr
         WHERE
         created > DATE_SUB(NOW(), INTERVAL :new HOUR) AND
@@ -85,6 +89,7 @@ def main():
         AND (source IS NULL or source = '')
         AND (version NOT RLIKE '[^a.0-9]')
         AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'Linux')
+        GROUP BY 1
     """
     
     try:
@@ -99,23 +104,27 @@ def main():
             continue
         for (key, word_set) in word_dict.iteritems():
             delta[key].after.insert(key = key, link = row.id, meta = word_set)
-        after_total += 1
+        after_total += 1   
+    
+    if (after_total < _MIN_DENOM_THRESHOLD or base_total < _MIN_DENOM_THRESHOLD):
+        warn("NOT ENOUGH FEEDBACK %d before and %d after") % (base_total, after_total)
+        return
     
     #Generate alerts
     
     for (k,v) in delta.iteritems():
         v.set_thresholds(diff_pct = _DIFF_PCT_MIN, diff_abs = _DIFF_ABS_MIN)
         v.set_potentials(base = base_total, after = after_total)
-        if (v.is_significant and v.severity >= _ALERT_SEV_MIN):
+        if (v.is_significant and v.severity >= _ALERT_SEV_MIN 
+            and v.after.count >= _MIN_COUNT_THRESHOLD):
             emit_alert(v)
-
-    
     # Now send an email, looking up each piece of feedback.
     email_list = set()
     
     for (k,v) in delta.iteritems():
         v.set_thresholds(diff_pct = _DIFF_PCT_MIN, diff_abs = _DIFF_ABS_MIN)
-        if (v.is_significant and v.severity >= _EMAIL_SEV_MIN):
+        if (v.is_significant and v.severity >= _EMAIL_SEV_MIN
+            and v.after.count >= _MIN_COUNT_THRESHOLD):
             email_list.add(v)
     email_results(email_list)
 
@@ -162,7 +171,6 @@ def email_results(email_list):
     
     if len(email_list) > 0:
 
-    
         msg = MIMEText(email_body)
         msg['Subject'] = "Alert for: " + ", ".join(shortwords)
         msg['From'] = ALERT_EMAIL_FROM
@@ -170,9 +178,6 @@ def email_results(email_list):
         server = smtplib.SMTP('localhost')
         server.sendmail(ALERT_EMAIL_FROM, ALERT_EMAIL.split(','), msg.as_string())
         server.quit()
-    
-    print "Run complete. %d alerts issued. %d before and %d after comments processed." % \
-        (len(email_list), base_total, after_total)
 
 
 def emit_alert (v):
@@ -207,16 +212,22 @@ def emit_alert (v):
         'severity': v.severity,
         'summary': '%s is trending up by %.2f'%(v.after.sorted_metadata[0], v.diff_pct),
         'description': description,
-        'flavor': 'word_alert',
+        'flavor': 'word-based',
         'emitter_name': 'input_word_alert',
         'emitter_version': 0,
         'links': links
     }  
+    print "Headers", headers
     resp = requests.post(
         'https://input.mozilla.org/api/v1/alerts/alert/',
         data=json.dumps(payload),
         headers=headers
     )
+    if resp.status_code == 201:
+        print "All systems good. Submitted alert for %s" % (v.after.sorted_metadata[0])
+    else:
+        print "Failed to submit alert for %s" % (v.after.sorted_metadata[0])
+        print resp.json()['detail']
     
 class WordDeltaCounter (ItemCounterDelta):
     @property
