@@ -1,3 +1,17 @@
+#!/usr/local/bin/python
+
+'''
+Exports Google Play database/files.
+'''
+
+#TODO(rrayborn): 
+
+__author__     = 'Rob Rayborn'
+__copyright__  = 'Copyright 2015, The Mozilla Foundation'
+__license__    = 'MPLv2'
+__maintainer__ = 'Rob Rayborn'
+__email__      = 'rrayborn@mozilla.com'
+__status__     = 'Production'
 
 #TODO: add gflags
 #TODO: encoding issues
@@ -63,6 +77,16 @@ def update(pull_date  = date.today() - relativedelta(days = 1),
            latest_csv = _LATEST_CSV,
            all_csv    = _ALL_CSV,
            db         = _SENTIMENT_DB):
+    '''
+    Updates the Google Play database/files.
+
+    Args:
+        pull_date     (datetime): start date of data to pull, inclusive (default: 42 days ago)
+        latest_csv    (str):      Path to output the latest Google Play data to
+        all_csv       (str):      Path to the complete Google Play CSV (this is a concatenation of all previous CSVs)
+        db            (database): the database object to use, must point to the 'sentiment' database
+    '''
+    
 
     day = pull_date.day
 
@@ -145,6 +169,12 @@ def update(pull_date  = date.today() - relativedelta(days = 1),
     #pprint(stats)
 
 def create_table_if_not_exists(db = _SENTIMENT_DB):
+    '''
+    Creates the Google Play table if it doesn't exist.
+
+    Args:
+        db            (database): the database object to use, must point to the 'sentiment' database
+    '''
     # create the table if not exists
     query = '''CREATE TABLE IF NOT EXISTS google_play_reviews (
         created               BIGINT NOT NULL, 
@@ -160,6 +190,15 @@ def create_table_if_not_exists(db = _SENTIMENT_DB):
     db.execute_sql(query)
 
 def _update_row(values, db = _SENTIMENT_DB):
+    '''
+    Updates a row in our Google Play table.
+
+    Args:
+        values  (dict):     a dict that contains all the query variables:
+                                created, date_str, version, language, model,
+                                rating, title, description
+        db      (database): the database object to use, must point to the 'sentiment' database
+    '''
     query = '''REPLACE INTO google_play_reviews
                 SET
                     created     = :created,
@@ -175,6 +214,15 @@ def _update_row(values, db = _SENTIMENT_DB):
 
 
 def _get_versions_dates(start_date_str, end_date_str, db = _SENTIMENT_DB):
+    '''
+    Gets start/end date data for 
+
+    Args:
+        start_date_str (str):      String for the min date 'YYYY-MM-DD'
+        end_date_str   (str):      String for the max date 'YYYY-MM-DD'
+        db             (database): The database object to use, must point to the 'sentiment' database
+    '''
+
     query = '''SELECT
             version,
             IF(release_start_date <= :end_date_str
@@ -243,13 +291,30 @@ def _download_convert_merge(file_date, filename, destroy=False):
     _execute('rm %s/reviews_org.mozilla*' % _DATA_PATH)
 
 def _header_exception_raiser(file1, file2):
+    '''
+    Compares the headers of 2 csvs and errs if their's a difference.
+
+    Args:
+        file1 (str):      Filename 1
+        file2 (str):      Filename 2
+        db    (database): The database object to use, must point to the 'sentiment' database
+    '''
     ret1 = _execute('head -n 1 %s' % file1)
     ret2 = _execute('head -n 1 %s' % file2)
     if (ret1 != ret2):
         raise Exception('%s\'s headers don\'t match %s\'s headers' 
                         % (file1, file2))
 
+#TODO(rrayborn): Can we try to do more in Python to avoid this badness?
 def _execute(cmd):
+    '''
+    Executes raw commands
+
+    Args:
+        cmd (str):   the command to execute
+
+    returns the command output
+    '''
     return check_output(cmd, shell=True)
 
 
