@@ -12,7 +12,7 @@ import smtplib
 from email.mime.text import MIMEText
 from sqlalchemy import sql
 from textwrap import dedent
-from math import log, floor
+from math import log, floor, min
 import httplib
 httplib.HTTPConnection.debuglevel = 1
 
@@ -24,18 +24,19 @@ from lib.language.word_types import tokenize
 
 _TIMEFRAME = 12 # Hours
 _PAST_TIMEFRAME = 3 # Weeks
-# Constants for calculation severity
-_DIFF_PCT_MIN = 10 # Percentage increase for which we absolutely don't want to return sev.
+# Constants for calculation of severity
+_DIFF_PCT_MIN = 30 # Percentage increase for which we absolutely don't want to return sev.
 _DIFF_ABS_MIN = 0.5 # Percentage point change for which we absolutely ignore
-_DIFF_ABS_SCALE = 70 # Scaling factor between rel and abs diff
+_DIFF_ABS_SCALE = 200 # Scaling factor between rel and abs diff
 _SEV_SCALE = 10 # Factor by which to expand the log of the product of the logs.
-_SEV_SUB = 3.3 # Magic. Just magic. Deal
+_SEV_SUB = 3.3 # Reduce this to alert more, increase to alert less
+_MAX_PCT_DIFF = 100000 # Infinity throws everything off, so we're capping things.
 
 _MIN_COUNT_THRESHOLD = 3
 _MIN_DENOM_THRESHOLD = 20
 
 _EMAIL_SEV_MIN = 5 # Severity level above which we send email
-_ALERT_SEV_MIN = 0 # Severity level above which we send alerts (-1 = send everything)
+_ALERT_SEV_MIN = 2 # Severity level above which we send alerts (-1 = send everything)
 
 ALERT_EMAIL_FROM = environ['ALERT_EMAIL_FROM']
 ALERT_EMAIL = environ['ALERT_EMAIL']
@@ -225,7 +226,7 @@ def emit_alert (v):
         'description': description,
         'flavor': 'word-based',
         'emitter_name': 'input_word_alert',
-        'emitter_version': 0,
+        'emitter_version': 0.1,
         'links': links
     }  
     print "Headers", headers
@@ -247,6 +248,7 @@ class WordDeltaCounter (ItemCounterDelta):
         This function is magic. I don't know if it's the right one or if we should
         make a better one but whatever.
         """
+        pct_value = min(self.diff_pct, _MAX_PCT_DIFF)
         pct_part = safe_log(self.diff_pct - _DIFF_PCT_MIN)
         abs_part = safe_log((self.diff_abs - _DIFF_ABS_MIN)*_DIFF_ABS_SCALE)
         value = _SEV_SCALE * (safe_log(abs_part * pct_part) - _SEV_SUB)
