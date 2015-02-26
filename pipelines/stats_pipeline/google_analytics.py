@@ -1,15 +1,11 @@
 
 #TODO: add gflags
-#TODO: add SQL lib
-#
 #TODO: test
 
-#TODO(rrayborn): Fix this
-import sys; sys.path.append('/home/shared/code/lib/web_api/')
-import google_services
-#TODO(rrayborn): Fix this
-import sys; sys.path.append('/home/shared/code/lib/database/')
-from simple_db import SimpleDB
+
+from lib.database.backend_db import Db
+from lib.web_api import google_services
+
 
 from datetime import date, datetime, timedelta
 import csv
@@ -22,10 +18,11 @@ _MAX_RESULTS = 100*365*4
 _API_URL = 'https://www.googleapis.com/analytics/v3/data/ga?'
 
 def main():
-    generate_inproduct(device_type = 'desktop', start_date = '2014-10-10', end_date = '2014-10-11')
+    generate_inproduct(device_type = 'desktop')
 
 
 def generate_inproduct(
+            db          = None,
             auth_token  = google_services.google_service_connection().get_auth_token(), 
             versions    = None, 
             device_type = 'desktop', 
@@ -33,18 +30,17 @@ def generate_inproduct(
             start_date  = (date.today() - timedelta(days=1)).strftime('%Y-%m-%d'), 
             end_date    = (date.today() - timedelta(days=1)).strftime('%Y-%m-%d'), 
             ga_id       = None,
-            config_file = None
+            max_results = _MAX_RESULTS
         ):
-
-    db = SimpleDB('sentiment', config_file=config_file)
-    
     if not versions:
-        max_version = db.execute('SELECT MAX(version) FROM release_info;')[0][0]
+        if not db:
+            db = Db('sentiment')
+        max_version = db.execute_sql('SELECT MAX(version) FROM release_info;').first()[0]
         versions = range(1,max_version)
-    if not ga_id:
-        ga_id = _DESKTOP_GA_ID if device_type == 'desktop' else _MOBILE_GA_ID
     if not filename:
         filename = device_type + '.tsv'
+    if not ga_id:
+        ga_id = _DESKTOP_GA_ID if device_type == 'desktop' else _MOBILE_GA_ID
 
     # SET UP REQUEST
     device_category = 'ga:deviceCategory==desktop' if device_type =='desktop' \
@@ -65,7 +61,7 @@ def generate_inproduct(
             'access_token': auth_token,
             'filters':      ';'.join(filters),
             'ids':          ga_id,
-            'max-results':  _MAX_RESULTS,
+            'max-results':  max_results,
             'dimensions':   'ga:date,ga:browserVersion',
             'metrics':      'ga:sessions',
             'samplingLevel':'HIGHER_PRECISION'
