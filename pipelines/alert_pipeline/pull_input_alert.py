@@ -14,6 +14,10 @@ _TIMEFRAME = 14 # Days
 ALERT_FILENAME = 'input_alerts.json'
 
 ALERT_TOKEN = environ['ALERT_TOKEN']
+_INPUT_URL = 'https://input.mozilla.org/api/v1/alerts/alert/?'
+
+# TODO: make this env based.
+_OUTPUT_PATH = '/var/server/server/useradvocacy/data/static_json/'
 
 def main():
     headers = {
@@ -25,13 +29,12 @@ def main():
         'flavors': 'word-based'
     }
     resp = requests.get(
-        'https://input.mozilla.org/api/v1/alerts/alert/?' + urllib.urlencode(qs_params),
+        _INPUT_URL + urllib.urlencode(qs_params),
         headers=headers
     )
     if resp.status_code == 200:
         file_path = path.join(
-            environ['CODE_PATH'], 
-            'flask/useradvocacy/data/static_json',
+            _OUTPUT_PATH,
             ALERT_FILENAME
         )
         file = open(file_path, 'w')
@@ -39,7 +42,7 @@ def main():
         timestamp = mktime_tz(parsedate_tz(resp.headers['date']))
         alert_json['lastUpdateTimestamp'] = timestamp
         alert_json['lastUpdated'] = str(datetime.datetime.fromtimestamp(timestamp))
-        json.dump(alert_json, file)
+        json.dump(alert_json, file, indent=4, ensure_ascii=False, encoding="utf-8")
         print "Successfully saved %s"%(file_path)
     else:
         print "Error: " + json.dumps(resp)
