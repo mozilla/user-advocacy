@@ -7,8 +7,11 @@ import requests
 import datetime
 import httplib
 httplib.HTTPConnection.debuglevel = 1
+import urllib
+from email.utils import mktime_tz, parsedate_tz
 
 _TIMEFRAME = 14 # Days
+ALERT_FILENAME = 'input_alerts.json'
 
 ALERT_TOKEN = environ['ALERT_TOKEN']
 
@@ -26,9 +29,19 @@ def main():
         headers=headers
     )
     if resp.status_code == 200:
-        print resp.json
+        file_path = path.join(
+            environ['CODE_PATH'], 
+            'flask/useradvocacy/data/static_json',
+            ALERT_FILENAME
+        )
+        file = open(file_path, 'w')
+        alert_json = resp.json()
+        timestamp = mktime_tz(parsedate_tz(resp.headers['date']))
+        alert_json['lastUpdateTimestamp'] = timestamp
+        alert_json['lastUpdated'] = str(datetime.datetime.fromtimestamp(timestamp))
+        json.dump(alert_json, file)
     else:
-        print resp
+        print json.dumps(resp)
     
 if __name__ == '__main__':
 
