@@ -40,8 +40,9 @@ def main():
         alert_json['lastUpdateTimestamp'] = timestamp
         alert_json['lastUpdated'] = str(datetime.datetime.fromtimestamp(timestamp))
         json.dump(alert_json, file)
+        print "Successfully saved %s"%(file_path)
     else:
-        print json.dumps(resp)
+        print "Error: " + json.dumps(resp)
     
 if __name__ == '__main__':
 
