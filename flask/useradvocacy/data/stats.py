@@ -22,8 +22,9 @@ _NONDAILY_MEASURES = [
         'sumo_forum_posts',
         'sumo_inproduct_visits',
         'sumo_forum_unanswered_pct',
-        #heartbeat_average, 
-        #heartbeat_volume,
+        'heartbeat_average',
+        'heartbeat_responses_rate',
+        'heartbeat_volume',
         'adis'
     ]
 
@@ -49,7 +50,6 @@ _ALL_PERIODS = [
         'month',
         'version'
     ]
-
 
 # def main():
 #     import json as built_in_json
@@ -348,6 +348,22 @@ def stats_return(args):
     if 'input_volume'              in corrected_measures:
         select_statements.append(
                 'SUM(input_volume) AS input_volume'
+            )
+    if 'input_average'             in corrected_measures:
+        select_statements.append(
+                'SUM(input_average*input_volume)/SUM(input_volume) AS input_average'
+            )
+    if 'heartbeat_average'         in corrected_measures:
+        select_statements.append(
+                'SUM(heartbeat_average*heartbeat_volume)/SUM(heartbeat_volume) AS heartbeat_average'
+            )
+    if 'heartbeat_responses_rate'  in corrected_measures:
+        select_statements.append(
+                'SUM(heartbeat_responses_rate*heartbeat_volume)/SUM(heartbeat_volume) AS heartbeat_responses_rate'
+            )
+    if 'heartbeat_volume'          in corrected_measures:
+        select_statements.append(
+                'SUM(heartbeat_volume) AS heartbeat_volume'
             )
     if 'play_average'              in corrected_measures:
         select_statements.append(
