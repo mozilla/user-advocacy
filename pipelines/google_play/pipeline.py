@@ -271,6 +271,14 @@ def _get_versions_dates(start_date_str, end_date_str, db = _SENTIMENT_DB):
 
 
 def _download_convert_merge(file_date, filename, destroy=False):
+    '''
+    Downloads a csv from Google Play and merges it into another CSV
+
+    Args:
+        file_date (datetime): the date to pull google play data for
+        filename       (str): the file to merge into
+        destroy       (bool): whether to merge into or overwrite the file.
+    '''
     year_month = file_date.strftime('%Y%m')
 
     # Download new files
