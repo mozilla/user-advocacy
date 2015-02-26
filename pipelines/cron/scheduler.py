@@ -30,6 +30,9 @@ _JOBLIST = [
         ['0 5 * * *', 
             'python pipelines/hello_pipeline/pipeline.py         >/tmp/hello_cron       2>&1',
             'Hello Pipeline'],
+        ['10 * * * *', 
+            'python pipelines/alert_pipeline/pull_input_alert.py >/tmp/hello_cron       2>&1',
+            'Fetch alerts'],
         ['0 */6 * * *',
             'python pipelines/alert_pipeline/word_alert.py       >/tmp/alert_cron       2>&1',
             'Alert Pipeline']
