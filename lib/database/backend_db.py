@@ -13,6 +13,6 @@ os_env = os.environ
 engine = db.init_engine(os_env['SQLALCHEMY_UTILS_URI'])
 
 class Db(db.Database):
-    def __init__(self, database_name):
-        super(Db, self).__init__(database_name, engine)
+    def __init__(self, database_name, is_persistant = False):
+        super(Db, self).__init__(database_name, engine, is_persistant)
     
