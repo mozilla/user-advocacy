@@ -26,7 +26,8 @@ def main():
         'Fjord-Authorization': 'Token ' + ALERT_TOKEN,
     }
     qs_params = {
-        'flavors': 'word-based'
+        'flavors': 'word-based',
+        'max': 10000
     }
     resp = requests.get(
         _INPUT_URL + urllib.urlencode(qs_params),
