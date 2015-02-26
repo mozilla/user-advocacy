@@ -13,27 +13,26 @@ __maintainer__ = "Rob Rayborn"
 __email__ = "rrayborn@mozilla.com"
 __status__ = "Development"
 
-from datetime import date, datetime, timedelta
 from OpenSSL.crypto import load_pkcs12, dump_privatekey, FILETYPE_PEM
+
+from datetime import date, datetime, timedelta
+from os import environ
 import json
 import jwt
 import requests
 import time
 
-from os import path
 
-_FILE_PATH = path.dirname(path.realpath(__file__))+'/'
-
-_AUTH_PATH  = _FILE_PATH + 'auth/'
+_SECRETS_PATH  = environ['SECRETS_PATH']
 
 # Header and Grant Type are always the same for Google's API so making a 
 #   variable instead of a file
 _HEADER_JSON = {'alg':'RS256','typ':'jwt'}
 _GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:jwt-bearer'
 # Default filenames
-_CLAIMS_FILE = _AUTH_PATH + 'claims.json'
-_P12_FILE = _AUTH_PATH + 'goog.p12'
-_AUTH_FILE = _AUTH_PATH + '.auth.tmp'
+_CLAIMS_FILE = _SECRETS_PATH + 'claims.json'
+_P12_FILE    = _SECRETS_PATH + 'goog.p12'
+_AUTH_FILE   = _SECRETS_PATH + '.auth.tmp'
 # Other defaults
 _GOOG_PASSPHRASE = 'notasecret' # notasecret is the universal google passphrase
 
