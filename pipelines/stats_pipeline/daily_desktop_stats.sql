@@ -1,67 +1,26 @@
 
--- Usage:  
--- set @start_date = '2014-01-01'; 
--- set @end_date = '2014-09-01'; 
--- REPLACE @adis_file manually; 
--- REPLACE @visits_file manually; 
-USE sentiment;
-
 CREATE TABLE IF NOT EXISTS daily_desktop_stats (
-  id                      INT  NOT NULL AUTO_INCREMENT,
-  `date`                  DATE NOT NULL,
-  days_since_epoch        INT  NOT NULL,
-  version                 INT  NOT NULL,
-  channel                 ENUM('Release','Beta','Aurora','Nightly'),
-  input_average           FLOAT,
-  input_average_7_days    FLOAT,
-  input_volume            INT,
-  sumo_posts              INT,
-  sumo_unanswered_3_days  INT,
-  sumo_in_product_views   INT,
-  adis                    INT,
-  heartbeat_average       FLOAT,
-  heartbeat_volume        INT,
+  id                       INT  NOT NULL AUTO_INCREMENT,
+  `date`                   DATE NOT NULL,
+  days_since_epoch         INT  NOT NULL,
+  version                  INT  NOT NULL,
+  channel                  ENUM('Release','Beta','Aurora','Nightly'),
+  input_average            FLOAT,
+  input_average_7_days     FLOAT,
+  input_volume             INT,
+  sumo_posts               INT,
+  sumo_unanswered_3_days   INT,
+  sumo_in_product_views    INT,
+  adis                     INT,
+  heartbeat_average        FLOAT,
+  heartbeat_responses_rate FLOAT,
+  heartbeat_volume         INT,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_stat` (`date`,`version`)
 );
 
-
--- Load ADI data
-CREATE TEMPORARY TABLE tmp_desktop_adis (
-    `date`                DATE NOT NULL, 
-    version               INT  NOT NULL, 
-    num_adis              INT  NOT NULL, 
-    CONSTRAINT unique_stat UNIQUE (`date`, version)
-);
-
-LOAD DATA LOCAL INFILE '@adis_file'
-    INTO TABLE tmp_desktop_adis
-    FIELDS TERMINATED BY '\t'
-    OPTIONALLY ENCLOSED BY '\"'
-    LINES TERMINATED BY '\n'
-    IGNORE 1 LINES
-    (`date`, version, num_adis)
-;
-
--- Load visits data
-CREATE TEMPORARY TABLE tmp_desktop_sumo_visits (
-    `date`                DATE NOT NULL, 
-    version               INT  NOT NULL, 
-    visits                INT  NOT NULL, 
-    CONSTRAINT unique_stat UNIQUE (`date`, version)
-);
-
-LOAD DATA LOCAL INFILE '@visits_file'
-    INTO TABLE tmp_desktop_sumo_visits
-    FIELDS TERMINATED BY '\t'
-    OPTIONALLY ENCLOSED BY '\"'
-    LINES TERMINATED BY '\n'
-    IGNORE 1 LINES
-    (`date`, version, visits)
-;
-
-DROP TABLE IF EXISTS tmp_desktop_input_base;
 -- Get Input data
+DROP TABLE IF EXISTS tmp_desktop_input_base;
 CREATE TABLE tmp_desktop_input_base AS 
 SELECT
     DATE(created) AS `date`,
@@ -78,10 +37,27 @@ SELECT
 FROM input.remote_feedback_response
 WHERE
     product = 'Firefox'
-    AND DATE(created) >= DATE_SUB(@start_date, INTERVAL 7 DAY)
-    AND DATE(created) <= @end_date
+    AND DATE(created) >= DATE_SUB(:start_date, INTERVAL 7 DAY)
+    AND DATE(created) <= :end_date
 GROUP BY
     1,2,3,4,5,6,7,8,9
+HAVING version IN (SELECT version FROM release_info)
+;
+
+CREATE TEMPORARY TABLE tmp_desktop_heartbeat AS 
+SELECT 
+    DATE(FROM_UNIXTIME(updated_ts/1000)) AS `date`,
+    CAST(SUBSTRING_INDEX(version, '.', 1) AS UNSIGNED) AS version,
+    AVG(score) AS average,
+    COUNT(score)/COUNT(*) AS responses_rate,
+    COUNT(*) AS volume
+FROM input.remote_heartbeat_answer
+WHERE
+    survey_id = 'heartbeat-by-user-first-impression'
+    AND NOT is_test
+    AND updated_ts >= 1000*UNIX_TIMESTAMP(:start_date)
+    AND updated_ts <= 1000*UNIX_TIMESTAMP(:end_date)
+GROUP BY 1,2
 HAVING version IN (SELECT version FROM release_info)
 ;
 
@@ -122,10 +98,9 @@ FROM
     LEFT JOIN tmp_desktop_input_base t6 ON(t0.d6 = t6.d0 AND t0.version = t6.version )
 HAVING
     version IN (SELECT version FROM release_info)
-    AND t0.`date` >= @start_date
+    AND `date` >= :start_date
 ;
 DROP TABLE IF EXISTS tmp_desktop_input_base;
-
 
 -- Get SUMO data
 CREATE TEMPORARY TABLE tmp_desktop_sumo AS 
@@ -141,8 +116,8 @@ FROM
         SELECT id, created 
         FROM sumo.questions_question
         WHERE
-            DATE(created) >= @start_date
-            AND DATE(created) <= @end_date
+            DATE(created) >= :start_date
+            AND DATE(created) <= :end_date
             AND product_id = 1
     ) question
     LEFT JOIN (  
@@ -205,6 +180,7 @@ REPLACE INTO daily_desktop_stats (
         sumo_in_product_views,
         adis,
         heartbeat_average,
+        heartbeat_responses_rate,
         heartbeat_volume
     )
 SELECT
@@ -219,8 +195,9 @@ SELECT
     COALESCE(sumo.num_unanswered_72,0)          AS sumo_unanswered_3_days,
     COALESCE(visits.visits,0)                   AS sumo_in_product_views,
     COALESCE(adis.num_adis,0)                   AS adis,
-    Null                                        AS heartbeat_average,
-    Null                                        AS heartbeat_volume
+    COALESCE(heartbeat.average,0)               AS heartbeat_average,
+    COALESCE(heartbeat.responses_rate,0)        AS heartbeat_responses_rate,
+    COALESCE(heartbeat.volume,0)                AS heartbeat_volume
 FROM
     tmp_desktop_base base
     LEFT JOIN tmp_desktop_input input           
@@ -231,6 +208,8 @@ FROM
             ON(base.version = adis.version      AND base.`date` = adis.`date`)
     LEFT JOIN tmp_desktop_sumo_visits visits 
             ON(base.version = visits.version AND base.`date` = visits.`date`)
+    LEFT JOIN tmp_desktop_heartbeat heartbeat 
+            ON(base.version = heartbeat.version AND base.`date` = heartbeat.`date`)
 HAVING -- Make sure that the row is necessary
     input_average
     OR input_average_7_days
@@ -240,5 +219,6 @@ HAVING -- Make sure that the row is necessary
     OR sumo_in_product_views
     OR adis
     OR heartbeat_average
+    OR heartbeat_responses_rate
     OR heartbeat_volume
 ;

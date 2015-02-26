@@ -1,11 +1,4 @@
 
--- Usage:  
--- set @start_date = '2014-01-01'; 
--- set @end_date = '2014-09-01'; 
--- REPLACE @adis_file manually; 
--- REPLACE @visits_file manually; 
-USE sentiment;
-
 CREATE TABLE IF NOT EXISTS daily_mobile_stats (
   id                      INT  NOT NULL AUTO_INCREMENT, 
   `date`                  DATE NOT NULL, 
@@ -26,41 +19,6 @@ CREATE TABLE IF NOT EXISTS daily_mobile_stats (
   PRIMARY KEY (id),
   CONSTRAINT unique_stat UNIQUE (`date`, version)
 );
-
--- Load ADI data
-CREATE TEMPORARY TABLE tmp_mobile_adis (
-    `date`                DATE NOT NULL, 
-    version               INT  NOT NULL, 
-    num_adis              INT  NOT NULL, 
-    CONSTRAINT unique_stat UNIQUE (`date`, version)
-);
-
-LOAD DATA LOCAL INFILE '@adis_file'
-    INTO TABLE tmp_mobile_adis
-    FIELDS TERMINATED BY '\t'
-    OPTIONALLY ENCLOSED BY '\"'
-    LINES TERMINATED BY '\n'
-    IGNORE 1 LINES
-    (`date`, version, num_adis)
-;
-
--- Load ADI data
-CREATE TEMPORARY TABLE tmp_mobile_sumo_visits (
-    `date`                DATE NOT NULL, 
-    version               INT  NOT NULL, 
-    visits                INT  NOT NULL, 
-    CONSTRAINT unique_stat UNIQUE (`date`, version)
-);
-
-LOAD DATA LOCAL INFILE '@visits_file'
-    INTO TABLE tmp_mobile_sumo_visits
-    FIELDS TERMINATED BY '\t'
-    OPTIONALLY ENCLOSED BY '\"'
-    LINES TERMINATED BY '\n'
-    IGNORE 1 LINES
-    (`date`, version, visits)
-;
-
 
 -- Load Google Play data
 CREATE TEMPORARY TABLE tmp_mobile_play AS 
@@ -91,8 +49,8 @@ SELECT
 FROM input.remote_feedback_response
 WHERE
     product = 'Firefox for Android'
-    AND DATE(created) > DATE_SUB(@start_date, INTERVAL 7 DAY)
-    AND DATE(created) <= @end_date
+    AND DATE(created) >= DATE_SUB(:start_date, INTERVAL 7 DAY)
+    AND DATE(created) <= :end_date
 GROUP BY
     1,2,3,4,5,6,7,8,9
 HAVING version IN (SELECT version FROM release_info)
@@ -135,10 +93,10 @@ FROM
     LEFT JOIN tmp_mobile_input_base t6 ON(t0.d6 = t6.d0 AND t0.version = t6.version )
 HAVING
     version IN (SELECT version FROM release_info)
-    AND t0.`date` >= @start_date
+    AND `date` >= :start_date
 ;
 
-DROP TABLE tmp_mobile_input_base;
+DROP TABLE IF EXISTS tmp_mobile_input_base;
 
 
 -- Get SUMO data
@@ -155,8 +113,8 @@ FROM
         SELECT id, created 
         FROM sumo.questions_question
         WHERE
-            DATE(created) >= @start_date
-            AND DATE(created) <= @end_date
+            DATE(created) >= :start_date
+            AND DATE(created) <= :end_date
             AND product_id = 1
     ) question
     LEFT JOIN (  

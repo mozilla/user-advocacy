@@ -1,15 +1,25 @@
+#!/usr/local/bin/python
+
+'''
+Exports Hello AKA Loop data to our server's static data dir.
+'''
+
+#TODO(rrayborn): 
+
+__author__     = 'Rob Rayborn'
+__copyright__  = 'Copyright 2015, The Mozilla Foundation'
+__license__    = 'MPLv2'
+__maintainer__ = 'Rob Rayborn'
+__email__      = 'rrayborn@mozilla.com'
+__status__     = 'Production'
 
 #TODO: add gflags
 #TODO: add SQL lib
 #
 #TODO: test
 
-#TODO(rrayborn): Fix this
-import sys;
-sys.path.append('/home/shared/code/lib/database/')
-from simple_db import SimpleDB
-sys.path.append('/home/shared/code/stats_pipeline/')
-import google_analytics
+from lib.database.backend_db  import Db
+from pipelines.stats_pipeline import google_analytics
 
 import csv
 from datetime import date,timedelta
@@ -17,9 +27,9 @@ from dateutil.relativedelta import relativedelta
 from os import path
 from subprocess import check_output
 
-_PIPELINE_PATH = path.dirname(path.realpath(__file__))+'/'
-_DATA_PATH  = _PIPELINE_PATH + 'data/'
-_ADIS_SQL_FILE = _PIPELINE_PATH + 'adis.sql'
+_PIPELINE_PATH      = path.dirname(path.realpath(__file__))+'/'
+_DATA_PATH          = _PIPELINE_PATH + 'data/'
+_ADIS_SQL_FILE      = _PIPELINE_PATH + 'adis.sql'
 _QUERY_FILE_PATTERN = _PIPELINE_PATH + 'daily_%s_stats.sql'
 
 #FLAGS = gflags.FLAGS
@@ -33,102 +43,116 @@ _QUERY_FILE_PATTERN = _PIPELINE_PATH + 'daily_%s_stats.sql'
 #gflags.MarkFlagAsRequired('filename')
 #
 #
-#def main():
-#    bootstrap()
-#    if bootstrap:
-#        if csv:
-#            bootstrap(csv)
-#        else:
-#            bootstrap()
-#    elif date:
-#        update(date)
-#    else:
-#        update()
+
+#This should be handled better...
+_SENTIMENT_DB = Db('sentiment', is_persistant = True)
+
 def main():
-    #update(start_date='2014-11-02', end_date='2014-11-04')
-    update()
+    update(product='desktop',start_date='2015-02-24', end_date='2015-02-24')
+    #update()
+
+#TODO(rrayborn): bootstrap function
 
 def update(
-            start_date = (date.today() - timedelta(days=2)).strftime('%Y-%m-%d'),
-            end_date   = (date.today() - timedelta(days=2)).strftime('%Y-%m-%d'),
-            product    = None
-        ):
-    if product:
-        update_product(product = product, start_date=start_date, end_date=end_date)
-    else:
-        update_product(product = 'desktop', start_date=start_date, end_date=end_date)
-        update_product(product = 'mobile',  start_date=start_date, end_date=end_date)
-
-def update_product(
             product    = None,
             start_date = (date.today() - timedelta(days=2)).strftime('%Y-%m-%d'),
-            end_date   = (date.today() - timedelta(days=2)).strftime('%Y-%m-%d')
+            end_date   = (date.today() - timedelta(days=2)).strftime('%Y-%m-%d'),
+            db         = _SENTIMENT_DB
+        ):
+    if product:
+        _update_product(product, start_date, end_date, db)
+    else:
+        _update_product('desktop', start_date, end_date, db)
+        _update_product('mobile',  start_date, end_date, db)
+
+def _update_product(
+            product,
+            start_date,
+            end_date,
+            db
         ):
 
     adis_file   = _DATA_PATH + '.' + product +'_adis.tsv'
-    visits_file  = _DATA_PATH + '.' + product +'_visits.tsv'
+    visits_file = _DATA_PATH + '.' + product +'_visits.tsv'
     query_file  = _QUERY_FILE_PATTERN % product
     alt_product = 'Firefox' if product == 'desktop' else 'Fennec'
 
-    generate_adis(alt_product, adis_file, start_date, end_date)
+    # =========== Parse ADI data ===============================================
+    tmp_adis_table = 'tmp_%s_adis' % product
+    cmd = 'echo "%s" | isql -v metrics_dsn  -b -x0x09 >%s'
+    with open(_ADIS_SQL_FILE, 'r') as adis_sql:
+        if adis_sql:
+            query = adis_sql.read().replace('\n','  ') % (
+                    alt_product, start_date, end_date)
+    check_output(cmd % (query, adis_file), shell=True)
+    query ='''CREATE TEMPORARY TABLE {table} (
+                `date`                DATE NOT NULL, 
+                version               INT  NOT NULL, 
+                num_adis              INT  NOT NULL, 
+                CONSTRAINT unique_stat UNIQUE (`date`, version)
+            );'''.format(table = tmp_adis_table)
+    execute_wrapper(db, query)
 
+    load_csv_into_table(adis_file, 
+                        tmp_adis_table,
+                        db,
+                        header = ['`date`', 'version', 'num_adis'])
+            
+    # =========== Parse Analytics data =========================================
+    tmp_sumo_table = 'tmp_%s_sumo_visits' % product
+    # Get Google analytics data
     google_analytics.generate_inproduct( 
+            db          = db,
             device_type = product, 
             filename    = visits_file,
             start_date  = start_date,
             end_date    = end_date
         )
 
-    run_stats_query(
-            start_date,
-            end_date,
-            adis_file,
-            visits_file,
-            query_file
-        )
+    query ='''CREATE TEMPORARY TABLE {table} (
+                `date`                DATE NOT NULL, 
+                version               INT  NOT NULL, 
+                visits                INT  NOT NULL, 
+                CONSTRAINT unique_stat UNIQUE (`date`, version)
+            );'''.format(table = tmp_sumo_table)
+    execute_wrapper(db, query)
 
-def run_stats_query(
-            start_date,
-            end_date,
-            adis_file,
-            visits_file,
-            query_file
-        ):
-    
-    #set @adis_file = "%s";\nset @visits_file = "%s";\n' % (
-    #adis_file,
-    #visits_file
-    query_preface = 'set @start_date = "%s";\nset @end_date = "%s";\n' % (
-            start_date,
-            end_date
-        )
+    load_csv_into_table(visits_file, 
+                        tmp_sumo_table,
+                        db,
+                        header = ['`date`', 'version', 'visits'])
 
+    # =========== Run Stats query ==============================================
     with open(query_file, 'r') as query_sql:
         if query_sql:
             query = query_sql.read()
-            query = query.replace("@visits_file",visits_file)
-            query = query.replace("@adis_file",adis_file)
-            query = query.replace("@start_date",'"'+str(start_date)+'"')
-            query = query.replace("@end_date",'"'+str(end_date)+'"')
     
-    db = SimpleDB('sentiment')
-    db.execute(query,verbose=True)
-    db.commit()
-
-def generate_adis(product, filename, start_date, end_date):
-    cmd = 'echo "%s" | isql -v metrics_dsn  -b -x0x09 >%s'
-    with open(_ADIS_SQL_FILE, 'r') as adis_sql:
-        if adis_sql:
-            query = adis_sql.read().replace('\n','  ') % (
-                    product, start_date, end_date)
-    _execute(cmd % (query, filename))
+    execute_wrapper(db, query, {'start_date': start_date, 'end_date': end_date})
 
 
-# Utilites
-
-def _execute(cmd):
-    return check_output(cmd, shell=True)
-
+def load_csv_into_table(filename, tablename, db, header = None):
+    with open(filename, 'rb') as f:
+        reader = csv.reader(f, delimiter='\t')
+        # remove header
+        h = reader.next()
+        if not header:
+            header = h
+        insert_str = ('INSERT INTO %s (%s) ' % (tablename, ','.join(header))) \
+                     + ' VALUES (%s);'
+        for row in reader:
+            if isinstance(row[0],str):
+                row[0] = '"' + row[0] + '"'
+            db.execute_sql(insert_str % ','.join(row))
+    
+def execute_wrapper(db, sql, query_vars = None, verbose = False):
+    queries = sql.split(';')
+    for query in queries:
+        print query
+        if query != '':
+            if query_vars:
+                db.execute_sql(query, query_vars)
+            else:
+                db.execute_sql(query)
 
 if __name__ == "__main__":
     main()
