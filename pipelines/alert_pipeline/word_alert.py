@@ -69,6 +69,7 @@ def main():
         results = input_db.execute_sql(old_data_sql, old=_PAST_TIMEFRAME, new=_TIMEFRAME)
     except (OperationalError):
         print "Database timed out executing base sql."
+        #TODO: raise an alert instead of just printing.
         return
     
     for row in results:
@@ -99,6 +100,7 @@ def main():
         results = input_db.execute_sql(new_data_sql, new=_TIMEFRAME)
     except (OperationalError):
         print "Database timed out executing after sql."
+        #TODO: raise an alert instead of just printing.
         return
 
     for row in results:
@@ -112,6 +114,7 @@ def main():
     if (after_total < _MIN_DENOM_THRESHOLD or base_total < _MIN_DENOM_THRESHOLD):
         warn("NOT ENOUGH FEEDBACK %d before and %d after" % (base_total, after_total))
         print "NOT ENOUGH FEEDBACK %d before and %d after" % (base_total, after_total)
+        #TODO: raise an alert instead of just printing.
         return
     
     #Generate alerts
@@ -129,6 +132,7 @@ def main():
     
     if alert_count <= 0:
         print "No alerts today"
+        #This is super fishy but technically valid usecase. I guess leave it for now.
             
     # Now send an email, looking up each piece of feedback.
     email_list = set()
@@ -248,6 +252,7 @@ class WordDeltaCounter (ItemCounterDelta):
         This function is magic. I don't know if it's the right one or if we should
         make a better one but whatever.
         """
+        #TODO: experiment with other algorithms
         pct_value = min(self.diff_pct, _MAX_PCT_DIFF)
         pct_part = safe_log(self.diff_pct - _DIFF_PCT_MIN)
         abs_part = safe_log((self.diff_abs - _DIFF_ABS_MIN)*_DIFF_ABS_SCALE)
