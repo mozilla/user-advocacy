@@ -2,7 +2,7 @@
 <html lang="en">
   <meta charset="utf-8">
 <head>
-    <title>User Sentiment Report</title>
+    <title>User Sentiment Report Live Data</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{{ url_for('static', filename='libs/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet" media="screen">
     <link href="sentiment-report.css" rel="stylesheet">
@@ -24,12 +24,46 @@
                     <div class="chart-group">
                         <div class="row">
                             <div class="col-xs-12 chart-header">
+                                <h3>Firefox Desktop Heartbeat Score</h3>
+                                <p>Average heartbeat score across all versions of Firefox. Score is rated on a scale of 1 - 5 stars.</p>
+                            </div>
+                        </div>
+                        <div class="row chart">
+                            <div id="chart1"></div>
+                        </div>
+                        <div class="row chart-discuss">
+                            <!-- Insert chart discussion here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 chart-col">
+                    <div class="chart-group">
+                        <div class="row">
+                            <div class="col-xs-12 chart-header">
+                                <h3>Heartbeat participation rate</h3>
+                                <p>This chart shows what percentage of the users who are offered a Heartbeat survey submit a rating.</p>
+                            </div>
+                        </div>
+                        <div class="row chart">
+                            <div id="chart2"></div>
+                        </div>
+                        <div class="row chart-discuss">
+                            <!-- Insert chart discussion here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row chart-row">
+                <div class="col-md-6 chart-col">
+                    <div class="chart-group">
+                        <div class="row">
+                            <div class="col-xs-12 chart-header">
                                 <h3>Input Sentiment Score over time (all versions)</h3>
                                 <p>This chart shows the input sentiment over time for all versions of Firefox Desktop. Score is on a scale of 0 (indicating all negative feedback) to 100 (for all positive feedback). Dark line is 7-day rolling average.</p>
                             </div>
                         </div>
                         <div class="row chart">
-                            <div id="chart1"></div>
+                            <div id="chart3"></div>
                         </div>
                         <div class="row chart-discuss">
                             <!-- Insert chart discussion here -->
@@ -45,7 +79,7 @@
                             </div>
                         </div>
                         <div class="row chart">
-                            <div id="chart2"></div>
+                            <div id="chart4"></div>
                         </div>
                         <div class="row chart-discuss">
                             <!-- Insert chart discussion here -->
@@ -63,7 +97,7 @@
                             </div>
                         </div>
                         <div class="row chart">
-                            <div id="chart3"></div>
+                            <div id="chart5"></div>
                         </div>
                         <div class="row chart-discuss">
                             <!-- Insert chart discussion here -->
@@ -79,7 +113,7 @@
                             </div>
                         </div>
                         <div class="row chart">
-                            <div id="chart4"></div>
+                            <div id="chart6"></div>
                         </div>
                         <div class="row chart-discuss">
                             <!-- Insert chart discussion here -->

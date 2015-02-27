@@ -1,3 +1,25 @@
+var heartbeat_rating_chart = timeScaleLine()
+    .y(function(d) {
+        return d.heartbeat_average
+    })
+    .ylabel("Rating")
+    .ymin(1)
+    .ymax(5)
+    .colors(["#B2EAF8"])
+    .legend(false);
+    
+var heartbeat_response_chart = timeScaleLine()
+    .y(function(d) {
+        return d.heartbeat_responses_rate
+    })
+    .ymin(0)
+    .ymax(100)
+    .ylabel("Percentage")
+    .colors(["#00B8E6"])
+    .legend(false);
+
+
+
 var input_by_time_chart = timeScaleLine()
     .y(function(d) {
         return d.value * 100
@@ -19,12 +41,30 @@ var input_sentiment_chart = sentimentChart()
         return d.input_average * 2;
     });
 
+/*TODO: refactor this whole thing to use promises.*/
+
 var annoter = makeAnnotations();
 d3.json("/data/static/json/desktop-annotations.json", function(note_data) {
 
     notes = annoter(note_data);
+    heartbeat_rating_chart.annotations(notes);
+    heartbeat_response_chart.annotations(notes);
     input_by_time_chart.annotations(notes);
     input_sentiment_chart.annotations(notes);
+  
+    d3.json("/data/api/v1/stats?measures=heartbeat_average&period_delta=90&products=Firefox&channels=all", function(data) {
+        results = [{name:"Average Rating", values: data.results}];
+        d3.select("#chart1")
+            .datum(results)
+            .call(heartbeat_rating_chart)
+    });   
+
+    d3.json("/data/api/v1/stats?measures=heartbeat_response_rate&period_delta=90&products=Firefox&channels=all", function(data) {
+        results = [{name:"Response rate", values: data.results}];
+        d3.select("#chart2")
+            .datum(results)
+            .call(heartbeat_response_chart)
+    }); 
 
     d3.json("/data/api/v1/stats?measures=input_average&period_delta=90&products=Firefox&channels=all", function(data) {
         final_data = [
@@ -37,9 +77,9 @@ d3.json("/data/static/json/desktop-annotations.json", function(note_data) {
                 values: []
             }
         ];
-        
+
         temp_array = [];
-        
+
         for(i = 0; i < data.results.length; i++){
             item = {};
             item.date = data.results[i].date;
@@ -56,14 +96,14 @@ d3.json("/data/static/json/desktop-annotations.json", function(note_data) {
                 temp_array.shift();
             }
         }
-        d3.select("#chart1")
+        d3.select("#chart3")
             .datum(final_data)
             .call(input_by_time_chart);
     });
 
     d3.json("/data/api/v1/stats?measures=input_average,input_volume,adis&period_delta=90&products=Firefox&channels=all", function(data) {
         results = data.results;
-        d3.select("#chart2")
+        d3.select("#chart4")
             .datum(results)
             .call(input_sentiment_chart)
     });
@@ -90,7 +130,7 @@ var input_by_version_chart = barChart()
 
 d3.json("/data/api/v1/stats?measures=input_average&period=version&period_delta=10&products=Firefox&channels=release", function(data) {
     results = data.results;
-    d3.select("#chart3")
+    d3.select("#chart5")
         .datum(results)
         .call(input_by_version_chart);
 });
@@ -124,14 +164,16 @@ var sumo_volume_chart = barChart()
 
 d3.json("/data/api/v1/stats?measures=sumo_inproduct_visits&period=week&products=Firefox&period_delta=12&channels=all", function(data) {
     results = data.results;
-    d3.select("#chart4")
+    d3.select("#chart6")
         .datum(results)
         .call(sumo_volume_chart);
 });
 
 $(window).resize(_.debounce(function() {
-    d3.select("#chart1").call(input_by_time_chart);
-    d3.select("#chart2").call(input_sentiment_chart);
-    d3.select("#chart3").call(input_by_version_chart);
-    d3.select("#chart4").call(sumo_volume_chart);
+    d3.select("#chart1").call(heartbeat_rating_chart);
+    d3.select("#chart2").call(heartbeat_response_chart);
+    d3.select("#chart3").call(input_by_time_chart);
+    d3.select("#chart4").call(input_sentiment_chart);
+    d3.select("#chart5").call(input_by_version_chart);
+    d3.select("#chart6").call(sumo_volume_chart);
 }, 300));
