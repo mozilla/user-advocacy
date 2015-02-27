@@ -22,19 +22,19 @@ _JOBLIST = [
         #['13 * * * *','echo "this is a new test: $CODE_PATH" >/tmp/test.txt', 'test']
         #[,,],
         [   '0 3 * * *', 
-            'python pipelines/google_play/google_play_manager.py >/tmp/google_play_cron 2>&1', 
+            'python $CODE_PATH/pipelines/google_play/google_play_manager.py >/tmp/google_play_cron 2>&1', 
             'Play Pipeline'],
         ['0 4 * * *', 
-            'python pipelines/stats_pipeline/pipeline.py         >/tmp/stats_cron       2>&1', 
+            'python $CODE_PATH/pipelines/stats_pipeline/pipeline.py         >/tmp/stats_cron       2>&1', 
             'Stats Pipeline'],
         ['0 5 * * *', 
-            'python pipelines/hello_pipeline/pipeline.py         >/tmp/hello_cron       2>&1',
+            'python $CODE_PATH/pipelines/hello_pipeline/pipeline.py         >/tmp/hello_cron       2>&1',
             'Hello Pipeline'],
         ['10 * * * *', 
-            'python pipelines/alert_pipeline/pull_input_alert.py >>/tmp/alert_pipe_cron       2>&1',
+            'python $CODE_PATH/pipelines/alert_pipeline/pull_input_alert.py >>/tmp/alert_pipe_cron       2>&1',
             'Fetch alerts'],
         ['0 */6 * * *',
-            'python pipelines/alert_pipeline/word_alert.py       >/tmp/alert_cron       2>&1',
+            'python $CODE_PATH/pipelines/alert_pipeline/word_alert.py       >/tmp/alert_cron       2>&1',
             'Alert Pipeline']
     ]
 
