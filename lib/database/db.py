@@ -30,7 +30,7 @@ class Database(object):
         self.database_name = database_name
 
     def _get_connection(self):
-        return self.conn if self.conn else self.engine.connect()
+        return self.conn if hasattr(self,'conn') else self.engine.connect()
 
     def execute_sql(self, sql_string, *multiparams, **params):
         """Explicitly executes a SQL command."""
