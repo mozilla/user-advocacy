@@ -12,7 +12,7 @@ import smtplib
 from email.mime.text import MIMEText
 from sqlalchemy import sql
 from textwrap import dedent
-from math import log, floor, min
+from math import log, floor
 import httplib
 httplib.HTTPConnection.debuglevel = 1
 
