@@ -11,6 +11,7 @@ source $WORKON_HOME/uabackend/bin/virtualenvwrapper.sh
 workon uabackend
 cd $CODE_PATH
 
+echo "PYTHONPATH IS $PYTHONPATH"
 echo "CODE_PATH IS $CODE_PATH"
 echo "PATH IS $(pwd)"
 
