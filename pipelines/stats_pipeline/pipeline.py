@@ -21,7 +21,6 @@ __status__     = 'Production'
 from lib.database.backend_db  import Db
 from pipelines.stats_pipeline import google_analytics
 
-import csv
 from datetime import date,timedelta
 from dateutil.relativedelta import relativedelta
 from os import path
@@ -91,12 +90,10 @@ def _update_product(
                 num_adis              INT  NOT NULL, 
                 CONSTRAINT unique_stat UNIQUE (`date`, version)
             );'''.format(table = tmp_adis_table)
-    execute_wrapper(db, query)
+    db.janky_execute_sql_wrapper(query)
 
-    load_csv_into_table(adis_file, 
-                        tmp_adis_table,
-                        db,
-                        header = ['`date`', 'version', 'num_adis'])
+    header = ['`date`', 'version', 'num_adis']
+    db.insert_csv_into_table(adis_file, tmp_adis_table, header, delimiter = '\t')
             
     # =========== Parse Analytics data =========================================
     tmp_sumo_table = 'tmp_%s_sumo_visits' % product
@@ -115,44 +112,19 @@ def _update_product(
                 visits                INT  NOT NULL, 
                 CONSTRAINT unique_stat UNIQUE (`date`, version)
             );'''.format(table = tmp_sumo_table)
-    execute_wrapper(db, query)
+    db.janky_execute_sql_wrapper(query)
 
-    load_csv_into_table(visits_file, 
-                        tmp_sumo_table,
-                        db,
-                        header = ['`date`', 'version', 'visits'])
+    header = ['`date`', 'version', 'visits']
+    db.insert_csv_into_table(visits_file, tmp_sumo_table, header, delimiter = '\t')
 
     # =========== Run Stats query ==============================================
     with open(query_file, 'r') as query_sql:
         if query_sql:
             query = query_sql.read()
     
-    execute_wrapper(db, query, {'start_date': start_date, 'end_date': end_date})
+    db.janky_execute_sql_wrapper(query, {'start_date': start_date, 'end_date': end_date})
 
-
-def load_csv_into_table(filename, tablename, db, header = None):
-    with open(filename, 'rb') as f:
-        reader = csv.reader(f, delimiter='\t')
-        # remove header
-        h = reader.next()
-        if not header:
-            header = h
-        insert_str = ('INSERT INTO %s (%s) ' % (tablename, ','.join(header))) \
-                     + ' VALUES (%s);'
-        for row in reader:
-            if isinstance(row[0],str):
-                row[0] = '"' + row[0] + '"'
-            db.execute_sql(insert_str % ','.join(row))
     
-def execute_wrapper(db, sql, query_vars = None, verbose = False):
-    queries = sql.split(';')
-    for query in queries:
-        print query
-        if query != '':
-            if query_vars:
-                db.execute_sql(query, query_vars)
-            else:
-                db.execute_sql(query)
 
 if __name__ == "__main__":
     main()

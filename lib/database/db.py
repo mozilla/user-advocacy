@@ -4,7 +4,7 @@
 This is a generic wrapper for sqlalchemy engines to add a database object that you can
 specify. Database objects behave like engines but sets a default DB each time.
 """
-
+import csv
 import logging
 import sqlalchemy
 from sqlalchemy.sql import text, select
@@ -57,5 +57,92 @@ class Database(object):
             return self.Metadata.tables[self.database_name + '.' + table_name]
         return sqlalchemy.schema.MetaData(bind=engine).tables[table_name]
 
+    #======== More Specific Helper Functions ===================================
 
+    def janky_execute_sql_wrapper(self, sql, query_vars = None):
+        '''
+        SQL statements with more than one query were erroring out,
+        This is a hacky fix.
+        '''
+        queries = sql.split(';')
+        for query in queries:
+            if query != '':
+                if query_vars:
+                    self.execute_sql(query, query_vars)
+                else:
+                    self.execute_sql(query)
+
+    def insert_csv_into_table(self,
+                              filename,
+                              tablename,
+                              col_fields,
+                              has_header = True,
+                              delimiter = ','):
+        '''
+        Loads a CSV into a Table
+
+        Args:
+            filename    (str): The path/filename of the CSV
+            tablename   (str): The name of the table to update
+            col_fields (dict): A dict that maps <column name|column index> -> field
+                       (list): A list of the fields that correlate to the CSV columns
+                               ex. {1:'week', 3:'total'} 
+                               ex. {'date':'week', 'total':'total'}
+            has_header (bool): Whether the FILE contains a header (default: True)
+            delimiter   (str): The delimeter used in the CSV (default: ',')
+        '''
+        #TODO: It would be nice to be able to pass in functions to alter specific columns
+
+        # Convert list to dict if list
+        new_cf = {}
+        if isinstance(col_fields, list):
+            i = 0
+            for v in col_fields:
+                new_cf[i] = v
+                i += 1
+            col_fields = new_cf
+
+        first_key = col_fields.keys()[0]
+        col_type = type(first_key)
+        if isinstance(first_key, (int, long)):
+            needs_mapped = False
+            new_mapping = col_fields
+        else:
+            needs_mapped = True
+            new_mapping = {} # index -> field
+            if not has_header:
+                raise Exception('If you provide string keys for col_fields \
+                                your file must have a header to map against.')
+        print needs_mapped
+        # Sanity Check the keys of col_values for consistent types
+        for k in col_fields.keys():
+            if not isinstance(k,col_type):
+                raise Exception('type(key) in col_fields must be consistent.')
+
+        with open(filename, 'rb') as f:
+            reader = csv.reader(f, delimiter = delimiter)
+            # remove header
+            if has_header:
+                h = reader.next()
+                if needs_mapped:
+                    header = {}
+                    i = 0
+                    for v in h:
+                        header[v] = i
+                        i += 1
+                    for k,v in col_fields.iteritems():
+                        new_mapping[header[v]] = v
+
+            insert_pattern = 'INSERT INTO %s (%s) VALUES (%s);'
+            for row in reader:
+                fields = []
+                values = []
+                for index, field in new_mapping.iteritems():
+                    fields.append(field)
+                    values.append(row[index])
+                self.execute_sql(insert_pattern % (
+                        tablename,
+                        ','.join(fields),
+                        ','.join(values)
+                    ))
     
