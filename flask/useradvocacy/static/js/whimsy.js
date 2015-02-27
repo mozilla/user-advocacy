@@ -23,14 +23,22 @@
         'KeyboardCat': 1,
         'Odin': 1,
         'Congrats': 1,
+        'Heartbeat': 10,
+        
     };
     
     var exceptions = {
-        'Pirate':  ['Arrrvocacy','Arrrvocacy',
-                    'Arrrrvocacy','Arrrrrvocacy','Arrrrrrrrrrrvocacy'],
-        'Canada': ['Eh?vocacy'],
-        'Go': ['SFGiants', 'Niners'],
-        'Congrats': ['Matt', 'Tyler'],
+        'Pirate'    :   ['Arrrvocacy','Arrrvocacy',
+                        'Arrrrvocacy','Arrrrrvocacy','Arrrrrrrrrrrvocacy',
+                        'Arrrrrrrrrrrrrrrrrrrrrvocacy'],
+        'Canada'    :   ['Eh?vocacy'],
+        'Go'        :   ['SFGiants', 'Niners'],
+        'Congrats'  :   ['Matt&amp;Jess', 'Tyler&amp;Emily'],
+        'Heartbeat' :   [   '&#x2605;&#x2605;&#x2605;&#x2605;&#x2605',
+                            '&#x2605;&#x2605;&#x2605;&#x2605;&#x2606',
+                            '&#x2605;&#x2605;&#x2605;&#x2606;&#x2606',
+                            '&#x2605;&#x2605;&#x2606;&#x2606;&#x2606',
+                            '&#x2605;&#x2606;&#x2606;&#x2606;&#x2606'],
     };
     
     var sum = _.reduce(titles, function (a,w) { return a+w }, 0);
@@ -52,7 +60,7 @@
                 $('.navbar-brand .large-red-text').text('Advocacy');
             } else if (exceptions[item]) {
                 $('.navbar-brand .large-grey-text').text(item);
-                $('.navbar-brand .large-red-text').text(_.sample(exceptions[item]));
+                $('.navbar-brand .large-red-text').html(_.sample(exceptions[item]));
             } else if (item.match('^\&\#')) {
                 $('.navbar-brand .large-grey-text').html(
                 '<span style="font-weight: 300">'+item+'</span> ');
@@ -81,5 +89,7 @@
             whimsify(true);
         }
     }, false);
+    
+    window.whimsify = whimsify
     
 }(jQuery, d3, window, _));
