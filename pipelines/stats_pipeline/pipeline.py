@@ -45,7 +45,7 @@ _QUERY_FILE_PATTERN = _PIPELINE_PATH + 'daily_%s_stats.sql'
 #
 
 #This should be handled better...
-_SENTIMENT_DB = Db('sentiment', is_persistant = True)
+_SENTIMENT_DB = Db('sentiment', is_persistent = True)
 
 def main():
     update(product='desktop',start_date='2015-02-24', end_date='2015-02-24')

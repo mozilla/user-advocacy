@@ -19,11 +19,11 @@ def init_engine (uri):
 
 class Database(object):
     """Database object. Represents an explicitly named DB accessed from a given engine."""
-    def __init__(self, database_name, engine, is_persistant = False):
+    def __init__(self, database_name, engine, is_persistent = False):
         meta = sqlalchemy.schema.MetaData(bind=engine, schema=database_name)
         meta.reflect()
         self.engine = engine
-        if is_persistant:
+        if is_persistent:
             self.conn = self.engine.connect()
         self.Metadata = meta
         self.tables = meta.tables
