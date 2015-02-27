@@ -349,10 +349,6 @@ def stats_return(args):
         select_statements.append(
                 'SUM(input_volume) AS input_volume'
             )
-    if 'input_average'             in corrected_measures:
-        select_statements.append(
-                'SUM(input_average*input_volume)/SUM(input_volume) AS input_average'
-            )
     if 'heartbeat_average'         in corrected_measures:
         select_statements.append(
                 'SUM(heartbeat_average*heartbeat_volume)/SUM(heartbeat_volume) AS heartbeat_average'
