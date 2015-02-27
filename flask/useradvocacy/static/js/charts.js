@@ -646,7 +646,6 @@ function timeScaleLine() {
                     return yScale(yValue(d));
                 });
 
-            xScale.nice(d3.time.week, 2);
             xAxis.ticks(d3.time.week, 2);
             xAxis.tickFormat(d3.time.format("%-m/%-d"));
 
