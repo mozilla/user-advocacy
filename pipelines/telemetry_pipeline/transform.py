@@ -6,12 +6,10 @@ import sys
 
 from collections import defaultdict
 from math        import log,pow,floor
-from pprint      import pprint
+#from pprint      import pprint
 from os          import path
 
-#TODO(rrayborn): Fix this import
-sys.path.append(path.normpath(path.join(path.dirname(__file__), '..', '..')))
-from lib.database.simple_db import SimpleDB
+from lib.database.backend_db  import Db
 
 _PIPELINE_PATH = path.dirname(path.realpath(__file__))+'/'
 _DATA_PATH  = _PIPELINE_PATH + '/data/'
@@ -19,6 +17,8 @@ _UPDATE_SQL_FILE = _PIPELINE_PATH + 'update.sql'
 _INTERMEDIATE_CSV = _DATA_PATH + '.tmp.csv'
 _CHANNELS = ['release', 'beta', 'aurora', 'nightly']
 
+#This should be handled better...
+_SENTIMENT_DB = Db('sentiment', is_persistent = True)
 
 def bootstrap():
     #TODO(rrayborn)
@@ -40,22 +40,22 @@ def run(date_str, channel, file_in):
     # Transform
     measures = MeasureList()
     measures.load_csv(file_in)
-    measures.save_csv() #TODO(rrayborn): refactor this to avoid saving an intermediate CSV
+    #measures.save_csv() #TODO(rrayborn): refactor this to avoid saving an intermediate CSV
 
     # Load to MySQL
-    _telem_parsed_to_sql(date_str, channel)
+    _telem_parsed_to_sql(date_str, channel, measures.get_iter())
 
 
 # ===== SQLING =================================================================
 
 def _telem_parsed_to_sql(date_str,
                          channel,
-                         version = None,
-                         file_in    = _INTERMEDIATE_CSV, 
+                         measure_iter,
+                         version    = None, 
                          query_file = _UPDATE_SQL_FILE):
     """ Loads _INTERMEDIATE_CSV into the sentiment database """
 
-    db = SimpleDB('sentiment') # TODO(rrayborn): Switch off of SimpleDB to db.py
+    db = Db('telemetry', is_persistent = True)
 
     #version query
     if not version:
@@ -63,23 +63,42 @@ def _telem_parsed_to_sql(date_str,
                 SELECT
                     version
                 FROM 
-                    release_info ri
+                    sentiment.release_info ri
                 WHERE
                     '{date}' >= ri.{channel}_start_date
                     AND '{date}' <= ri.{channel}_end_date
             ;""".format(date=date_str, channel=channel)
-        version = str(db.execute(query)[0][0])
+        version = str(db.execute_sql(query).first()[0])
+
+    
+    query ='''CREATE TEMPORARY TABLE tmp_weekly_stats (
+            os                       ENUM('Windows','Mac','Linux'),
+            measure                  VARCHAR(200),
+            measure_value            VARCHAR(200),
+            users                    INT,
+            measure_average          FLOAT,
+            measure_nonzero_average  FLOAT,
+            active_users             FLOAT,
+            potential_users          INT         
+        );'''
+    db.execute_sql(query)
+    mappings = {
+                0:'measure',
+                1:'os',
+                2:'measure_average',
+                3:'measure_nonzero_average',
+                4:'active_users',
+                5:'potential_users',
+                6:'measure_value'
+            }
+    db.insert_data_into_table(measure_iter, 'tmp_weekly_stats', mappings)
+
 
     with open(query_file, 'r') as query_sql:
         if query_sql:
             query = query_sql.read()
-            query = query.replace("@csv",     file_in)
-            query = query.replace("@week",    date_str)
-            query = query.replace("@channel", channel)
-            query = query.replace("@version", version)
     
-    db.execute(query)
-    db.commit()
+    db.execute_sql(query, {'week':date_str, 'channel':channel, 'version':version})
 
 # ===== MUNGING ================================================================
 
@@ -136,7 +155,7 @@ class MeasureList:
             # featurelist  = ['features_kept','new','window','button']
             # value        = 'kept'
             # measure_name = 'window-button'
-            print "features"
+#            print "features"
             featurelist  = raw_value.partition('-')
             value        = featurelist[0].rpartition('_')[2]
             measure_name = featurelist[2]
@@ -157,7 +176,7 @@ class MeasureList:
             else:
                 raise Warning('Toolbar value %s unknown' % featurelist[2])
                 value = None
-            print "toolbar"
+#            print "toolbar"
             measure_name = featurelist[0]
             
             self.insert(measure_name, 'string', 
@@ -166,7 +185,7 @@ class MeasureList:
         elif reScreen.search(raw_value):
             measure_name = 'sizemode'
             value        = raw_value.rpartition('-')[-1]
-            print "screen"
+#            print "screen"
             
             self.insert(measure_name, 'string', 
                         os, os_total,  
@@ -178,7 +197,7 @@ class MeasureList:
             # featurelist  = ['click','menu','button','button','left']
             # value        = 'count'
             # measure_name = <yield>
-            print "buckets"
+#            print "buckets"
             measure_name = raw_value
             self.insert(measure_name, 'bucket', 
                         os, os_total,  
@@ -218,6 +237,9 @@ class MeasureList:
         measure = self.measure_lists[measure_name]
         measure.insert(os, os_total, values = values)
 
+    def get_iter(self):
+        return iter(self.get_table())
+
     def get_table(self):
         ret = [Measure.get_header()]
         for measure_name, measure_list in self.measure_lists.iteritems():
@@ -231,8 +253,9 @@ class MeasureList:
             next(csvreader, None)
 
             for row in csvreader:
-                print row
+#                print row
                 self._append_row(row)
+
 
     def save_csv(self, file_out = _INTERMEDIATE_CSV):
         if file_out:
@@ -418,7 +441,7 @@ class OSMeasure:
 
 if __name__ == "__main__":
     queue = [
-        #["2014-06-24", "aurora",  _DATA_PATH + "week_of_20140624_aurora.csv"],
+        ["2015-01-27", "nightly",  _DATA_PATH + "week_of_20150127_nightly.csv"]#,
         #["2014-07-01", "aurora",  _DATA_PATH + "week_of_20140701_aurora.csv"],
         #["2014-07-08", "aurora",  _DATA_PATH + "week_of_20140708_aurora.csv"],
         #["2014-07-15", "aurora",  _DATA_PATH + "week_of_20140715_aurora.csv"],
