@@ -71,7 +71,7 @@ class Database(object):
                     self.execute_sql(query, query_vars)
                 else:
                     self.execute_sql(query)
-
+    
     def insert_csv_into_table(self,
                               filename,
                               tablename,
@@ -90,6 +90,28 @@ class Database(object):
                                ex. {'date':'week', 'total':'total'}
             has_header (bool): Whether the FILE contains a header (default: True)
             delimiter   (str): The delimeter used in the CSV (default: ',')
+        '''
+        with open(filename, 'rb') as f:
+            csv_iter = csv.reader(f, delimiter = delimiter)
+            self.insert_data_into_table(csv_iter, tablename, col_fields, has_header)
+
+
+    def insert_data_into_table(self,
+                               data_iterator,
+                               tablename,
+                               col_fields,
+                               has_header = True):
+        '''
+        Loads a CSV into a Table
+
+        Args:
+            data_iterator (iter): A data iterator
+            tablename      (str): The name of the table to update
+            col_fields    (dict): A dict that maps <column name|column index> -> field
+                          (list): A list of the fields that correlate to the CSV columns
+                                  ex. {1:'week', 3:'total'} 
+                                  ex. {'date':'week', 'total':'total'}
+            has_header    (bool): Whether the FILE contains a header (default: True)
         '''
         #TODO: It would be nice to be able to pass in functions to alter specific columns
 
@@ -113,36 +135,39 @@ class Database(object):
             if not has_header:
                 raise Exception('If you provide string keys for col_fields \
                                 your file must have a header to map against.')
-        print needs_mapped
         # Sanity Check the keys of col_values for consistent types
         for k in col_fields.keys():
             if not isinstance(k,col_type):
                 raise Exception('type(key) in col_fields must be consistent.')
 
-        with open(filename, 'rb') as f:
-            reader = csv.reader(f, delimiter = delimiter)
-            # remove header
-            if has_header:
-                h = reader.next()
-                if needs_mapped:
-                    header = {}
-                    i = 0
-                    for v in h:
-                        header[v] = i
-                        i += 1
-                    for k,v in col_fields.iteritems():
-                        new_mapping[header[v]] = v
+        # remove header
+        if has_header:
+            first_line = data_iterator.next()
+            if needs_mapped:
+                header = {}
+                i = 0
+                for v in first_line:
+                    header[v] = i
+                    i += 1
+                for k,v in col_fields.iteritems():
+                    new_mapping[header[v]] = v
 
-            insert_pattern = 'INSERT INTO %s (%s) VALUES (%s);'
-            for row in reader:
-                fields = []
-                values = []
-                for index, field in new_mapping.iteritems():
-                    fields.append(field)
-                    values.append(row[index])
-                self.execute_sql(insert_pattern % (
-                        tablename,
-                        ','.join(fields),
-                        ','.join(values)
-                    ))
+        insert_pattern = 'INSERT INTO %s (%s) VALUES (%s);'
+        for row in data_iterator:
+            fields = []
+            values = []
+            for index, field in new_mapping.iteritems():
+                if row[index] is None or row[index] =='Null':
+                    value = 'Null'
+                elif isinstance(row[index],str):
+                    value = '"' + row[index].decode('utf-8') + '"'
+                else:
+                    value = str(row[index])
+                fields.append(field)
+                values.append(value)
+            self.execute_sql(insert_pattern % (
+                    tablename,
+                    ','.join(fields),
+                    ','.join(values)
+                ))
     

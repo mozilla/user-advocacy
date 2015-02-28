@@ -15,7 +15,7 @@ __status__     = 'Production'
 
 #TODO: add gflags
 #TODO: add SQL lib
-#
+
 #TODO: test
 
 from lib.database.backend_db  import Db
@@ -90,7 +90,7 @@ def _update_product(
                 num_adis              INT  NOT NULL, 
                 CONSTRAINT unique_stat UNIQUE (`date`, version)
             );'''.format(table = tmp_adis_table)
-    db.janky_execute_sql_wrapper(query)
+    db.execute_sql(query)
 
     header = ['`date`', 'version', 'num_adis']
     db.insert_csv_into_table(adis_file, tmp_adis_table, header, delimiter = '\t')
@@ -112,7 +112,7 @@ def _update_product(
                 visits                INT  NOT NULL, 
                 CONSTRAINT unique_stat UNIQUE (`date`, version)
             );'''.format(table = tmp_sumo_table)
-    db.janky_execute_sql_wrapper(query)
+    db.execute_sql(query)
 
     header = ['`date`', 'version', 'visits']
     db.insert_csv_into_table(visits_file, tmp_sumo_table, header, delimiter = '\t')
