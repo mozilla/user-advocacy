@@ -1,10 +1,12 @@
 #!/usr/local/bin/python
 
 '''
-Exports Hello AKA Loop data to our server's static data dir.
+Exports data to our server's stats table from various sources including:
+ * Input
+ * Sumo
+ * Google Play
+ * Google Analytics
 '''
-
-#TODO(rrayborn): 
 
 __author__     = 'Rob Rayborn'
 __copyright__  = 'Copyright 2015, The Mozilla Foundation'
@@ -14,7 +16,6 @@ __email__      = 'rrayborn@mozilla.com'
 __status__     = 'Production'
 
 #TODO: add gflags
-#TODO: add SQL lib
 
 #TODO: test
 
@@ -48,14 +49,11 @@ _SENTIMENT_DB = Db('sentiment', is_persistent = True)
 
 def main():
     update()
-    #update()
-
-#TODO(rrayborn): bootstrap function
 
 def update(
             product    = None,
-            start_date = (date.today() - timedelta(days=2)).strftime('%Y-%m-%d'),
-            end_date   = (date.today() - timedelta(days=2)).strftime('%Y-%m-%d'),
+            start_date = (date.today() - timedelta(days=3)).strftime('%Y-%m-%d'),
+            end_date   = (date.today() - timedelta(days=1)).strftime('%Y-%m-%d'),
             db         = _SENTIMENT_DB
         ):
     if product:
