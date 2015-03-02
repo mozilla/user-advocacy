@@ -1,3 +1,5 @@
+// TODO: Error handling for every d3.json load.
+
 var heartbeat_rating_chart = timeScaleLine()
     .y(function(d) {
         return d.heartbeat_average
@@ -6,11 +8,11 @@ var heartbeat_rating_chart = timeScaleLine()
     .ymin(1)
     .ymax(5)
     .colors(["#B2EAF8"])
-    .legend(false);
+    .legend(false)
     
 var heartbeat_response_chart = timeScaleLine()
     .y(function(d) {
-        return d.heartbeat_responses_rate
+        return d.heartbeat_response_rate * 100
     })
     .ymin(0)
     .ymax(100)

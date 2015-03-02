@@ -644,7 +644,8 @@ function timeScaleLine() {
                 })
                 .y(function(d) {
                     return yScale(yValue(d));
-                });
+                })
+                .defined(function(d) { return !isNaN(yValue(d)); });
 
             xAxis.ticks(d3.time.week, 2);
             xAxis.tickFormat(d3.time.format("%-m/%-d"));
