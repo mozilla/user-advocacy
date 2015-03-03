@@ -355,7 +355,7 @@ def stats_return(args):
             )
     if 'heartbeat_response_rate'  in corrected_measures:
         select_statements.append(
-                'SUM(heartbeat_response_rate*heartbeat_volume)/SUM(heartbeat_volume) AS heartbeat_response_rate'
+                'SUM(heartbeat_volume)/SUM(heartbeat_volume/heartbeat_response_rate) AS heartbeat_response_rate'
             )
     if 'heartbeat_volume'          in corrected_measures:
         select_statements.append(

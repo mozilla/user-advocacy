@@ -50,7 +50,7 @@ SELECT
     CAST(SUBSTRING_INDEX(version, '.', 1) AS UNSIGNED) AS version,
     AVG(score) AS average,
     COUNT(score)/COUNT(*) AS response_rate,
-    COUNT(*) AS volume
+    COUNT(score) AS volume
 FROM input.remote_heartbeat_answer
 WHERE
     survey_id = 'heartbeat-by-user-first-impression'
