@@ -12,8 +12,7 @@ CREATE TABLE IF NOT EXISTS daily_desktop_stats (
   sumo_unanswered_3_days   INT,
   sumo_in_product_views    INT,
   adis                     INT,
-  heartbeat_average        FLOAT,
-  heartbeat_response_rate  FLOAT,
+  heartbeat_surveyed_users INT,
   heartbeat_volume         INT,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_stat` (`date`,`version`)
@@ -49,7 +48,7 @@ SELECT
     DATE(FROM_UNIXTIME(updated_ts/1000)) AS `date`,
     CAST(SUBSTRING_INDEX(version, '.', 1) AS UNSIGNED) AS version,
     AVG(score) AS average,
-    COUNT(score)/COUNT(*) AS response_rate,
+    COUNT(*) AS surveyed_users,
     COUNT(score) AS volume
 FROM input.remote_heartbeat_answer
 WHERE
@@ -180,7 +179,7 @@ REPLACE INTO daily_desktop_stats (
         sumo_in_product_views,
         adis,
         heartbeat_average,
-        heartbeat_response_rate,
+        heartbeat_surveyed_users,
         heartbeat_volume
     )
 SELECT
@@ -196,7 +195,7 @@ SELECT
     COALESCE(visits.visits,0)                   AS sumo_in_product_views,
     COALESCE(adis.num_adis,0)                   AS adis,
     COALESCE(heartbeat.average,0)               AS heartbeat_average,
-    COALESCE(heartbeat.response_rate,0)         AS heartbeat_response_rate,
+    COALESCE(heartbeat.surveyed_users,0)        AS heartbeat_surveyed_users,
     COALESCE(heartbeat.volume,0)                AS heartbeat_volume
 FROM
     tmp_desktop_base base
@@ -219,6 +218,6 @@ HAVING -- Make sure that the row is necessary
     OR sumo_in_product_views
     OR adis
     OR heartbeat_average
-    OR heartbeat_response_rate
+    OR heartbeat_surveyed_users
     OR heartbeat_volume
 ;
