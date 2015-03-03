@@ -6,7 +6,7 @@ from lib.database.backend_db import Db
 import csv
 import json
 import requests
-import datetime
+import datetime as dt
 from warnings import warn
 import smtplib
 from email.mime.text import MIMEText
@@ -128,7 +128,7 @@ def main():
             and v.after.count >= _MIN_COUNT_THRESHOLD):
             print "Emitting alert for %s" % v.after.sorted_metadata[0]
             alert_count += 1
-            emit_alert(v)
+            v.emit()
     
     if alert_count <= 0:
         print "No alerts today"
@@ -195,57 +195,14 @@ def email_results(email_list):
         server.sendmail(ALERT_EMAIL_FROM, ALERT_EMAIL.split(','), msg.as_string())
         server.quit()
 
-
-def emit_alert (v):
-    headers = {
-        'content-type': 'application/json',
-        'accept': 'application/json; indent=4',
-        'Fjord-Authorization': 'Token ' + ALERT_TOKEN,
-    }
-    links = []
-    for link_id in v.after.link_list:
-        links.append({
-            'name'  : 'Input Link',
-            'url'   : 'http://input.mozilla.org/dashboard/response/'+str(link_id)
-        })
-    description = dedent("""
-    
-        Trending words: %s
-    
-        Before: %.2f/1000
-        After %.2f/1000
-        Absolute Difference: %.2f %%age points
-        Percent Difference: %.2f %%
-        
-    """%(
-        ", ".join(v.after.sorted_metadata),
-        v.base_pct * 10,
-        v.after_pct * 10,
-        v.diff_abs * 10,
-        v.diff_pct
-    )).strip()
-    payload = {
-        'severity': v.severity,
-        'summary': '%s is trending up by %.2f'%(v.after.sorted_metadata[0], v.diff_pct),
-        'description': description,
-        'flavor': 'word-based',
-        'emitter_name': 'input_word_alert',
-        'emitter_version': 0.1,
-        'links': links
-    }  
-    print "Headers", headers
-    resp = requests.post(
-        'https://input.mozilla.org/api/v1/alerts/alert/',
-        data=json.dumps(payload),
-        headers=headers
-    )
-    if resp.status_code == 201:
-        print "All systems good. Submitted alert for %s" % (v.after.sorted_metadata[0])
-    else:
-        print "Failed to submit alert for %s" % (v.after.sorted_metadata[0])
-        print resp.json()['detail']
     
 class WordDeltaCounter (ItemCounterDelta):
+
+    def __init__ (self, *args, **kwargs):
+        super(WordDeltaCounter, self).__init__(*args, **kwargs)
+        now = dt.datetime.utcnow()
+        self.end_time = now - (dt.timedelta(microseconds=now.microsecond))
+
     @property
     def severity (self):
         """
@@ -262,6 +219,63 @@ class WordDeltaCounter (ItemCounterDelta):
         if value > 10:
             return 10
         return int(floor(value))
+        
+    def emit(self):
+        headers = {
+            'content-type': 'application/json',
+            'accept': 'application/json; indent=4',
+            'Fjord-Authorization': 'Token ' + ALERT_TOKEN,
+        }
+        timediff = dt.timedelta(hours = _TIMEFRAME)
+        start_time = self.end_time - timediff
+        links = []
+        for link_id in self.after.link_list:
+            links.append({
+                'name'  : 'Input Link',
+                'url'   : 'http://input.mozilla.org/dashboard/response/'+str(link_id)
+            })
+        description = dedent("""
+    
+            Trending words: %s
+    
+            Before: %.2f/1000
+            After %.2f/1000
+            Absolute Difference: %.2f %%age points
+            Percent Difference: %.2f %%
+        
+        """%(
+            ", ".join(self.after.sorted_metadata),
+            self.base_pct * 10,
+            self.after_pct * 10,
+            self.diff_abs * 10,
+            self.diff_pct
+        )).strip()
+        payload = {
+            'severity': self.severity,
+            'summary': '%s is trending up by %.2f'%\
+                (self.after.sorted_metadata[0], self.diff_pct),
+            'description': description,
+            'flavor': 'word-based',
+            'emitter_name': 'input_word_alert',
+            'emitter_version': 0.1,
+            'links': links,
+            'start_time': start_time.isoformat()+'Z',
+            'end_time': self.end_time.isoformat()+'Z'
+        }  
+        print "Headers", headers
+        resp = requests.post(
+            'https://input.mozilla.org/api/v1/alerts/alert/',
+            data=json.dumps(payload),
+            headers=headers
+        )
+        if resp.status_code == 201:
+            print "All systems good. Submitted alert for %s" % \
+                (self.after.sorted_metadata[0])
+        else:
+            print "Failed to submit alert for %s" % (self.after.sorted_metadata[0])
+            print resp.json()['detail']
+
+    
         
 def safe_log (value):
     if value <= 0:
