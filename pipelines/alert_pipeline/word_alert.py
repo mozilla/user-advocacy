@@ -257,7 +257,7 @@ class WordDeltaCounter (ItemCounterDelta):
             'description': description,
             'flavor': 'word-based',
             'emitter_name': 'input_word_alert',
-            'emitter_version': 0.1,
+            'emitter_version': 1,
             'links': links,
             'start_time': start_time.isoformat()+'Z',
             'end_time': self.end_time.isoformat()+'Z'
