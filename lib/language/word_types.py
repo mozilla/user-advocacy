@@ -96,11 +96,17 @@ def tokenize(comment, wc = None):
     s           = Simplifier()
     words_dict  = defaultdict(set)
     word_regex  = re.compile(r'\W+')
+    version_regex = re.compile(r'^[\d.a]*$')
     for word in words:
         if word is None or word=='': #TODO(rrayborn): this shouldn't happen but it is
             continue
         # Remove non-alphanumberic
         new_word = word_regex.sub('', word)
+        if word is None or word=='': #This shouldn't happen but gets rid of blanks
+            continue
+        # Remove things that match just version numbers
+        if version_regex.match(word):
+            continue
         # Apply Mappings
         new_word = wc.translate_mapping(word)
         # Remove common [Pre]
