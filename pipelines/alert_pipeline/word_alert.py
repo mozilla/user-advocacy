@@ -15,6 +15,7 @@ from textwrap import dedent
 from math import log, floor
 import httplib
 httplib.HTTPConnection.debuglevel = 1
+from pytz import timezone as tz
 
 import operator
 
@@ -201,6 +202,7 @@ class WordDeltaCounter (ItemCounterDelta):
     def __init__ (self, *args, **kwargs):
         super(WordDeltaCounter, self).__init__(*args, **kwargs)
         now = dt.datetime.utcnow()
+        now = tz('UTC').localize(now)
         self.end_time = now - (dt.timedelta(microseconds=now.microsecond))
 
     @property
@@ -259,8 +261,8 @@ class WordDeltaCounter (ItemCounterDelta):
             'emitter_name': 'input_word_alert',
             'emitter_version': 1,
             'links': links,
-            'start_time': start_time.isoformat()+'Z',
-            'end_time': self.end_time.isoformat()+'Z'
+            'start_time': start_time.isoformat(),
+            'end_time': self.end_time.isoformat()
         }  
         print "Headers", headers
         resp = requests.post(
@@ -274,6 +276,32 @@ class WordDeltaCounter (ItemCounterDelta):
         else:
             print "Failed to submit alert for %s" % (self.after.sorted_metadata[0])
             print resp.json()['detail']
+            
+    def __repr__(self):
+        repr = "Word counter object for %s with %d before and %d after counts"%\
+            (self.key, self.base, self.after)
+        return repr
+        
+    def __str__(self):
+        str = dedent("""
+            Severity %d counter for %s.
+            Words: %s
+            Before: %.2f/1000
+            After %.2f/1000
+            Absolute Difference: %.2f %%age points
+            Percent Difference: %.2f %%
+            Total links: %d
+        """%(
+            self.severity,
+            self.after.sorted_metadata[0],
+            ", ".join(self.after.sorted_metadata),
+            self.base_pct * 10,
+            self.after_pct * 10,
+            self.diff_abs * 10,
+            self.diff_pct,
+            len(self.after.link_list)
+        )).strip()
+        return str
 
     
         
