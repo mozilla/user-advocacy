@@ -96,7 +96,7 @@ def tokenize(comment, wc = None):
     s           = Simplifier()
     words_dict  = defaultdict(set)
     word_regex  = re.compile(r'\W+')
-    version_regex = re.compile(r'^(v|version)?[\d.a]*$')
+    version_regex = re.compile(r'^(v|ver|version|ff|fx|firefox)?[\d.a]*$')
     for word in words:
         if word is None or word=='': #TODO(rrayborn): this shouldn't happen but it is
             continue
