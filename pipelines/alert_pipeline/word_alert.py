@@ -28,10 +28,10 @@ _PAST_TIMEFRAME = 3 # Weeks
 # Constants for calculation of severity
 _DIFF_PCT_MIN = 30 # Percentage increase for which we absolutely don't want to return sev.
 _DIFF_ABS_MIN = 0.5 # Percentage point change for which we absolutely ignore
-_DIFF_ABS_SCALE = 200 # Scaling factor between rel and abs diff
-_SEV_SCALE = 10 # Factor by which to expand the log of the product of the logs.
-_SEV_SUB = 3.3 # Reduce this to alert more, increase to alert less
-_MAX_PCT_DIFF = 100000 # Infinity throws everything off, so we're capping things.
+_DIFF_ABS_SCALE = 2 # Scaling factor between rel and abs diff
+_SEV_SCALE = 8.5 # Factor by which to scale things up to fit the range.
+_SEV_SUB = 2 # Reduce this to alert more, increase to alert less
+_MAX_PCT_DIFF = 10000 # Infinity throws everything off, so we're capping things.
 
 _MIN_COUNT_THRESHOLD = 3
 _MIN_DENOM_THRESHOLD = 20
@@ -214,8 +214,8 @@ class WordDeltaCounter (ItemCounterDelta):
         #TODO: experiment with other algorithms
         pct_value = min(self.diff_pct, _MAX_PCT_DIFF)
         pct_part = safe_log(self.diff_pct - _DIFF_PCT_MIN)
-        abs_part = safe_log((self.diff_abs - _DIFF_ABS_MIN)*_DIFF_ABS_SCALE)
-        value = _SEV_SCALE * (safe_log(abs_part * pct_part) - _SEV_SUB)
+        abs_part = (self.diff_abs - _DIFF_ABS_MIN)*_DIFF_ABS_SCALE
+        value = _SEV_SCALE * (safe_log(abs_part + pct_part) - _SEV_SUB)
         if value < -1:
             return -1
         if value > 10:
@@ -279,7 +279,7 @@ class WordDeltaCounter (ItemCounterDelta):
             
     def __repr__(self):
         repr = "Word counter object for %s with %d before and %d after counts"%\
-            (self.key, self.base, self.after)
+            (self.key, self.base.count, self.after.count)
         return repr
         
     def __str__(self):
