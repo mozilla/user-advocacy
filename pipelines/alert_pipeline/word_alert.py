@@ -189,7 +189,7 @@ def email_results(email_list):
     if len(email_list) > 0:
 
         msg = MIMEText(email_body)
-        msg['Subject'] = "Alert for: " + ", ".join(shortwords)
+        msg['Subject'] = "[Input Alert] " + ", ".join(shortwords)
         msg['From'] = ALERT_EMAIL_FROM
         msg['To'] = ALERT_EMAIL
         server = smtplib.SMTP('localhost')
