@@ -52,7 +52,7 @@ def main():
 
 def update(
             product    = None,
-            start_date = (date.today() - timedelta(days=9)).strftime('%Y-%m-%d'),
+            start_date = (date.today() - timedelta(days=3)).strftime('%Y-%m-%d'),
             end_date   = (date.today() - timedelta(days=1)).strftime('%Y-%m-%d'),
             db         = _SENTIMENT_DB
         ):
