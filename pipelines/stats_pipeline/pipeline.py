@@ -76,7 +76,7 @@ def _update_product(
 
     # =========== Parse ADI data ===============================================
     tmp_adis_table = 'tmp_%s_adis' % product
-    cmd = 'echo "%s" | isql -v metrics_dsn  -b -x0x09 >%s'
+    cmd = 'echo "%s" | isql -v metrics_dsn  -b -x0x09 | tail -n+10 >%s'
     with open(_ADIS_SQL_FILE, 'r') as adis_sql:
         if adis_sql:
             query = adis_sql.read().replace('\n','  ') % (
