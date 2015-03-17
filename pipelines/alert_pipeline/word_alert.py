@@ -23,6 +23,7 @@ from collections import defaultdict
 from lib.general.counters import ItemCounterDelta
 from lib.language.word_types import tokenize
 
+_VERSION = 2 # Update this when you update stuff (ints only)
 _TIMEFRAME = 12 # Hours
 _PAST_TIMEFRAME = 3 # Weeks
 # Constants for calculation of severity
@@ -30,8 +31,8 @@ _DIFF_PCT_MIN = 30 # Percentage increase for which we absolutely don't want to r
 _DIFF_ABS_MIN = 0.5 # Percentage point change for which we absolutely ignore
 _DIFF_ABS_SCALE = 2 # Scaling factor between rel and abs diff
 _SEV_SCALE = 8.5 # Factor by which to scale things up to fit the range.
-_SEV_SUB = 2 # Reduce this to alert more, increase to alert less
-_MAX_PCT_DIFF = 10000 # Infinity throws everything off, so we're capping things.
+_SEV_SUB = 2.2 # Reduce this to alert more, increase to alert less
+_MAX_PCT_DIFF = 1000 # Infinity throws everything off, so we're capping things.
 
 _MIN_COUNT_THRESHOLD = 3
 _MIN_DENOM_THRESHOLD = 20
@@ -259,7 +260,7 @@ class WordDeltaCounter (ItemCounterDelta):
             'description': description,
             'flavor': 'word-based',
             'emitter_name': 'input_word_alert',
-            'emitter_version': 1,
+            'emitter_version': _VERSION,
             'links': links,
             'start_time': start_time.isoformat(),
             'end_time': self.end_time.isoformat()
