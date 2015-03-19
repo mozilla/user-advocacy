@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 
 import sys
-from os import path, environ
+from os import path, environ, remove
 import json
 import requests
 import datetime
@@ -38,6 +38,7 @@ def main():
             _OUTPUT_PATH,
             ALERT_FILENAME
         )
+        remove(file_path)
         file = open(file_path, 'w')
         alert_json = resp.json()
         timestamp = mktime_tz(parsedate_tz(resp.headers['date']))
