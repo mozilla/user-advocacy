@@ -5,7 +5,6 @@ var results = {};
 
 function startup() {
     parameters = $.deparam(document.location.search.substring(1));
-    console.log("params", parameters);
     filters = location.hash.substring(1);
     setGlobals();
     run();
@@ -13,7 +12,6 @@ function startup() {
 
 function run() {
     url = '/data/static/json/input_alerts.json';
-    console.log(url);
     $('#loading-throbber').show();
     $('#main').hide();
     $('#error-message').hide();
@@ -29,7 +27,6 @@ function run() {
         } else {
             showErrorMessage(false);
         }
-        console.log("json", json);
         results = _(json.alerts).map(function (d){
             parsed_summary = summary_parse(d.summary);
             if (parsed_summary === null){
@@ -42,14 +39,13 @@ function run() {
                 return d;
             }
         })
-        .reverse().value();
+        .sortBy(['datetime', 'severity']).reverse().value();
         updateChange(true);
     });
 
 }
 
 function drawTables() {
-    console.log("results", results);
     var selection = d3.select("#alert-list");
     $(selection[0]).empty();
     var all_rows = selection.selectAll('.alerts').data(results).enter();
@@ -133,7 +129,6 @@ function adjustControls() {
 }
 
 function updateChange(redraw) {
-    console.log("parameters", parameters);
     setGlobals();
     var url = document.location.pathname;
     url = url + '?' + $.param(removeDefaultParams(parameters));
@@ -242,7 +237,6 @@ function updateForm() {
     var os = parameters.os?parameters.os:"default";
     $("input[type='radio']#os-" + os).click();
     var channel = parameters.channel?parameters.channel:"release";
-    console.log('channel', channel);
     $("input[type='radio']#channel-" + channel).click();
     var params = ['date', 'base_date', 'version', 'base_version'];
     _(params).forEach(function (param){
