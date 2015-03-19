@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+{% block css %}
+  <link href="../static/css/charts.css" rel="stylesheet">
+  <link href="alerts.css" rel="stylesheet">
+{% endblock %}
+{% block page_title %}
+Input Alerts
+{% endblock %}
+
+{% block content %}
+<div class='row'>
+        <div class='col-md-2' id='controls'>
+        <div class='hidden-xs' id='sidebar'><!--
+        
+<h4 onclick="toggleForm()">Data: <span class="small">[show/hide]</span></h4>
+<form class="form" id='data-form'>
+<fieldset>
+
+<div class="form-group">
+  <label class="form-label" for="for-timeframe" id="form-label-timeframe">Timeframe</label>
+  <div class="btn-group-vertical" data-toggle="buttons" id="form-timeframe"> 
+    <label class="btn btn-default" for="default">
+      <input name="timeframe" id="timeframe-week" value="week" type="radio">
+      Week
+    </label> 
+    <label class="btn btn-default" for="version">
+      <input name="timeframe" id="timeframe-version" value="version" type="radio">
+      Version
+    </label> 
+  </div>
+</div>
+
+<button type="button" class="btn btn-success" onclick="submitForm()">Make it so!</button>
+</fieldset>
+</form>
+
+<h4 onclick="toggleDisplay()">Display options: <span class="small">[show/hide]</span></h4>
+<div id='display-settings'>
+<h4>Display:</h4>
+            <div class="btn-group-vertical">
+            <button class="btn btn-default control-value no-diff"
+            onclick="changeParam('show_value', 'summary')" id="value-ctrl-summary" 
+                title="Show summary of each measure">Summary</button>
+            <button class="btn btn-default control-value diff-only"
+            onclick="changeParam('show_value', 'summary_count')" id="value-ctrl-summary_count" 
+                title="Show summary with absolute value change between dates">Summary (Counts)</button>
+            <button class="btn btn-default control-value diff-only"
+            onclick="changeParam('show_value', 'summary_percent')" id="value-ctrl-summary_percent" 
+                title="Show percentage point change between summary values">Summary (Percents)</button>
+            <button class="btn btn-default control-value"
+            onclick="changeParam('show_value', 'count')" id="value-ctrl-count" 
+                title="Show number of sessions">Count</button>
+            <button class="btn btn-default control-value"
+            onclick="changeParam('show_value', 'percent')" id="value-ctrl-percent" 
+                title="Show percentage of sessions">Percentage</button>
+            <button class="btn btn-default control-value diff-only"
+            onclick="changeParam('show_value', 'diff')" id="value-ctrl-diff" 
+                title="Show percentage change between sessions">Percentage Change</button>
+            <button class="btn btn-default control-value diff-only"
+            onclick="changeParam('show_value', 'base_count')" id="value-ctrl-base_count" 
+                title="Show previous session count">Previous Count</button>
+            <button class="btn btn-default control-value diff-only"
+            onclick="changeParam('show_value', 'base_percent')" id="value-ctrl-base_percent" 
+                title="Show previous percentage">Previous Percentage</button>
+            </div>
+            </div>
+        -->
+        </div>  
+        </div>
+        
+<!-- MAIN DIV  -->
+
+<div class="col-md-10" id="main">
+        <h2 id="title-string">Current alerts</h2>
+        <div id="warning-message" class="text-warning"></div>
+        <div id="alert-list"></div>
+        <div class="col-md-6 col-md-offset-2 jumbotron" id="error-message">
+            <h2>Something went wrong:</h2>
+            <p class="text-center" id="blank-text">No data for this period yet. Try some other parameters.</p>
+            <p class="text-center" id="error-text"></p>
+        </div>
+        <div class="col-md-10 jumbotron" id="loading-throbber">
+            <h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>
+            <p>We're trying to get you your data, or at least some kind of valid error message. If you see this for an extended period of time, try a shift-refresh.</p>
+    </div>
+        </div>
+        </div>
+        
+
+{% endblock %}
+{% block js %}
+    <script src="jquery-deparam.min.js"></script>
+    <script src="alerts.js"></script>
+{% endblock%}

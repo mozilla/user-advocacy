@@ -24,7 +24,7 @@
         'Odin': 1,
         'Congrats': 1,
         'Heartbeat': 10,
-        
+        'Rock': 1
     };
     
     var exceptions = {
@@ -39,6 +39,7 @@
                             '&#x2605;&#x2605;&#x2605;&#x2606;&#x2606',
                             '&#x2605;&#x2605;&#x2606;&#x2606;&#x2606',
                             '&#x2605;&#x2606;&#x2606;&#x2606;&#x2606'],
+        'Rock'      :   ['Climbing', 'AndRoll']
     };
     
     var sum = _.reduce(titles, function (a,w) { return a+w }, 0);
