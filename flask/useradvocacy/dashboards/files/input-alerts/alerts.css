@@ -21,9 +21,10 @@
     margin: 10px 15px;
 }
 
-#alert-list .alerts:hover {
+#alert-list .details {
     padding: 5px 15px 5px 15px;
     margin: 10px 15px;
+    background-color: rgba(256,256,256,0.8);
 }
 
 

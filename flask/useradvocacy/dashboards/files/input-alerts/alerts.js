@@ -36,6 +36,7 @@ function run() {
                 d.word = parsed_summary.word;
                 d.percent = parsed_summary.percent;
                 d.datetime = new Date(d.start_time.replace("Z","+0000"));
+                d.split_desc = d.description.split("\n");
                 return d;
             }
         })
@@ -60,12 +61,37 @@ function drawTables() {
     alerts.append('p').classed('sevtext', true).text(function(d){
         return "Severity: " + d.severity;
     });
+    details = alerts.append('div').classed({'details': true, 'hidden': true});
+    details.append('h5').text('Details:');
+    description = details.append("div").classed({"desc": true});
+    
+    desc_lines = description.selectAll(".desc_lines").data(function (d) {
+        return d.split_desc;
+    }).enter();
+    desc_lines.append('p').text(function(d){return d});
+    alerts.on("click", displayDetails);
     
 // POLISH
 
 }
 
 // Utilities
+
+function displayDetails () {
+    alert = d3.select(this);
+    details = alert.select('.details');
+    details.classed({'hidden': false});
+    alert.on("click", null);
+    alert.on("click", hideDetails);
+}
+
+function hideDetails () {
+    alert = d3.select(this);
+    details = alert.select('.details');
+    details.classed({'hidden': true});
+    alert.on("click", null);
+    alert.on("click", displayDetails);
+}
 
 function summary_parse(summary) {
     var re = /^(.+) is trending up by ([\d.]+|inf)$/;
