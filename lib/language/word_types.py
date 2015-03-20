@@ -98,7 +98,7 @@ def tokenize(comment, wc = None):
     word_regex  = re.compile(r'\W+')
     version_regex = re.compile(r'^(v|ver|version|ff|fx|firefox)?[\d.a]*$')
     for word in words:
-        if word is None or word=='': #TODO(rrayborn): this shouldn't happen but it is
+        if not word or word in ['', '\n', ' ']: #TODO(rrayborn): this is a temporary solution
             continue
         # Remove non-alphanumberic
         new_word = word_regex.sub('', word)
@@ -124,18 +124,18 @@ def tokenize(comment, wc = None):
 
     return words_dict, helpfulness
 
-#def main():
-#    wc = WordClassifier()
-#    print ["wc.is_spam('palemoon')          ", wc.is_spam('palemoon')]
-#    print ["wc.is_spam('palemoom')          ", wc.is_spam('palemoom')]
-#    print ["wc.is_common('a')               ", wc.is_common('a')]
-#    print ["wc.is_common('apple')           ", wc.is_common('apple')]
-#    print ["wc.translate_mapping('ff')      ", wc.translate_mapping('ff')]
-#    print ["wc.translate_mapping('firefox') ", wc.translate_mapping('firefox')]
-#    print ["wc.translate_mapping('cats')    ", wc.translate_mapping('cats')]
-#    a,b = tokenize('Firefox is crashing. I don\'t like when it crashes. Tést')
-#    print a
-#    print b
-#
-#if __name__ == '__main__':
-#    main()
+def main():
+    wc = WordClassifier()
+    print ["wc.is_spam('palemoon')          ", wc.is_spam('palemoon')]
+    print ["wc.is_spam('palemoom')          ", wc.is_spam('palemoom')]
+    print ["wc.is_common('a')               ", wc.is_common('a')]
+    print ["wc.is_common('apple')           ", wc.is_common('apple')]
+    print ["wc.translate_mapping('ff')      ", wc.translate_mapping('ff')]
+    print ["wc.translate_mapping('firefox') ", wc.translate_mapping('firefox')]
+    print ["wc.translate_mapping('cats')    ", wc.translate_mapping('cats')]
+    a,b = tokenize('Firefox is crashing. I don\'t like when it crashes. Tést')
+    print a
+    print b
+
+if __name__ == '__main__':
+    main()
