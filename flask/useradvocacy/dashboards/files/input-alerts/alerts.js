@@ -30,8 +30,8 @@ function run() {
         results = _(json.alerts).map(function (d){
             parsed_summary = summary_parse(d.summary);
             if (parsed_summary === null){
-                console.log(d.summary);
-                return d;
+                console.log("Not processed:", d);
+                return null;
             } else {
                 d.word = parsed_summary.word;
                 d.percent = parsed_summary.percent;
@@ -40,7 +40,7 @@ function run() {
                 return d;
             }
         })
-        .sortBy(['datetime', 'severity']).reverse().value();
+        .sortBy(['datetime', 'severity']).reverse().slice(0,200).value();
         updateChange(true);
     });
 
