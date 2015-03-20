@@ -27,20 +27,21 @@ function run() {
         } else {
             showErrorMessage(false);
         }
-        results = _(json.alerts).map(function (d){
+        results = _(json.alerts).filter(function (d){
             parsed_summary = summary_parse(d.summary);
             if (parsed_summary === null){
                 console.log("Not processed:", d);
-                return null;
-            } else {
-                d.word = parsed_summary.word;
-                d.percent = parsed_summary.percent;
-                d.datetime = new Date(d.start_time.replace("Z","+0000"));
-                d.split_desc = d.description.split("\n");
-                return d;
+                return false;
             }
-        })
-        .sortBy(['datetime', 'severity']).reverse().slice(0,200).value();
+            return true;
+        }).map(function (d) {
+            parsed_summary = summary_parse(d.summary);
+            d.word = parsed_summary.word;
+            d.percent = parsed_summary.percent;
+            d.datetime = new Date(d.start_time.replace("Z","+0000"));
+            d.split_desc = d.description.split("\n");
+            return d;
+        }).sortBy(['datetime', 'severity']).reverse().slice(0,200).value();
         updateChange(true);
     });
 
