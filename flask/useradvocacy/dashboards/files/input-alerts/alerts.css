@@ -27,6 +27,16 @@
     background-color: rgba(256,256,256,0.8);
 }
 
+#alert-list .links a {
+    display: block;
+    padding: 5px;
+    text-decoration: none;
+    color: #000;
+}
+
+#alert-list .links a:hover {
+    background-color: rgba(256,256,256, 1);
+}
 
 #controls h4 {
     font: 18px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;

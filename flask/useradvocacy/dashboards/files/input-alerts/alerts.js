@@ -1,11 +1,11 @@
 (function($, d3, window, _) {
 
-var parameters, filters, sent_params, param_string;
+var parameters, min_severity, sent_params, param_string;
 var results = {};
+var input_json = {};
 
 function startup() {
     parameters = $.deparam(document.location.search.substring(1));
-    filters = location.hash.substring(1);
     setGlobals();
     run();
 }
@@ -28,20 +28,28 @@ function run() {
             showErrorMessage(false);
         }
         results = _(json.alerts).filter(function (d){
-            parsed_summary = summary_parse(d.summary);
+            var parsed_summary = summary_parse(d.summary);
             if (parsed_summary === null){
                 console.log("Not processed:", d);
                 return false;
             }
             return true;
         }).map(function (d) {
-            parsed_summary = summary_parse(d.summary);
+            var parsed_summary = summary_parse(d.summary);
             d.word = parsed_summary.word;
             d.percent = parsed_summary.percent;
             d.datetime = new Date(d.start_time.replace("Z","+0000"));
             d.split_desc = d.description.split("\n");
+            d.links = _.map(d.links, function (e) {
+                var re = /input\.mozilla\.org\/dashboard\/response\/(\d+)/;
+                matches = re.exec(e.url);
+                if (matches) {
+                    e.id = matches[1];
+                }
+                return e;
+            })
             return d;
-        }).sortBy(['datetime', 'severity']).reverse().slice(0,200).value();
+        }).sortBy(['datetime', 'severity']).reverse().value();
         updateChange(true);
     });
 
@@ -50,7 +58,11 @@ function run() {
 function drawTables() {
     var selection = d3.select("#alert-list");
     $(selection[0]).empty();
-    var all_rows = selection.selectAll('.alerts').data(results).enter();
+    sev_cutoff = min_severity == 'default'?6:min_severity;
+    var drawlist = _(results).filter(function(d) {
+        return (d.severity >= sev_cutoff);
+    }).slice(0, 200).value();
+    var all_rows = selection.selectAll('.alerts').data(drawlist).enter();
     var alerts = all_rows.append('div').classed('alerts', true);
     alerts.style("background-color", function(d) {
         return severityScale(d.severity);
@@ -62,41 +74,120 @@ function drawTables() {
     alerts.append('p').classed('sevtext', true).text(function(d){
         return "Severity: " + d.severity;
     });
-    details = alerts.append('div').classed({'details': true, 'hidden': true});
+    var details = alerts.append('div').classed({'details': true});
     details.append('h5').text('Details:');
-    description = details.append("div").classed({"desc": true});
+    var description = details.append("div").classed({"desc": true});
     
-    desc_lines = description.selectAll(".desc_lines").data(function (d) {
+    var desc_lines = description.selectAll(".desc_lines").data(function (d) {
         return d.split_desc;
     }).enter();
     desc_lines.append('p').text(function(d){return d});
     alerts.on("click", displayDetails);
-    
+    $(".details").hide();
+    details.append('h5').text('Links:');
+    var link_list = details.append('ul').classed({'link-list': true});
+    $(link_list[0]).empty();
+    link_list.each(makeLinks)
 // POLISH
 
 }
 
 // Utilities
 
+String.prototype.truncate =
+     function (n, useWordBoundary) {
+         var tooLong = this.length > n,
+             s_ = tooLong ? this.substr(0,n-1) : this;
+         s_ = useWordBoundary && tooLong ? s_.substr(0,s_.lastIndexOf(' ')) : s_;
+         return  tooLong ? s_ + '&hellip;' : s_;
+      };
+      
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/\//g, "&#x2F;")
+}
+
+function makeLinks() {
+    var link_list = d3.select(this);
+    var list = link_list.datum().links;
+    $(link_list[0]).empty();
+    link_list.selectAll(".links").data(list).enter().append('li')
+        .classed({"links": true}).each(function (e) {
+            elink = d3.select(this);
+            if (e.id !== undefined && input_json[e.id] !== undefined){
+                var feedback = input_json[e.id];
+                var short_desc = escapeHtml(feedback.description)
+                    .truncate(300, true).replace("\n", "<br/>");
+                elink.append('p')
+                .append('a').attr('href', function (d) { return d.url })
+                    .html(short_desc);
+            } else {
+                elink.append('a').attr('href', function (d) { return d.url })
+                    .text(function (d) { return d.name });
+            }
+        })
+    $(".links a").click( function(event) {
+            event.stopPropagation();
+            return true;
+        });
+}
+
 function displayDetails () {
-    alert = d3.select(this);
-    details = alert.select('.details');
-    details.classed({'hidden': false});
+    var alert = d3.select(this);
+    var details = alert.select('.details');
+    var link_list = details.select('.link-list');
+    $(details[0]).slideDown();
+    var links = details.datum().links;
+    var links_to_get = _(links).filter(function (d) {
+        if (d.id === undefined || input_json[d.id] !== undefined) {
+            return false;
+        }
+        return true;
+    }).map("id").value();
+    if (links_to_get.length > 0) {
+        getInputData(links_to_get, makeLinks, link_list[0][0])
+    };
     alert.on("click", null);
     alert.on("click", hideDetails);
 }
 
+function getInputData(link_ids, callback, this_context) {
+    var url = 'https://input.mozilla.org/api/v1/feedback/?id=' +  link_ids.join(',');
+    d3.json(url, function (error, json) {
+        if (error) {
+            console.log(error);
+            return;
+        }
+        if (json.results.length == 0) {
+            console.log("No results of input query")
+            return;
+        }
+        var array = json.results;
+        console.log(array);
+        for (var i = 0; i < array.length; i++) {
+            delete array[i].description_bigrams;
+            input_json[array[i].id] = array[i];
+        }
+        callback.call(this_context);
+    });
+}
+
 function hideDetails () {
-    alert = d3.select(this);
-    details = alert.select('.details');
-    details.classed({'hidden': true});
+    var alert = d3.select(this);
+    var details = alert.select('.details');
+    $(details[0]).slideUp();
     alert.on("click", null);
     alert.on("click", displayDetails);
 }
 
 function summary_parse(summary) {
     var re = /^(.+) is trending up by ([\d.]+|inf)$/;
-    matches = re.exec(summary);
+    var matches = re.exec(summary);
     if (matches === null) {
         return null;
     } else {
@@ -168,7 +259,7 @@ function updateChange(redraw) {
 function filterTables(){    
     d3.selectAll('.telemetry-table')
     .classed('hidden', function (d) {
-        if (filter == 'default' || filter_hash != '') {
+        if (filter == 'default') {
             return false;
         } else if (d.name != filter) {
             return true;
@@ -179,7 +270,7 @@ function filterTables(){
     
     d3.selectAll('.telemetry-row')
     .classed('hidden', function (d) {
-        if (cat_filter == 'default' || filter_hash != '') {
+        if (cat_filter == 'default') {
             return false;
         } else if (d.category === null && cat_filter == 'unspecified') {
             return false;
@@ -192,12 +283,7 @@ function filterTables(){
 }
 
 function setGlobals() {
-/*
-    sort_order = parameters.sort_order ? parameters.sort_order : 'default';
-    filter = parameters.filter ? parameters.filter : 'default';
-    show_value = parameters.show_value ? parameters.show_value : 'default';
-    cat_filter = parameters.cat_filter ? parameters.cat_filter : 'default';
-*/
+    min_severity = parameters.min_severity ? parameters.min_severity : 'default';
 }
 
 function removeKnownParams (p) {
