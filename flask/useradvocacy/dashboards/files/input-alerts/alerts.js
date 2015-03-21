@@ -150,7 +150,9 @@ function displayDetails () {
         return true;
     }).map("id").value();
     if (links_to_get.length > 0) {
-        getInputData(links_to_get, makeLinks, link_list[0][0])
+        getInputData(links_to_get, makeLinks, link_list[0][0]);
+    } else {
+        makeLinks.call(link_list[0][0]);
     };
     alert.on("click", null);
     alert.on("click", hideDetails);
