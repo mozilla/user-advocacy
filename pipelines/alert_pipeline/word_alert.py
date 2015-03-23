@@ -32,7 +32,9 @@ _DIFF_ABS_MIN = 0.5 # Percentage point change for which we absolutely ignore
 _DIFF_ABS_SCALE = 2 # Scaling factor between rel and abs diff
 _SEV_SCALE = 8.5 # Factor by which to scale things up to fit the range.
 _SEV_SUB = 2.2 # Reduce this to alert more, increase to alert less
-_MAX_PCT_DIFF = 1000 # Infinity throws everything off, so we're capping things.
+_MAX_PCT_DIFF = 100 # Infinity throws everything off, so we're capping things. This is 
+                    # per piece of feedback, which should make the 0 before, 3 after case
+                    # not trigger so bad.
 
 _MIN_COUNT_THRESHOLD = 3
 _MIN_DENOM_THRESHOLD = 20
@@ -213,7 +215,8 @@ class WordDeltaCounter (ItemCounterDelta):
         make a better one but whatever.
         """
         #TODO: experiment with other algorithms
-        pct_value = min(self.diff_pct, _MAX_PCT_DIFF)
+        max_possible_count = self.base.count <= 0?self.after.count:15
+        pct_value = min(self.diff_pct, _MAX_PCT_DIFF * max_possible_count)
         pct_part = safe_log(self.diff_pct - _DIFF_PCT_MIN)
         abs_part = (self.diff_abs - _DIFF_ABS_MIN)*_DIFF_ABS_SCALE
         value = _SEV_SCALE * (safe_log(abs_part + pct_part) - _SEV_SUB)
