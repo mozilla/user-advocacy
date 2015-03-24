@@ -30,7 +30,7 @@ _WORD_MAPPINGS_CSV = _PATH + "word_mappings.csv"
 _TLD_CSV           = _PATH + "tlds.csv"
 
 _DEFAULT_CLASSIFIER = None
-
+_SIMPLIFIER         = Simplifier()
 
 
 def tokenize(comment, word_classifier = None):
@@ -128,12 +128,14 @@ class WordClassifier(object):
         comment = comment[1:-1]
                 
         # Regex Matches
-        comment = self._parse_comment_with_regexes(comment, words_dict)
+        #comment = self._parse_comment_with_regexes(comment, words_dict)
 
         # Tokenize
         words = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment.encode('utf-8'))
 
         for word in words:
+            print word
+
             helpfulness = min(self._parse_word(word, words_dict = words_dict), helpfulness)
 
         return words_dict, helpfulness
@@ -153,7 +155,7 @@ class WordClassifier(object):
             word (str):       The simplified word value
 
         '''
-        simplifier = Simplifier()
+        simplifier = _SIMPLIFIER
         nonword_regex = re.compile(r'\W+')
         if not original:
             original = word
@@ -176,7 +178,7 @@ class WordClassifier(object):
         # Remove common [Post]
         if self.is_common(word):
             return helpfulness, None
-        if words_dict:
+        if words_dict is not None:
             words_dict[word].add(original)
         return helpfulness, word
 
@@ -255,9 +257,10 @@ class WordClassifier(object):
         comment = self._parse_comment_with_regex(
                 comment, self._get_simple_url_regex(), words_dict = words_dict
             )
-        comment = self._parse_comment_with_regex(
-                comment, self._get_complex_url_regex(), words_dict = words_dict
-            )
+#TODO(rrayborn): fix this to cover complex URLs (i.e. sub-domains/www/http)
+#        comment = self._parse_comment_with_regex(
+#                comment, self._get_complex_url_regex(), words_dict = words_dict
+#            )
         comment = self._parse_comment_with_regex(
                 comment, self._get_version_regex(), replacement = ''
             )
@@ -268,6 +271,7 @@ class WordClassifier(object):
         '''Applies a regex to parse the comment'''
         match = regex.search(comment)
         if match:
+            print ['match',match.group(0)]
             if replacement is None:
                 ignore, rep = self._parse_word(match.group(1))
             else:
@@ -299,7 +303,8 @@ class WordClassifier(object):
 #    #print ["_word_classifier.translate_word('cats')    ", _word_classifier.translate_word('cats')]
 #    #s = 'The Firefox 35 is crashing on You tube.com'
 #    #print _parse_comment_with_regex(s.lower(), _get_version_regex(), replacement = '')
-#    s = ' Fire fox 35 is crashing on You tube.com . I don\'t  like when fire fox crashes on youtube. Tést'
+#    s = ' Fire fox 35 is crashing on youtube . I don\'t  like when fire fox crashes on youtube. Tést'
+#    s = " Stack Overflow is a question and answer site for professional and enthusiast programmers. It's 100 free, no registration required."
 #    print s
 #    a,b = tokenize(s)
 #    print a
