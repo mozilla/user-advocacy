@@ -6,8 +6,9 @@ from lib.database.backend_db import Db
 import csv
 import json
 import requests
+import re
 import datetime as dt
-from lib.general.simplwarn import warn
+from lib.general.simplewarn import warn
 import smtplib
 from email.mime.text import MIMEText
 from sqlalchemy import sql
@@ -16,6 +17,8 @@ from math import log, floor
 import httplib
 httplib.HTTPConnection.debuglevel = 1
 from pytz import timezone as tz
+
+from sqlalchemy.exc import OperationalError
 
 import operator
 
@@ -67,11 +70,11 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
     
 
     if debug:
-        if !isinstance(debug_file, file):
+        if not isinstance(debug_file, file):
             warn("Debug file should be type <file>, outputting to stdout instead")
             debug_file = sys.stdout
 
-    if (!debug or debug_file != sys.stdout):
+    if (not debug or debug_file != sys.stdout):
         print "Generating alerts for " + date_string
 
     old_data_sql = """
@@ -101,7 +104,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         if value == 0:
             continue
         for (key, word_set) in word_dict.iteritems():
-            if !re.match("\S", key):
+            if (key is None) or not re.match('\S', key):
                 continue
             delta[key].base.insert(key = key, link = row.id, meta = word_set)
         base_total += 1
@@ -152,7 +155,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         if (v.is_significant and v.severity >= _ALERT_SEV_MIN
                 and v.after.count >= _MIN_COUNT_THRESHOLD):
             alert_count += 1
-            if (!debug or debug_file != sys.stdout):
+            if (not debug or debug_file != sys.stdout):
                 print "Emitting alert for %s" % v.after.sorted_metadata[0]
             v.emit(debug = debug, debug_file = debug_file)
     
@@ -238,7 +241,7 @@ class WordDeltaCounter (ItemCounterDelta):
         make a better one but whatever.
         """
         #TODO: experiment with other algorithms
-        max_possible_count = self.base.count <= 0?self.after.count:15
+        max_possible_count = self.after.count if (self.base.count <= 0) else 15
         pct_value = min(self.diff_pct, _MAX_PCT_DIFF * max_possible_count)
         pct_part = safe_log(self.diff_pct - _DIFF_PCT_MIN)
         abs_part = (self.diff_abs - _DIFF_ABS_MIN)*_DIFF_ABS_SCALE
