@@ -134,7 +134,7 @@ class WordClassifier(object):
         words = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment.encode('utf-8'))
 
         for word in words:
-            print word
+            #print word
 
             helpfulness = min(self._parse_word(word, words_dict = words_dict), helpfulness)
 
@@ -271,7 +271,7 @@ class WordClassifier(object):
         '''Applies a regex to parse the comment'''
         match = regex.search(comment)
         if match:
-            print ['match',match.group(0)]
+            # print ['match',match.group(0)]
             if replacement is None:
                 ignore, rep = self._parse_word(match.group(1))
             else:
