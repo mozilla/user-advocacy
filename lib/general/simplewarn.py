@@ -25,7 +25,7 @@ import sys
 _messages = set()
 
 
-def warnOnce (message, category = UserWarning, stacklevel == 0):
+def warnOnce (message, category = UserWarning, stacklevel = 0):
     """
         Provide a given message (in a given category) once. 
         stacklevel is ignored but kept here for compatibility.
@@ -38,7 +38,7 @@ def warnOnce (message, category = UserWarning, stacklevel == 0):
     else:
         sys.stderr.write(category.__name__ + ": "+ message + u'\n')
     
-def warnAlways (message, category = UserWarning, stacklevel == 0):
+def warnAlways (message, category = UserWarning, stacklevel = 0):
     """
         Always print this warning. 
         stacklevel is ignored but kept here for compatibility.
