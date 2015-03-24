@@ -131,7 +131,7 @@ class WordClassifier(object):
         comment = comment[1:-1]
                 
         # Regex Matches
-        #comment = self._parse_comment_with_regexes(comment, words_dict)
+        comment = self._parse_comment_with_regexes(comment, words_dict)
 
         # Tokenize
         words = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment.encode('utf-8'))
@@ -217,27 +217,11 @@ class WordClassifier(object):
 
     # === REGEX-BASED PARSING ==================================================
 
-    def _get_simple_url_regex(self, filename = _TLD_CSV):
-        '''Returns a compIled URL regex with domains as specified in <filename>'''
-        # create regex
-        base_regex = r'([a-zA-Z0-9]+)\.(?:%s)+(?:\/(?:[^ ])*)?' # 
-
-        tlds = []
-        with open(filename, 'rb') as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',', quotechar='\"')
-            for row in csv_reader:
-                if len(row) == 1:
-                    tlds.append(row[0].replace('.','\\.'))
-                else:
-                    raise Warning("File %s does not have 1 column as required" % filename)
-
-        return re.compile(base_regex % '|'.join(tlds))
-
-    def _get_complex_url_regex(self, filename = _TLD_CSV):
-        '''Returns a compIled URL regex with domains as specified in <filename>'''
+    def _get_url_regex(self, filename = _TLD_CSV):
+        '''Returns a compiled URL regex with domains as specified in <filename>'''
         
         # create regex
-        base_regex = r'(?:http[s]?://)?[a-zA-Z0-9]*\.?([a-zA-Z0-9]+)\.(?:%s)+(?:\/(?:[^ ])*)?' # 
+        base_regex = r'(?:http[s]?://)?([a-zA-Z0-9]*\.)*([a-zA-Z0-9]+)\.(?:%s)+(?:\/(?:[^ ])*)?' # 
 
         tlds = []
         with open(filename, 'rb') as csv_file:
@@ -259,12 +243,8 @@ class WordClassifier(object):
     def _parse_comment_with_regexes(self, comment, words_dict):
         '''Applies all of our regexes to parse the comment'''
         comment = self._parse_comment_with_regex(
-                comment, self._get_simple_url_regex(), words_dict = words_dict
+                comment, self._get_url_regex(), words_dict = words_dict
             )
-#TODO(rrayborn): fix this to cover complex URLs (i.e. sub-domains/www/http)
-#        comment = self._parse_comment_with_regex(
-#                comment, self._get_complex_url_regex(), words_dict = words_dict
-#            )
         comment = self._parse_comment_with_regex(
                 comment, self._get_version_regex(), replacement = ''
             )
@@ -297,16 +277,16 @@ class WordClassifier(object):
         return comment
 
 #def main():
-#    _word_classifier = WordClassifier()
-#    print ["_word_classifier.is_spam('palemoon')          ", _word_classifier.is_spam('palemoon')]
-#    print ["_word_classifier.is_spam('palemoom')          ", _word_classifier.is_spam('palemoom')]
-#    print ["_word_classifier.is_common('a')               ", _word_classifier.is_common('a')]
-#    print ["_word_classifier.is_common('apple')           ", _word_classifier.is_common('apple')]
-#    print ["_word_classifier.translate_word('ff')      ", _word_classifier.translate_word('ff')]
-#    print ["_word_classifier.translate_word('firefox') ", _word_classifier.translate_word('firefox')]
-#    print ["_word_classifier.translate_word('cats')    ", _word_classifier.translate_word('cats')]
+##    _word_classifier = WordClassifier()
+##    print ["_word_classifier.is_spam('palemoon')          ", _word_classifier.is_spam('palemoon')]
+##    print ["_word_classifier.is_spam('palemoom')          ", _word_classifier.is_spam('palemoom')]
+##    print ["_word_classifier.is_common('a')               ", _word_classifier.is_common('a')]
+##    print ["_word_classifier.is_common('apple')           ", _word_classifier.is_common('apple')]
+##    print ["_word_classifier.translate_word('ff')      ", _word_classifier.translate_word('ff')]
+##    print ["_word_classifier.translate_word('firefox') ", _word_classifier.translate_word('firefox')]
+##    print ["_word_classifier.translate_word('cats')    ", _word_classifier.translate_word('cats')]
 #    examples = [
-#            ' Fire fox 35 is crashing on youtube . I don\'t  like when fire fox crashes on youtube. Tést',
+#            ' Fire fox 35 is crashing on http://a.b.c.youtube.com . I don\'t  like when fire fox crashes on youtube.com. Tést',
 #            ' Stack Overflow is a question and answer site for professional and enthusiast programmers. It\'s 100 free, no registration required.',
 #            'fire fox crash'
 #        ]
