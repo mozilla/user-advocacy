@@ -12,6 +12,9 @@ __maintainer__ = "Rob Rayborn"
 __email__ = "rrayborn@mozilla.com"
 __status__ = "Development"
 
+#TODO(rrayborn): Better URL parsing
+#TODO(rrayborn): Better helpfulness
+
 # import external language library
 import csv
 import re
@@ -32,6 +35,7 @@ _TLD_CSV           = _PATH + "tlds.csv"
 _DEFAULT_CLASSIFIER = None
 _SIMPLIFIER         = Simplifier()
 
+_HELPFULNESS_NUM_WORDS = 7
 
 def tokenize(comment, word_classifier = None):
     '''
@@ -108,7 +112,6 @@ class WordClassifier(object):
 
         '''
         words_dict  = defaultdict(set)
-        helpfulness = 10
 
         comment = comment.lower()
         comment = ' ' + comment + ' '
@@ -133,8 +136,9 @@ class WordClassifier(object):
         # Tokenize
         words = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment.encode('utf-8'))
 
+        num_words = len(words)/2
+        helpfulness = 10 if num_words > _HELPFULNESS_NUM_WORDS else 6
         for word in words:
-            #print word
 
             helpfulness = min(self._parse_word(word, words_dict = words_dict), helpfulness)
 
@@ -293,22 +297,24 @@ class WordClassifier(object):
         return comment
 
 #def main():
-#    #_word_classifier = WordClassifier()
-#    #print ["_word_classifier.is_spam('palemoon')          ", _word_classifier.is_spam('palemoon')]
-#    #print ["_word_classifier.is_spam('palemoom')          ", _word_classifier.is_spam('palemoom')]
-#    #print ["_word_classifier.is_common('a')               ", _word_classifier.is_common('a')]
-#    #print ["_word_classifier.is_common('apple')           ", _word_classifier.is_common('apple')]
-#    #print ["_word_classifier.translate_word('ff')      ", _word_classifier.translate_word('ff')]
-#    #print ["_word_classifier.translate_word('firefox') ", _word_classifier.translate_word('firefox')]
-#    #print ["_word_classifier.translate_word('cats')    ", _word_classifier.translate_word('cats')]
-#    #s = 'The Firefox 35 is crashing on You tube.com'
-#    #print _parse_comment_with_regex(s.lower(), _get_version_regex(), replacement = '')
-#    s = ' Fire fox 35 is crashing on youtube . I don\'t  like when fire fox crashes on youtube. Tést'
-#    s = " Stack Overflow is a question and answer site for professional and enthusiast programmers. It's 100 free, no registration required."
-#    print s
-#    a,b = tokenize(s)
-#    print a
-#    print b
+#    _word_classifier = WordClassifier()
+#    print ["_word_classifier.is_spam('palemoon')          ", _word_classifier.is_spam('palemoon')]
+#    print ["_word_classifier.is_spam('palemoom')          ", _word_classifier.is_spam('palemoom')]
+#    print ["_word_classifier.is_common('a')               ", _word_classifier.is_common('a')]
+#    print ["_word_classifier.is_common('apple')           ", _word_classifier.is_common('apple')]
+#    print ["_word_classifier.translate_word('ff')      ", _word_classifier.translate_word('ff')]
+#    print ["_word_classifier.translate_word('firefox') ", _word_classifier.translate_word('firefox')]
+#    print ["_word_classifier.translate_word('cats')    ", _word_classifier.translate_word('cats')]
+#    examples = [
+#            ' Fire fox 35 is crashing on youtube . I don\'t  like when fire fox crashes on youtube. Tést',
+#            ' Stack Overflow is a question and answer site for professional and enthusiast programmers. It\'s 100 free, no registration required.',
+#            'fire fox crash'
+#        ]
+#    for example in examples:
+#        print example
+#        a,b = tokenize(example)
+#        print a
+#        print b
 #
 #
 #if __name__ == '__main__':
