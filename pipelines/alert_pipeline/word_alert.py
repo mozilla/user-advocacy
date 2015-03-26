@@ -271,7 +271,7 @@ class WordDeltaCounter (ItemCounterDelta):
         timediff = dt.timedelta(hours = _TIMEFRAME)
         start_time = self.end_time - timediff
         link_list = list(self.after.link_list)
-        link_list.sort((key = lambda x:(x[1], x[0]), reverse=True)
+        link_list.sort(key = lambda x:(x[1], x[0]), reverse=True)
         link_list = link_list[:_MAX_ALERT_LINKS]
         links = []
         for link in link_list:
