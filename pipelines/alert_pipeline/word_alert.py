@@ -44,6 +44,8 @@ _MIN_DENOM_THRESHOLD = 20
 
 _EMAIL_SEV_MIN = 5 # Severity level above which we send email
 _ALERT_SEV_MIN = 2 # Severity level above which we send alerts (-1 = send everything)
+_MAX_ALERT_LINKS = 25 # Send at most this number of links
+_MAX_EMAIL_LINKS = 15 # Email at most this number of links
 
 ALERT_EMAIL_FROM = environ['ALERT_EMAIL_FROM']
 ALERT_EMAIL = environ['ALERT_EMAIL']
@@ -106,7 +108,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         for (key, word_set) in word_dict.iteritems():
             if (key is None) or not re.match('\S', key):
                 continue
-            delta[key].base.insert(key = key, link = row.id, meta = word_set)
+            delta[key].base.insert(key = key, link = (row.id, value), meta = word_set)
         base_total += 1
 
     new_data_sql = """
@@ -128,7 +130,6 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         results = input_db.execute_sql(new_data_sql, new=_TIMEFRAME, now = date_string)
     except (OperationalError):
         warn("Database timed out executing after sql.")
-        #TODO: raise an alert instead of just printing.
         return
 
     for row in results:
@@ -136,12 +137,11 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         if value == 0:
             continue
         for (key, word_set) in word_dict.iteritems():
-            delta[key].after.insert(key = key, link = row.id, meta = word_set)
+            delta[key].after.insert(key = key, link = (row.id, value), meta = word_set)
         after_total += 1   
     
     if (after_total < _MIN_DENOM_THRESHOLD or base_total < _MIN_DENOM_THRESHOLD):
         warn("NOT ENOUGH FEEDBACK %d before and %d after" % (base_total, after_total))
-        #TODO: raise an alert instead of just printing.
         return
     
     #Generate alerts
@@ -196,10 +196,13 @@ def email_results(email_list):
                 v.diff_pct
             )
         email_body += "\n\nInput Links:"
-        for link_id in v.after.link_list :
-            comment_sql = sql.select([rfr.c.description]).where(rfr.c.id == link_id)
+        link_list = list(v.after.link_list)
+        link_list.sort((key = lambda x:(x[1], x[0]), reverse=True)
+        link_list = link_list[:_MAX_EMAIL_LINKS]
+        for link in link_list :
+            comment_sql = sql.select([rfr.c.description]).where(rfr.c.id == link[0])
             email_body += "\n<https://input.mozilla.org/dashboard/response/%s>:\n" % \
-                (str(link_id))
+                (str(link[0]))
             try:
                 rows = input_db.execute(comment_sql)
                 for item in rows:
@@ -267,11 +270,14 @@ class WordDeltaCounter (ItemCounterDelta):
         }
         timediff = dt.timedelta(hours = _TIMEFRAME)
         start_time = self.end_time - timediff
+        link_list = list(self.after.link_list)
+        link_list.sort((key = lambda x:(x[1], x[0]), reverse=True)
+        link_list = link_list[:_MAX_ALERT_LINKS]
         links = []
-        for link_id in self.after.link_list:
+        for link in link_list:
             links.append({
                 'name'  : 'Input Link',
-                'url'   : 'http://input.mozilla.org/dashboard/response/'+str(link_id)
+                'url'   : 'http://input.mozilla.org/dashboard/response/'+str(link[0])
             })
         description = dedent("""
     

@@ -84,6 +84,11 @@ function drawTables() {
     desc_lines.append('p').text(function(d){return d});
     alerts.on("click", displayDetails);
     $(".details").hide();
+    details.append('p').append('a').attr({ 'href': function(d) {
+        return "https://input.mozilla.org/en-US/?product=Firefox&q=" + d.word;
+    }}).text(function(d) {
+        return "Search input for " +  d.word;
+    });
     details.append('h5').text('Links:');
     var link_list = details.append('ul').classed({'link-list': true});
     $(link_list[0]).empty();
@@ -115,8 +120,15 @@ function escapeHtml(str) {
 function makeLinks() {
     var link_list = d3.select(this);
     var list = link_list.datum().links;
+    var truncated = 0;
+    var process_list = list;
+    console.log(list.length);
+    if (list.length > 10) {
+        truncated = (list.length - 10);
+        process_list = list.slice(0,10);
+    }
     $(link_list[0]).empty();
-    link_list.selectAll(".links").data(list).enter().append('li')
+    link_list.selectAll(".links").data(process_list).enter().append('li')
         .classed({"links": true}).each(function (e) {
             elink = d3.select(this);
             if (e.id !== undefined && input_json[e.id] !== undefined){
@@ -131,7 +143,12 @@ function makeLinks() {
                     .text(function (d) { return d.name });
             }
         })
-    $(".links a").click( function(event) {
+    if (truncated > 0){
+        d3.select(this)
+            .append('li')
+            .text('And '+truncated+' more...')
+    }
+    $(".details a").click( function(event) {
             event.stopPropagation();
             return true;
         });
@@ -148,7 +165,7 @@ function displayDetails () {
             return false;
         }
         return true;
-    }).map("id").value();
+    }).map("id").slice(0,10).value();
     if (links_to_get.length > 0) {
         getInputData(links_to_get, makeLinks, link_list[0][0]);
     } else {
