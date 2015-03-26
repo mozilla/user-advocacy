@@ -197,7 +197,7 @@ def email_results(email_list):
             )
         email_body += "\n\nInput Links:"
         link_list = list(v.after.link_list)
-        link_list.sort((key = lambda x:(x[1], x[0]), reverse=True)
+        link_list.sort(key = lambda x:(x[1], x[0]), reverse=True)
         link_list = link_list[:_MAX_EMAIL_LINKS]
         for link in link_list :
             comment_sql = sql.select([rfr.c.description]).where(rfr.c.id == link[0])
