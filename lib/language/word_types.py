@@ -141,6 +141,21 @@ class WordClassifier(object):
 
             helpfulness = min(self._parse_word(word, words_dict = words_dict), helpfulness)
 
+        # Catch weird cases
+        for k in words_dict.keys():
+            if k:
+                if k.strip() != k:
+                    new_k = k.strip()
+                    if new_k in words_dict.keys():
+                        words_dict[new_k] = words_dict[new_k].union(words_dict[k])
+                    else:
+                        words_dict[new_k] = words_dict[k]
+                    del words_dict[k]
+                words_dict[k] = set([e.strip() for e in words_dict[k]])
+            else:
+                del words_dict[k]
+
+
         return words_dict, helpfulness
 
     def _parse_word(self, word, words_dict = None, original = None):
@@ -220,7 +235,7 @@ class WordClassifier(object):
         '''Returns a compiled URL regex with domains as specified in <filename>'''
         
         # create regex
-        base_regex = r'(?:http[s]?://)?([a-zA-Z0-9]*\.)*(?P<domain>[a-zA-Z0-9]+)\.(?:%s)+(?:\/(?:[^ ])*)?' # 
+        base_regex = r'(?:http[s]?://)?([a-zA-Z0-9]*\.)*(?P<domain>[a-zA-Z0-9]+)\.(?:%s)+(?:\/(?:[\S])*)?([/a-zA-Z0-9])' # 
 
         tlds = []
         with open(filename, 'rb') as csv_file:
@@ -278,26 +293,26 @@ class WordClassifier(object):
 
         return comment
 
-def main():
-#    _word_classifier = WordClassifier()
-#    print ["_word_classifier.is_spam('palemoon')          ", _word_classifier.is_spam('palemoon')]
-#    print ["_word_classifier.is_spam('palemoom')          ", _word_classifier.is_spam('palemoom')]
-#    print ["_word_classifier.is_common('a')               ", _word_classifier.is_common('a')]
-#    print ["_word_classifier.is_common('apple')           ", _word_classifier.is_common('apple')]
-#    print ["_word_classifier.translate_word('ff')      ", _word_classifier.translate_word('ff')]
-#    print ["_word_classifier.translate_word('firefox') ", _word_classifier.translate_word('firefox')]
-#    print ["_word_classifier.translate_word('cats')    ", _word_classifier.translate_word('cats')]
-    examples = [
-            ' Fire fox 35 is crashing on http://a.b.c.youtube.com . I don\'t  like when fire fox crashes on youtube.com. Tést.com',
-            ' Stack Overflow is a question and answer site for professional and enthusiast programmers. It\'s 100 free, no registration required.',
-            'fire fox crash',
-            'For the paper called "The gravity tunnel in a non-uniform Earth" Alexander R. Klotz, when i open the pdf in firefox on page 3, the square root sign is almost touching the text below it in equation (3) in auto zoom, see (http://imgur.com/DlX1Ogw) and it shows better when set to page width see (http://imgur.com/PRC7kW2). this has been present for many releases, hope you can add it to your list of things to fix in future pdf.js releases! thanks'
-        ]
-    for example in examples:
-        print example
-        a,b = tokenize(example)
-        print a
-        print b
+#def main():
+##    _word_classifier = WordClassifier()
+##    print ["_word_classifier.is_spam('palemoon')          ", _word_classifier.is_spam('palemoon')]
+##    print ["_word_classifier.is_spam('palemoom')          ", _word_classifier.is_spam('palemoom')]
+##    print ["_word_classifier.is_common('a')               ", _word_classifier.is_common('a')]
+##    print ["_word_classifier.is_common('apple')           ", _word_classifier.is_common('apple')]
+##    print ["_word_classifier.translate_word('ff')      ", _word_classifier.translate_word('ff')]
+##    print ["_word_classifier.translate_word('firefox') ", _word_classifier.translate_word('firefox')]
+##    print ["_word_classifier.translate_word('cats')    ", _word_classifier.translate_word('cats')]
+#    examples = [
+#            ' Fire fox 35 is crashing on http://a.b.c.youtube.com/blah/blah/123&123+abc=efg.html. I don\'t  like when fire fox crashes on youtube.com. Tést.com',
+#            ' Stack Overflow is a question and answer site for professional and enthusiast programmers. It\'s 100 free, no registration required.',
+#            'fire fox crash',
+#            'For the paper called "The gravity tunnel in a non-uniform Earth" Alexander R. Klotz, when i open the pdf in firefox on page 3, the square root sign is almost touching the text below it in equation (3) in auto zoom, see (http://imgur.com/DlX1Ogw) and it shows better when set to page width see (http://imgur.com/PRC7kW2). this has been present for many releases, hope you can add it to your list of things to fix in future pdf.js releases! thanks'
+#        ]
+#    for example in examples:
+#        print example
+#        a,b = tokenize(example)
+#        print a
+#        print b
 
 
 if __name__ == '__main__':
