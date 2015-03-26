@@ -12,7 +12,6 @@ __maintainer__ = "Rob Rayborn"
 __email__ = "rrayborn@mozilla.com"
 __status__ = "Development"
 
-#TODO(rrayborn): Better URL parsing
 #TODO(rrayborn): Better helpfulness
 
 # import external language library
@@ -221,7 +220,7 @@ class WordClassifier(object):
         '''Returns a compiled URL regex with domains as specified in <filename>'''
         
         # create regex
-        base_regex = r'(?:http[s]?://)?([a-zA-Z0-9]*\.)*([a-zA-Z0-9]+)\.(?:%s)+(?:\/(?:[^ ])*)?' # 
+        base_regex = r'(?:http[s]?://)?([a-zA-Z0-9]*\.)*(?P<domain>[a-zA-Z0-9]+)\.(?:%s)+(?:\/(?:[^ ])*)?' # 
 
         tlds = []
         with open(filename, 'rb') as csv_file:
@@ -256,10 +255,13 @@ class WordClassifier(object):
         match = regex.search(comment)
         if match:
             # print ['match',match.group(0)]
-            if replacement is None:
-                ignore, rep = self._parse_word(match.group(1))
-            else:
+            if replacement:
                 rep = replacement
+            else:
+                try:
+                    ignore, rep = self._parse_word(match.group('domain'))
+                except Exception:
+                    return comment
             if words_dict is not None:
                 words_dict[rep].add(match.group(0))
                 comment = comment[:match.start()] + '' + \
@@ -276,26 +278,27 @@ class WordClassifier(object):
 
         return comment
 
-#def main():
-##    _word_classifier = WordClassifier()
-##    print ["_word_classifier.is_spam('palemoon')          ", _word_classifier.is_spam('palemoon')]
-##    print ["_word_classifier.is_spam('palemoom')          ", _word_classifier.is_spam('palemoom')]
-##    print ["_word_classifier.is_common('a')               ", _word_classifier.is_common('a')]
-##    print ["_word_classifier.is_common('apple')           ", _word_classifier.is_common('apple')]
-##    print ["_word_classifier.translate_word('ff')      ", _word_classifier.translate_word('ff')]
-##    print ["_word_classifier.translate_word('firefox') ", _word_classifier.translate_word('firefox')]
-##    print ["_word_classifier.translate_word('cats')    ", _word_classifier.translate_word('cats')]
-#    examples = [
-#            ' Fire fox 35 is crashing on http://a.b.c.youtube.com . I don\'t  like when fire fox crashes on youtube.com. Tést',
-#            ' Stack Overflow is a question and answer site for professional and enthusiast programmers. It\'s 100 free, no registration required.',
-#            'fire fox crash'
-#        ]
-#    for example in examples:
-#        print example
-#        a,b = tokenize(example)
-#        print a
-#        print b
-#
-#
-#if __name__ == '__main__':
-#    main()
+def main():
+#    _word_classifier = WordClassifier()
+#    print ["_word_classifier.is_spam('palemoon')          ", _word_classifier.is_spam('palemoon')]
+#    print ["_word_classifier.is_spam('palemoom')          ", _word_classifier.is_spam('palemoom')]
+#    print ["_word_classifier.is_common('a')               ", _word_classifier.is_common('a')]
+#    print ["_word_classifier.is_common('apple')           ", _word_classifier.is_common('apple')]
+#    print ["_word_classifier.translate_word('ff')      ", _word_classifier.translate_word('ff')]
+#    print ["_word_classifier.translate_word('firefox') ", _word_classifier.translate_word('firefox')]
+#    print ["_word_classifier.translate_word('cats')    ", _word_classifier.translate_word('cats')]
+    examples = [
+            ' Fire fox 35 is crashing on http://a.b.c.youtube.com . I don\'t  like when fire fox crashes on youtube.com. Tést.com',
+            ' Stack Overflow is a question and answer site for professional and enthusiast programmers. It\'s 100 free, no registration required.',
+            'fire fox crash',
+            'For the paper called "The gravity tunnel in a non-uniform Earth" Alexander R. Klotz, when i open the pdf in firefox on page 3, the square root sign is almost touching the text below it in equation (3) in auto zoom, see (http://imgur.com/DlX1Ogw) and it shows better when set to page width see (http://imgur.com/PRC7kW2). this has been present for many releases, hope you can add it to your list of things to fix in future pdf.js releases! thanks'
+        ]
+    for example in examples:
+        print example
+        a,b = tokenize(example)
+        print a
+        print b
+
+
+if __name__ == '__main__':
+    main()
