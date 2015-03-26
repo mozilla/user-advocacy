@@ -137,6 +137,8 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         if value == 0:
             continue
         for (key, word_set) in word_dict.iteritems():
+            if (key is None) or not re.match('\S', key):
+                continue
             delta[key].after.insert(key = key, link = (row.id, value), meta = word_set)
         after_total += 1   
     
