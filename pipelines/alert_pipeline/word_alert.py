@@ -35,7 +35,7 @@ _DIFF_ABS_MIN = 0.5 # Percentage point change for which we absolutely ignore
 _DIFF_ABS_SCALE = 2 # Scaling factor between rel and abs diff
 _SEV_SCALE = 8.5 # Factor by which to scale things up to fit the range.
 _SEV_SUB = 2.2 # Reduce this to alert more, increase to alert less
-_MAX_PCT_DIFF = 100 # Infinity throws everything off, so we're capping things. This is 
+_MAX_PCT_DIFF = 50 # Infinity throws everything off, so we're capping things. This is 
                     # per piece of feedback, which should make the 0 before, 3 after case
                     # not trigger so bad.
 
