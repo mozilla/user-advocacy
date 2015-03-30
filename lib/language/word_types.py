@@ -175,13 +175,14 @@ class WordClassifier(object):
         '''
         simplifier = _SIMPLIFIER
         nonword_regex = re.compile(r'\W+')
+        version_regex = re.compile(r'^(v|ver|version|ff|fx|firefox)?[\d.a]*$')
+
         if not original:
             original = word
         helpfulness = 10
 
-        if not word or nonword_regex.match(word): #TODO(rrayborn): this shouldn't happen but it is
+        if not word or nonword_regex.match(word) or version_regex.match(word):
             return helpfulness, None
-
         # Apply Mappings
         word = self.translate_word(word)
         # Remove common [Pre]
@@ -248,10 +249,11 @@ class WordClassifier(object):
 
         return re.compile(base_regex % '|'.join(tlds))
 
-    def _get_version_regex(self):
-        '''Returns a complied version regex'''
-        regex = r'(?:firefox|version|release|firefox version|firefox release)[\W]{1,3}[0-9]{1,3}'
-        return re.compile(regex)
+#We're now parsing this at the word level, not at the comment level
+#    def _get_version_regex(self):
+#        '''Returns a complied version regex'''
+#        regex = r'(?:firefox|version|release|firefox version|firefox release)[\W]{1,3}[0-9]{1,3}'
+#        return re.compile(regex)
 
 
     def _parse_comment_with_regexes(self, comment, words_dict):
@@ -259,9 +261,9 @@ class WordClassifier(object):
         comment = self._parse_comment_with_regex(
                 comment, self._get_url_regex(), words_dict = words_dict
             )
-        comment = self._parse_comment_with_regex(
-                comment, self._get_version_regex(), replacement = ''
-            )
+#           comment = self._parse_comment_with_regex(
+#                   comment, self._get_version_regex(), replacement = ''
+#               )
 
         return comment
 
@@ -303,7 +305,7 @@ class WordClassifier(object):
 ##    print ["_word_classifier.translate_word('firefox') ", _word_classifier.translate_word('firefox')]
 ##    print ["_word_classifier.translate_word('cats')    ", _word_classifier.translate_word('cats')]
 #    examples = [
-#            ' Fire fox 35 is crashing on http://a.b.c.youtube.com/blah/blah/123&123+abc=efg.html. I don\'t  like when fire fox crashes on youtube.com. Tést.com',
+#            ' Fire fox 35 is crashing on http://a.b.c.youtube.com/blah/blah/123&123+abc=efg.html. I don\'t  like when 35 crashes on youtube.com. Tést.com',
 #            ' Stack Overflow is a question and answer site for professional and enthusiast programmers. It\'s 100 free, no registration required.',
 #            'fire fox crash',
 #            'For the paper called "The gravity tunnel in a non-uniform Earth" Alexander R. Klotz, when i open the pdf in firefox on page 3, the square root sign is almost touching the text below it in equation (3) in auto zoom, see (http://imgur.com/DlX1Ogw) and it shows better when set to page width see (http://imgur.com/PRC7kW2). this has been present for many releases, hope you can add it to your list of things to fix in future pdf.js releases! thanks'
