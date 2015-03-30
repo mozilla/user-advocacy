@@ -1,6 +1,6 @@
 (function($, d3, window, _) {
 
-var parameters, min_severity, sent_params, param_string;
+var parameters, sent_params, param_string;
 var results = {};
 var input_json = {};
 
@@ -39,6 +39,7 @@ function run() {
             d.word = parsed_summary.word;
             d.percent = parsed_summary.percent;
             d.datetime = new Date(d.start_time.replace("Z","+0000"));
+            d.datetime.setSeconds(0);
             d.split_desc = d.description.split("\n");
             d.links = _.map(d.links, function (e) {
                 var re = /input\.mozilla\.org\/dashboard\/response\/(\d+)/;
@@ -122,7 +123,6 @@ function makeLinks() {
     var list = link_list.datum().links;
     var truncated = 0;
     var process_list = list;
-    console.log(list.length);
     if (list.length > 10) {
         truncated = (list.length - 10);
         process_list = list.slice(0,10);
@@ -241,27 +241,7 @@ severityScale = d3.scale.linear()
 // Global flow control functions
 
 function adjustControls() {
-/*
-    if(diff){
-        $(".no-diff").hide();
-        $(".diff-only").show();
-    } else {
-        $(".diff-only").hide();
-        $(".no-diff").show();
-    }
-    $(".control-sort").removeClass("active");
-    $("#sort-ctrl-" + sort_order).addClass("active");
-    $(".control-value").removeClass("active");
-    $("#value-ctrl-" + show_value).addClass("active");
-    if (show_value == 'default') {
-        $("#value-ctrl-summary").addClass("active");
-        $("#value-ctrl-summary_count").addClass("active");
-    }
-    $(".control-filter").removeClass("active");
-    $("#filter-ctrl-" + filter).addClass("active");
-    $(".control-category").removeClass("active");
-    $("#cat-ctrl-" + cat_filter).addClass("active");
-    */
+    $("#min_severity").val(min_severity);
 }
 
 function updateChange(redraw) {
@@ -272,33 +252,7 @@ function updateChange(redraw) {
     if (redraw) {
         drawTables();
     }
-    filterTables();
-}
-
-function filterTables(){    
-    d3.selectAll('.telemetry-table')
-    .classed('hidden', function (d) {
-        if (filter == 'default') {
-            return false;
-        } else if (d.name != filter) {
-            return true;
-        } else {
-            return false;
-        }
-    });
-    
-    d3.selectAll('.telemetry-row')
-    .classed('hidden', function (d) {
-        if (cat_filter == 'default') {
-            return false;
-        } else if (d.category === null && cat_filter == 'unspecified') {
-            return false;
-        } else if (d.category != cat_filter) {
-            return true;
-        } else {
-            return false;
-        }
-    });
+    adjustControls();
 }
 
 function setGlobals() {
@@ -324,6 +278,9 @@ function removeDefaultParams (p) {
 }
 
 function changeParam(type, value) {
+    if (typeof value == "undefined"){
+        value = $("#" + type).val()
+    }
     parameters[type] = value ? value : 'default';
     updateChange(true);
 }
@@ -344,41 +301,6 @@ startup();
 // Controls for choosing things.
 
 function updateForm() {
-    var type;
-    var timeframe;
-    if (parameters.version && !parameters.base_version) {
-        type = "version"
-        timeframe = 'version';
-    } else if (parameters.date && !parameters.base_date) {
-        type = "cs-week";
-        timeframe = 'week';
-    } else if (parameters.version && parameters.base_version) {
-        type = "version-diff"
-        timeframe = 'version';
-    } else if (parameters.date && parameters.base_date) {
-        type = "week-diff"
-        timeframe = 'week';
-    } else {
-        type = "cs-week";
-        timeframe = 'week';
-    }
-    
-    $("input[type='radio']#type-" + type).click();
-    $("input[type='radio']#timeframe-" + timeframe).click();
-    var os = parameters.os?parameters.os:"default";
-    $("input[type='radio']#os-" + os).click();
-    var channel = parameters.channel?parameters.channel:"release";
-    $("input[type='radio']#channel-" + channel).click();
-    var params = ['date', 'base_date', 'version', 'base_version'];
-    _(params).forEach(function (param){
-        if (parameters[param] && parameters[param] != 'default') {
-            $("select#" + param + " [value='" + parameters[param] + "']")
-                .prop('selected', true);
-        } else if (parameters[param] != 'default') {
-            $("select#" + param + " [value='latest']")
-                .prop('selected', true);
-        }
-    })
 
 }
 
@@ -401,12 +323,6 @@ function showErrorMessage (state, text) {
         $('#error-message').hide();
 
     }
-}
-
-function uppercaseFirst(string) {
-    var index = string.search("\\w");
-    if (index < 0) return string;
-    return string.substr(0, index) + string.substr(index, 1).toUpperCase() + string.substr(index+1);
 }
 
 

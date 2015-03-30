@@ -17,14 +17,31 @@
 }
 
 #alert-list .alerts {
-    padding: 5px 15px 5px 15px;
+    padding: 7px 15px 7px 15px;
     margin: 10px 15px;
+    border-radius: 15px;
+    box-shadow:inset 0px 0px 0px 0px rgba(256,256,256,0.8);
+}
+
+
+#alert-list .alerts:hover {
+    box-shadow:inset 0px 0px 0px 5px rgba(256,256,256,0.8);
+}
+
+#alert-list .alerts{
+    transition: box-shadow 0.2s ease-out;
+}
+
+#alert-list .datetext {
+    font-size: 90%;
+    float: right;
 }
 
 #alert-list .details {
     padding: 5px 15px 5px 15px;
     margin: 10px 15px;
     background-color: rgba(256,256,256,0.8);
+    border-radius: 15px;
 }
 
 #alert-list .links a {
@@ -55,9 +72,43 @@
     width: 100%;
 }
 
-#controls select {
-    margin-left: 10px;
+#controls .select-box {
+    padding: 0;
+    margin: 10px 0;
     width: 100%;
+    overflow: hidden;
+    background-color: transparent;
+    background: transparent;
+    position: relative;
+    font: 14px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+}
+
+#controls select {
+    padding: 5px 8px;
+    width: 100%;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+    background-image: none;
+    appearance:none;
+    -moz-appearance:none;
+    -webkit-appearance:none;
+}
+
+#controls .select-box:after {
+    top: 50%;
+    left: 85%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+    border-color: rgba(0, 0, 0, 0);
+    border-top-color: #000000;
+    border-width: 5px;
+    margin-top: -2px;
+    z-index: 100;
 }
 
 #controls .form-group > label {
@@ -74,10 +125,6 @@
 #controls .btn-group {
     margin: 0px 0 0 10px;
     width: 100%;
-}
-
-.btn-group#form-timeframe > label {
-    width: 50%;
 }
 
 .whimsy #controls .btn-default:not(.active):not(select):hover  {
