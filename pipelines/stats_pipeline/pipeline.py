@@ -22,7 +22,7 @@ __status__     = 'Production'
 from lib.database.backend_db  import Db
 from pipelines.stats_pipeline import google_analytics
 
-from datetime import date,timedelta
+from datetime import date,timedelta,datetime
 from dateutil.relativedelta import relativedelta
 from os import path
 from subprocess import check_output
@@ -77,10 +77,16 @@ def _update_product(
     # =========== Parse ADI data ===============================================
     tmp_adis_table = 'tmp_%s_adis' % product
     cmd = 'echo "%s" | isql -v metrics_dsn  -b -x0x09 | tail -n+10 >%s'
+    # TODO(rrayborn): Need to investigate why part of the end date is missing.
+    #                 Doesn't seem to affect the start_date...
+    start_date_minus = (datetime.strptime(start_date,'%Y-%m-%d') - \
+            timedelta(days=1)).strftime('%Y-%m-%d')
+    end_date_plus = (datetime.strptime(end_date,'%Y-%m-%d') + \
+            timedelta(days=1)).strftime('%Y-%m-%d')
     with open(_ADIS_SQL_FILE, 'r') as adis_sql:
         if adis_sql:
             query = adis_sql.read().replace('\n','  ') % (
-                    alt_product, start_date, end_date)
+                    alt_product, start_date_minus, end_date_plus)
     check_output(cmd % (query, adis_file), shell=True)
     query ='''CREATE TEMPORARY TABLE {table} (
                 `date`                DATE NOT NULL, 
