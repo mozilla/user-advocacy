@@ -81,7 +81,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
 
     old_data_sql = """
         SELECT description, MIN(id) as id
-        FROM remote_feedback_response fr
+        FROM feedback_response fr
         WHERE
         created > DATE_SUB(:now, INTERVAL :old WEEK) AND
         created < DATE_SUB(:now, INTERVAL :new HOUR)
@@ -113,7 +113,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
 
     new_data_sql = """
         SELECT description, MIN(id) as id
-        FROM remote_feedback_response fr
+        FROM feedback_response fr
         WHERE
         created > DATE_SUB(:now, INTERVAL :new HOUR) AND
         created < :now
