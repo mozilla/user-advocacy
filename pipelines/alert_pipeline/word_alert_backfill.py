@@ -1,33 +1,13 @@
 #!/usr/local/bin/python
 
 import sys
-import csv
-import json
-import smtplib
-import httplib
-import operator
-httplib.HTTPConnection.debuglevel = 1
 import datetime as dt
-from pytz import timezone as tz
-from collections import defaultdict
 
-
-from textwrap import dedent
-from email.mime.text import MIMEText
-from os import path, environ
-from math import log, floor
-
-import requests
-from sqlalchemy import sql
-from sqlalchemy.exc import OperationalError
-
-from lib.database.backend_db import Db
 from lib.general.simplewarn import warn
-from pipelines.alert_pipeline.word_alert import WordDeltaCounter, safe_log, process_alerts
+from pipelines.alert_pipeline.word_alert import process_alerts
 
 import argparse
 
-from lib.language.word_types import tokenize
 
 
 def main():

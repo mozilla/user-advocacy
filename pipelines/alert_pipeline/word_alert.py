@@ -2,7 +2,7 @@
 
 import sys
 from os import path, environ
-from lib.database.backend_db import Db
+from lib.database.input_db import Db as inputDb
 import csv
 import json
 import requests
@@ -54,7 +54,7 @@ ALERT_TOKEN = environ['ALERT_TOKEN']
 
 
 def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = True):
-    input_db = Db('input')
+    input_db = inputDb('input_mozilla_org_new')
     
     delta = defaultdict(WordDeltaCounter)
     base_total = 0
@@ -177,11 +177,11 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         email_results(email_list)
 
 def email_results(email_list):
-    input_db = Db('input')
+    input_db = inputDb('input')
     email_body = ''
     shortwords = []
     
-    rfr = input_db.get_table('remote_feedback_response')
+    rfr = input_db.get_table('feedback_response')
         
     for v in email_list:
         email_body += "===== Lvl %d ALERT FOR %s: =====\n" % (
@@ -289,13 +289,17 @@ class WordDeltaCounter (ItemCounterDelta):
             After %.2f/1000
             Absolute Difference: %.2f %%age points
             Percent Difference: %.2f %%
-        
+            Total feedback in the past %d hours: %d
+
         """%(
             ", ".join(self.after.sorted_metadata),
             self.base_pct * 10,
             self.after_pct * 10,
             self.diff_abs * 10,
-            self.diff_pct
+            self.diff_pct,
+            _TIMEFRAME,
+            len(self.after.link_list)
+            
         )).strip()
         payload = {
             'severity': self.severity,
@@ -347,7 +351,7 @@ class WordDeltaCounter (ItemCounterDelta):
             After %.2f/1000
             Absolute Difference: %.2f %%age points
             Percent Difference: %.2f %%
-            Total links: %d
+            Total feedback in the past %d hours: %d
         """%(
             self.severity,
             self.after.sorted_metadata[0],
@@ -356,6 +360,7 @@ class WordDeltaCounter (ItemCounterDelta):
             self.after_pct * 10,
             self.diff_abs * 10,
             self.diff_pct,
+            _TIMEFRAME,
             len(self.after.link_list)
         )).strip()
         return str

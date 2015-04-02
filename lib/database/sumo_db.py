@@ -10,7 +10,7 @@ from . import db
 
 os_env = os.environ
 
-engine = db.init_engine(os_env['SQLALCHEMY_UTILS_URI'])
+engine = db.init_engine(os_env['SQLALCHEMY_SUMO_URI'])
 
 class Db(db.Database):
     def __init__(self, database_name, is_persistent = False):
