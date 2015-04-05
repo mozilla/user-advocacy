@@ -177,7 +177,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         email_results(email_list)
 
 def email_results(email_list):
-    input_db = inputDb('input')
+    input_db = inputDb('input_mozilla_org_new')
     email_body = ''
     shortwords = []
     
