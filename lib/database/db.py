@@ -163,11 +163,16 @@ class Database(object):
                     value = '"' + row[index].decode('utf-8') + '"'
                 else:
                     value = str(row[index])
-                fields.append(field)
+
+                if value.lower() == '"true"' or value.lower() == '"false"':
+                    value = '"1"' if value.lower() == '"true"' else '"0"'
+
+                fields.append('`' + field + '`')
                 values.append(value)
-            self.execute_sql(insert_pattern % (
+            query = insert_pattern % (
                     tablename,
                     ','.join(fields),
                     ','.join(values)
-                ))
+                )
+            self.execute_sql(query)
     

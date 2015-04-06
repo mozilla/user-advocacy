@@ -13,5 +13,7 @@ os_env = os.environ
 engine = db.init_engine(os_env['SQLALCHEMY_INPUT_URI'])
 
 class Db(db.Database):
-    def __init__(self, database_name, is_persistent = False):
+    def __init__(self, 
+                 database_name = 'input_mozilla_org_new',
+                 is_persistent = False):
         super(Db, self).__init__(database_name, engine, is_persistent)
