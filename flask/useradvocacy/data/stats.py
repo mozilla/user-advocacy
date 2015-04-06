@@ -387,7 +387,7 @@ def stats_return(args):
             )
     if 'adis'                      in corrected_measures:
         select_statements.append(
-                'AVG(adis) AS adis'
+                'SUM(adis) AS adis'
             )
 
     select_clause = 'SELECT %s ' % ', '.join(select_statements) 
