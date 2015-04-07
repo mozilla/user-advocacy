@@ -56,7 +56,7 @@ _MOBILE_FILE_PATTERN  = 'daily_mobile_stats.sql'
 #This should be handled better...
 
 def main():
-    update(start_date = '2015-04-03', end_date = '2015-04-05')
+    update()
 
 def update(
             product    = 'both',
