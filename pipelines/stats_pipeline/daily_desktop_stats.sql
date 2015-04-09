@@ -32,21 +32,21 @@ SELECT
 FROM
     tmp_base base
     LEFT JOIN tmp_input input           
-            ON(base.version = input.version  AND base.`date` = input.`date`  AND base.is_desktop = input.is_desktop)
+            ON(base.version = input.version  AND base.`date` = input.`date`)
     LEFT JOIN tmp_sumo sumo             
-            ON(base.version = sumo.version   AND base.`date` = sumo.`date`   AND base.is_desktop = sumo.is_desktop)
+            ON(base.version = sumo.version   AND base.`date` = sumo.`date`)
     LEFT JOIN tmp_adis adis             
-            ON(base.version = adis.version   AND base.`date` = adis.`date`   AND base.is_desktop = adis.is_desktop)
+            ON(base.version = adis.version   AND base.`date` = adis.`date`)
     LEFT JOIN tmp_sumo_visits visits 
-            ON(base.version = visits.version AND base.`date` = visits.`date` AND base.is_desktop = visits.is_desktop)
+            ON(base.version = visits.version AND base.`date` = visits.`date`)
 WHERE
-          base.is_desktop
-    AND  input.is_desktop
-    AND   sumo.is_desktop
-    AND   adis.is_desktop
-    AND visits.is_desktop
+        (  base.is_desktop IS Null OR   base.is_desktop)
+    AND ( input.is_desktop IS Null OR  input.is_desktop)
+    AND (  sumo.is_desktop IS Null OR   sumo.is_desktop)
+    AND (  adis.is_desktop IS Null OR   adis.is_desktop)
+    AND (visits.is_desktop IS Null OR visits.is_desktop)
 HAVING -- Make sure that the row is necessary
-    input_average
+       input_average
     OR input_average_7_days
     OR input_volume
     OR sumo_posts

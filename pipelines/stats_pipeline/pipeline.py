@@ -60,7 +60,7 @@ def main():
 
 def update(
             product    = 'both',
-            start_date = (date.today() - timedelta(days=4)).strftime('%Y-%m-%d'),
+            start_date = (date.today() - timedelta(days=5)).strftime('%Y-%m-%d'),
             end_date   = (date.today() - timedelta(days=1)).strftime('%Y-%m-%d'),
             ua_db      = None,
             input_db   = None,
