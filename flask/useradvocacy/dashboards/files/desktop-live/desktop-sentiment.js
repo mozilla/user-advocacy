@@ -1,4 +1,7 @@
+var channel_colors = ['#fd8d3c','#fed98e','#41b6c4','#cbc9e2'];
+
 // TODO: Error handling for every d3.json load.
+
 
 var heartbeat_rating_chart = timeScaleLine()
     .y(function(d) {
@@ -7,7 +10,7 @@ var heartbeat_rating_chart = timeScaleLine()
     .ylabel("Rating")
     .ymin(1)
     .ymax(5)
-    .colors(["#B2EAF8"])
+    .colors(channel_colors)
     .legend(false)
     
 var heartbeat_response_chart = timeScaleLine()
@@ -17,7 +20,7 @@ var heartbeat_response_chart = timeScaleLine()
     .ymin(0)
     .ymax(100)
     .ylabel("Percentage")
-    .colors(["#00B8E6"])
+    .colors(channel_colors)
     .legend(false);
 
 
@@ -46,29 +49,52 @@ var input_sentiment_chart = sentimentChart()
 /*TODO: refactor this whole thing to use promises.*/
 
 var annoter = makeAnnotations();
-d3.json("/data/static/json/desktop-annotations.json", function(note_data) {
 
-    notes = annoter(note_data);
-    heartbeat_rating_chart.annotations(notes);
-    heartbeat_response_chart.annotations(notes);
-    input_by_time_chart.annotations(notes);
-    input_sentiment_chart.annotations(notes);
-  
-    d3.json("/data/api/v1/stats?measures=heartbeat_average&period_delta=90&products=Firefox&channels=all", function(data) {
-        results = [{name:"Average Rating", values: data.results}];
+var noteP = $.when(d3.jsonPromise("/data/static/json/desktop-annotations.json"))
+    .done(function(note_data) {
+        notes = annoter(note_data);
+        heartbeat_rating_chart.annotations(notes);
+        heartbeat_response_chart.annotations(notes);
+        input_by_time_chart.annotations(notes);
+        input_sentiment_chart.annotations(notes);
+    });
+
+var HBratingP = $.when(
+    d3.jsonPromise("/data/api/v1/stats?measures=heartbeat_average&period_delta=90&products=Firefox&channels=release"),
+    d3.jsonPromise("/data/api/v1/stats?measures=heartbeat_average&period_delta=90&products=Firefox&channels=beta"),
+    d3.jsonPromise("/data/api/v1/stats?measures=heartbeat_average&period_delta=90&products=Firefox&channels=aurora"),
+    d3.jsonPromise("/data/api/v1/stats?measures=heartbeat_average&period_delta=90&products=Firefox&channels=nightly")
+)
+    .done(function(release, beta, aurora, nightly) {
+        results = [
+                {name:"Release", values: release.results},
+                {name:"Beta", values: beta.results},
+                {name:"Dev Edition", values: aurora.results},
+                {name:"Nightly", values: nightly.results}
+            ];
         d3.select("#chart1")
-            .datum(results)
-            .call(heartbeat_rating_chart)
-    });   
-
-    d3.json("/data/api/v1/stats?measures=heartbeat_response_rate&period_delta=90&products=Firefox&channels=all", function(data) {
-        results = [{name:"Response rate", values: data.results}];
+            .datum(results);
+    });
+   
+var HBrespRateP = $.when(
+    d3.jsonPromise("/data/api/v1/stats?measures=heartbeat_response_rate&period_delta=90&products=Firefox&channels=release"),
+    d3.jsonPromise("/data/api/v1/stats?measures=heartbeat_response_rate&period_delta=90&products=Firefox&channels=beta"),
+    d3.jsonPromise("/data/api/v1/stats?measures=heartbeat_response_rate&period_delta=90&products=Firefox&channels=aurora"),
+    d3.jsonPromise("/data/api/v1/stats?measures=heartbeat_response_rate&period_delta=90&products=Firefox&channels=nightly")
+    )
+    .done(function(release, beta, aurora, nightly) {
+        results = [
+                {name:"Release", values: release.results},
+                {name:"Beta", values: beta.results},
+                {name:"Dev Edition", values: aurora.results},
+                {name:"Nightly", values: nightly.results}
+            ];
         d3.select("#chart2")
-            .datum(results)
-            .call(heartbeat_response_chart)
-    }); 
+            .datum(results);
+    });
 
-    d3.json("/data/api/v1/stats?measures=input_average&period_delta=90&products=Firefox&channels=all", function(data) {
+var inputAvgP = $.when(d3.jsonPromise("/data/api/v1/stats?measures=input_average&period_delta=90&products=Firefox&channels=all"))
+    .done(function(data) {
         final_data = [
             {
                 name: "Input rating",
@@ -100,17 +126,43 @@ d3.json("/data/static/json/desktop-annotations.json", function(note_data) {
         }
         d3.select("#chart3")
             .datum(final_data)
-            .call(input_by_time_chart);
+
     });
 
-    d3.json("/data/api/v1/stats?measures=input_average,input_volume,adis&period_delta=90&products=Firefox&channels=all", function(data) {
+var inputSentimentP = $.when(d3.jsonPromise("/data/api/v1/stats?measures=input_average,input_volume,adis&period_delta=90&products=Firefox&channels=all"))
+    .done(function(data) {
         results = data.results;
         d3.select("#chart4")
             .datum(results)
-            .call(input_sentiment_chart)
     });
 
-});
+
+$.when(noteP, HBratingP)
+    .done(
+        function() {
+            d3.select("#chart1").call(heartbeat_rating_chart);
+        });
+
+
+$.when(noteP, HBrespRateP)
+    .done(
+        function() {
+            d3.select("#chart2").call(heartbeat_response_chart);
+        });
+
+$.when(noteP, inputAvgP)
+    .done(
+        function() {
+            d3.select("#chart3").call(input_by_time_chart);
+        });
+
+$.when(noteP, inputSentimentP)
+    .done(
+        function() {
+            d3.select("#chart4").call(input_sentiment_chart);
+        });
+
+
 
 var input_by_version_chart = barChart()
     .x(function(d) {

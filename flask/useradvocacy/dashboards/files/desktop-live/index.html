@@ -25,7 +25,7 @@
                         <div class="row">
                             <div class="col-xs-12 chart-header">
                                 <h3>Firefox Desktop Heartbeat Score</h3>
-                                <p>Average heartbeat score across all versions of Firefox. Score is rated on a scale of 1 - 5 stars.</p>
+                                <p>Average heartbeat score across Firefox channels. Score is rated on a scale of 1 - 5 stars. <b>Colors:</b> <span style="color: #fd8d3c">Release</span> <span style="color: #fed98c">Beta</span> <span style="color: #41b6c4">Dev Edition</span> <span style="color: #cbc9e2">Nightly</span> </p>
                             </div>
                         </div>
                         <div class="row chart">
@@ -41,7 +41,7 @@
                         <div class="row">
                             <div class="col-xs-12 chart-header">
                                 <h3>Heartbeat participation rate</h3>
-                                <p>This chart shows what percentage of the users who are offered a Heartbeat survey submit a rating.</p>
+                                <p>This chart shows what percentage of the users who are offered a Heartbeat survey submit a rating. <b>Colors:</b> <span style="color: #fd8d3c">Release</span> <span style="color: #fed98c">Beta</span> <span style="color: #41b6c4">Dev Edition</span> <span style="color: #cbc9e2">Nightly</span> </p>
                             </div>
                         </div>
                         <div class="row chart">
@@ -129,6 +129,8 @@
     <script src="{{ url_for('static', filename='libs/lodash/lodash.js') }}"></script>
     <script src="{{ url_for('static', filename='libs/bootstrap/dist/js/bootstrap.min.js') }}"></script> 
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/d3promise.js') }}"></script>
+
     <script src="desktop-sentiment.js"></script>
 </body>
 
