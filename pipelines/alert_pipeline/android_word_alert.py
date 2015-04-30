@@ -116,13 +116,12 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         WHERE
         created > DATE_SUB(:now, INTERVAL :new HOUR) AND
         created < :now
-        AND product LIKE 'firefox'
+        AND product LIKE 'Firefox for Android'
         AND locale = 'en-US'
         AND happy = 0
         AND (campaign IS NULL or campaign = '')
         AND (source IS NULL or source = '')
         AND (version NOT RLIKE '[^a.0-9]')
-        AND (platform LIKE 'Windows%' OR platform LIKE 'OS X' OR platform LIKE 'Linux')
         GROUP BY 1
     """
     try:
