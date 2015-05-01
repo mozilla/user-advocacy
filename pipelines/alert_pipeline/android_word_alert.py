@@ -27,7 +27,7 @@ from lib.general.counters import ItemCounterDelta
 from lib.language.word_types import tokenize
 
 _VERSION = 2 # Update this when you update stuff (ints only)
-_TIMEFRAME = 12 # Hours
+_TIMEFRAME = 24 # Hours
 _PAST_TIMEFRAME = 3 # Weeks
 # Constants for calculation of severity
 _DIFF_PCT_MIN = 30 # Percentage increase for which we absolutely don't want to return sev.

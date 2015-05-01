@@ -16,7 +16,7 @@ def main():
     date = dt.datetime.strptime(args.date, '%Y-%m-%d')
     now = dt.datetime.now()
     increment = dt.timedelta(days = 1)
-    times = [dt.time(0), dt.time(6), dt.time(12), dt.time(18)]
+    times = [dt.time(6)]
     if args.debug:
         file = args.outfile
         print >> file, "end_time,word,base_pct,after_pct,base_count,after_count,severity\n"
