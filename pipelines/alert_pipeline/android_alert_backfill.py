@@ -4,7 +4,7 @@ import sys
 import datetime as dt
 
 from lib.general.simplewarn import warn
-from pipelines.alert_pipeline.word_alert import process_alerts
+from pipelines.alert_pipeline.android_word_alert import process_alerts
 
 import argparse
 
@@ -32,7 +32,7 @@ def main():
         file.close()
 
 def parseArgs():
-    parser = argparse.ArgumentParser(description='Backfill Input Alerts.')
+    parser = argparse.ArgumentParser(description='Backfill Android Input Alerts.')
     parser.add_argument('--debug', '-d', action = 'store_true', 
         help = 'Whether we should emit alerts or write to a file instead')
     parser.add_argument('--date','--startdate','-s', action = 'store',
