@@ -51,6 +51,11 @@ def heartbeat_stats_return(args):
 
     where_clause = 'WHERE %s ' % ' AND '.join(where_statements)
 
+    if len(where_clause) = 0:
+        ret['messages'] = {'parameters': 'No parameters found'}
+        return json.jsonify(ret) #TODO(rrayborn): throw code: , 400
+
+
     query = '''
             SELECT
                 survey_id,
@@ -63,7 +68,7 @@ def heartbeat_stats_return(args):
                 max_score,
                 is_response,
                 score,
-                SUM(volume)
+                SUM(volume) AS volume
             FROM sentiment.daily_heartbeat_stats
             WHERE %s
             GROUP BY 1,2,3,4,5,6,7,8,9,10
