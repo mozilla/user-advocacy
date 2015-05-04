@@ -34,6 +34,16 @@ def stats_api():
         return str(traceback.format_exc())
 
 @nocache
+@blueprint.route("/api/v1/heartbeat_stats", methods=["GET"])
+def heartbeat_stats_api():
+    try:
+        args = parse_args(request.args)
+        ret = heartbeat_stats_return(args)
+        return ret
+    except Exception as e:
+        return str(traceback.format_exc())
+
+@nocache
 @blueprint.route("/api/v1/telemetry/params", methods=["GET"])
 def telemetry_params_api():
     try:
