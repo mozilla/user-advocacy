@@ -34,6 +34,7 @@ from subprocess import check_output
 _PIPELINE_PATH        = path.dirname(path.realpath(__file__))+'/'
 _DATA_PATH            = _PIPELINE_PATH + 'data/'
 _CREATE_SQL_FILE      = _PIPELINE_PATH + 'create.sql'
+_HEARTBEAT_SQL_FILE   = _PIPELINE_PATH + 'heartbeat.sql'
 _INPUT_SQL_FILE       = _PIPELINE_PATH + 'input.sql'
 _BASE_SQL_FILE        = _PIPELINE_PATH + 'base.sql'
 _SUMO_SQL_FILE        = _PIPELINE_PATH + 'sumo.sql'
@@ -53,14 +54,12 @@ _MOBILE_FILE_PATTERN  = 'daily_mobile_stats.sql'
 #
 #
 
-#This should be handled better...
-
 def main():
     update()
 
 def update(
             product    = 'both',
-            start_date = (date.today() - timedelta(days=5)).strftime('%Y-%m-%d'),
+            start_date = (date.today() - timedelta(days=7)).strftime('%Y-%m-%d'),
             end_date   = (date.today() - timedelta(days=1)).strftime('%Y-%m-%d'),
             ua_db      = None,
             input_db   = None,
@@ -82,6 +81,17 @@ def update(
 
     # =========== Create tables ============================================
     _execute_query(ua_db, _CREATE_SQL_FILE, params=params, multi=True)
+
+    # =========== Parse heartbeat data =========================================
+    #TODO(rrayborn): should this be its own pipeline?
+    
+    # Fetch Input data
+    data = _execute_query(input_db, _HEARTBEAT_SQL_FILE, params=params)
+
+    # Insert Input data
+    header = data.keys()
+    ua_db.insert_data_into_table(data, 'daily_heartbeat_stats', header,
+                                 has_header = False, is_replace=True)
 
     # =========== Parse input data =============================================
     

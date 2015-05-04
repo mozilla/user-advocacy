@@ -38,7 +38,7 @@ FROM
             survey_id = 'heartbeat-by-user-first-impression'
             AND NOT is_test
             AND updated_ts >= 1000*UNIX_TIMESTAMP(:start_date)
-            AND updated_ts <= 1000*(UNIX_TIMESTAMP(:end_date)+24*60*60)
+            AND updated_ts <  1000*(UNIX_TIMESTAMP(:end_date)+24*60*60)
         GROUP BY 1,2
     ) t1
     ON(t0.`date` = t1.`date` AND t0.version = t1.version)
