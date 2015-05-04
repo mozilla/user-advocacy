@@ -19,7 +19,8 @@ then
     then
         # Check out $CODE_PATH
         cd $CODE_PATH
-        git pull
+        git fetch --all
+        git reset --hard origin/master
         chgrp -f     -R advocacy ..
         chmod 771 -f -R          ..
 
