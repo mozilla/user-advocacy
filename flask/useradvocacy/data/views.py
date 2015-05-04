@@ -2,23 +2,28 @@
 
 '''Server data access endpoints'''
 
+import os
+import traceback
+
+import flask.json         
 from flask import (current_app, Flask, Blueprint, request, render_template, url_for, flash, redirect, session, send_from_directory, safe_join, Response)
+from flask.ext.login import current_user
+from flask.ext.login import login_required
+from functools import wraps
+
 from werkzeug.exceptions import Unauthorized, Forbidden, NotFound, BadRequest, Conflict
 from werkzeug.datastructures import MultiDict
-                    
-from useradvocacy.extensions import login_manager
-from flask.ext.login import current_user
-import traceback
+
 from useradvocacy.user.models import User
 from useradvocacy.database import db
+from useradvocacy.extensions import login_manager
 from useradvocacy.utils import flash_errors, check_admin, nocache
-import flask.json
-from functools import wraps
-from .stats import stats_return
-from .telemetry import telemetry_stats, telemetry_stat, telemetry_params
-import os
 
-from flask.ext.login import login_required
+from .stats import stats_return
+from .heartbeat_stats import heartbeat_stats_return
+from .telemetry import telemetry_stats, telemetry_stat, telemetry_params
+
+
 
 blueprint = Blueprint('data', __name__, static_folder="./static", 
         url_prefix="/data", template_folder="./templates")
@@ -29,6 +34,16 @@ def stats_api():
     try:
         args = parse_args(request.args)
         ret = stats_return(args)
+        return ret
+    except Exception as e:
+        return str(traceback.format_exc())
+
+@nocache
+@blueprint.route("/api/v1/heartbeat_stats", methods=["GET"])
+def heartbeat_stats_api():
+    try:
+        args = parse_args(request.args)
+        ret = heartbeat_stats_return(args) #TODO(rrayborn)
         return ret
     except Exception as e:
         return str(traceback.format_exc())

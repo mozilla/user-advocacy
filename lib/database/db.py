@@ -6,6 +6,8 @@ specify. Database objects behave like engines but sets a default DB each time.
 """
 import csv
 import logging
+from datetime import date
+
 import sqlalchemy
 from sqlalchemy.sql import text, select
 
@@ -77,6 +79,7 @@ class Database(object):
                               tablename,
                               col_fields,
                               has_header = True,
+                              is_replace = False,
                               delimiter = ','):
         '''
         Loads a CSV into a Table
@@ -93,14 +96,16 @@ class Database(object):
         '''
         with open(filename, 'rb') as f:
             csv_iter = csv.reader(f, delimiter = delimiter)
-            self.insert_data_into_table(csv_iter, tablename, col_fields, has_header)
+            self.insert_data_into_table(csv_iter, tablename, col_fields,
+                                        has_header, is_replace)
 
 
     def insert_data_into_table(self,
                                data_iterator,
                                tablename,
                                col_fields,
-                               has_header = True):
+                               has_header = True,
+                               is_replace = False):
         '''
         Loads a CSV into a Table
 
@@ -151,16 +156,19 @@ class Database(object):
                     i += 1
                 for k,v in col_fields.iteritems():
                     new_mapping[header[v]] = v
+        if is_replace:
+            insert_pattern = 'REPLACE INTO %s (%s) VALUES (%s);'
+        else:
+            insert_pattern = 'INSERT INTO %s (%s) VALUES (%s);'
 
-        insert_pattern = 'INSERT INTO %s (%s) VALUES (%s);'
         for row in data_iterator:
             fields = []
             values = []
             for index, field in new_mapping.iteritems():
                 if row[index] is None or row[index] =='Null':
                     value = 'Null'
-                elif isinstance(row[index],str):
-                    value = '"' + row[index].decode('utf-8') + '"'
+                elif isinstance(row[index],str) or isinstance(row[index],date):
+                    value = '"' + str(row[index]).decode('utf-8') + '"'
                 else:
                     value = str(row[index])
 
