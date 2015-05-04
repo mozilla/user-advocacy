@@ -246,7 +246,7 @@ class WordDeltaCounter (ItemCounterDelta):
         #TODO: experiment with other algorithms
         max_possible_count = self.after.count if (self.base.count <= 0) else 15
         pct_value = min(self.diff_pct, _MAX_PCT_DIFF * max_possible_count)
-        pct_part = safe_log(self.diff_pct - _DIFF_PCT_MIN)
+        pct_part = safe_log(pct_value - _DIFF_PCT_MIN)
         abs_part = (self.diff_abs - _DIFF_ABS_MIN)*_DIFF_ABS_SCALE
         value = _SEV_SCALE * (safe_log(abs_part + pct_part) - _SEV_SUB)
         if value < -1:
