@@ -15,10 +15,47 @@ __status__ = "Development"
 
 import re
 import csv
-import dicts
 
 _GAP_PENALTY = 1
 _SWITCH_PENALTY = 1
+
+
+class LevenClassifier(object):
+    def __init__(self, entries = None, gap_penalty = _GAP_PENALTY, 
+                switch_penalty = _SWITCH_PENALTY, min_len = 3, threshold_ratio = .75):
+        self.min_len          = min_len
+        self.threshold_ratio  = threshold_ratio
+        self.leven_trie       = LevenTrie(entries = entries, 
+                                          gap_penalty = gap_penalty,
+                                          switch_penalty = switch_penalty)
+
+    def unique_list(self, entries):
+        ret = []
+        for entry in entries:
+            is_unique = self.is_unique(entry)
+            if is_unique:
+                ret.append(entry)
+        return ret
+
+    def is_unique(self, entry):
+
+        if len(entry) <= self.min_len:
+            return True
+        threshold = 1 + (1 - self.threshold_ratio) * len(entry)
+        print threshold
+
+        if self.leven_trie._num_sub_entries > 0:
+            match = self.leven_trie.search(entry, threshold)
+        else:
+            match = False
+
+        if match:
+            return False
+        else:
+            self.leven_trie.insert(entry)
+            return True
+
+
 
 class LevenTrie(object):
     def __init__(self, entries = None, gap_penalty = _GAP_PENALTY, 
@@ -30,8 +67,8 @@ class LevenTrie(object):
         self._node_count = 0
 
         #TODO setters
-        self._gap_penalty = gap_penalty
-        self._switch_penalty = switch_penalty
+        self.gap_penalty = gap_penalty
+        self.switch_penalty = switch_penalty
 
         self.insert_list(entries)
 
@@ -39,45 +76,51 @@ class LevenTrie(object):
     def insert_list(self, entries):
         if not entries:
             return
-        if entries:
-            for entry in entries:
-                self.insert(entry)
+        for entry in entries:
+            self.insert(entry)
 
     def insert(self, entry):
         if not entry:
             return
         if len(entry) < self._sub_trie_min_depth:
             self._sub_trie_min_depth = len(entry) 
-        self._insert(self._sanitize(entry))
+        self._insert(entry)
 
-    def _insert(self, entry, whole_word = None):
+    def _insert(self, entry, whole_entry = None):
         self._num_sub_entries += 1
-        if not whole_word:
-            whole_word = entry
+        if not whole_entry:
+            whole_entry = str(entry)
         if len(entry) == 0:
-            self._node = whole_word
+            self._node = whole_entry
             self._node_count += 1
             return 1
         
         if not entry[0] in self._sub_trie:
-                self._sub_trie[entry[0]] = LevenTrie()    
-        return self._sub_trie[entry[0]]._insert(entry[1:], whole_word)
+                self._sub_trie[entry[0]] = LevenTrie(
+                        gap_penalty = self.gap_penalty,
+                        switch_penalty = self.switch_penalty
+                    )    
+        return self._sub_trie[entry[0]]._insert(entry[1:], whole_entry)
    
     # SEARCH 
     def search(self, entry, threshold = 1.5):
-        threshold = threshold*len(entry)/4
-        tmp = self._search(self._sanitize(entry), threshold)
+        tmp = self._search(entry, threshold)
         return tmp[0]
 
-    def _search(self, entry, threshold, counter = 0):
-        counter += 1
-        #
-        #print '===================================================='
-        #print entry
-        #print self
+    def _search(self, entry, threshold, tries = None):
+
         record = [None, None]
         if threshold < 0:
             return record
+
+        if tries is None:
+            tries = {}
+        key = self.__repr__() + str(entry)
+        if key in tries.keys():
+            if threshold < tries[key]:
+                return record
+        tries[key] = threshold
+
 
         min_diff = abs(len(entry) - self._sub_trie_min_depth)
 
@@ -95,22 +138,22 @@ class LevenTrie(object):
             # shorten neither
             if self._node:
                 return [self._node, threshold]
-            elif threshold < self._gap_penalty*min_diff:
+            elif threshold < self.gap_penalty*min_diff:
                 return record
         else:
             # shorten entry
             record = self._list_max(record, 
-                    self._search(entry[1:], threshold - self._gap_penalty, counter))
+                    self._search(entry[1:], threshold - self.gap_penalty, tries = tries))
 
         if search_trie:
             for k,v in self._sub_trie.items():
                 # shorten words
                 record = self._list_max(record, 
-                        v._search(entry, threshold - self._gap_penalty, counter))
+                        v._search(entry, threshold - self.gap_penalty, tries = tries))
                 # shorten entry and words
                 if shorten_entry:
                     record = self._list_max(record, 
-                            v._search(entry[1:], threshold - self._diff(entry[0], k), counter))
+                            v._search(entry[1:], threshold - self._diff(entry[0], k), tries = tries))
         
         return record
     
@@ -127,20 +170,6 @@ class LevenTrie(object):
                             quotechar='\"', quoting=csv.QUOTE_MINIMAL)
             csv_writer.writerow(self.get_list())
 
-    # GETTERS/SETTERS
-
-    def get_gap_penalty(self, n):
-        return self._gap_penalty
-    
-    def set_gap_penalty(self, n):
-        self._gap_penalty = n
-    
-    def get_switch_penalty(self, n):
-        return self._switch_penalty
-    
-    def set_switch_penalty(self, n):
-        self._switch_penalty = n
-
     def get_list(self, ):
         l = []
         if self._node:
@@ -152,13 +181,10 @@ class LevenTrie(object):
 
     # HELPER FUNCTIONS
     def _diff(self, v1, v2):
-        return 0 if v1 == v2 else self._switch_penalty
+        return 0 if v1 == v2 else self.switch_penalty
 
     def _list_max(self, l1, l2):
         return l2 if l2[1] >= l1[1] else l1
-
-    def _sanitize(self, word):
-        return re.sub(r'[\W_0-9]+', '', word).lower()
     
     # STR FUNCTION
     def __str__(self):
@@ -176,17 +202,28 @@ class LevenTrie(object):
 
 
 #TODO: move this to the tests
-def tmp():
-    d = LevenTrie()
-    d.insert_list(['cats', 'cats', 'cots', 'digs', 'face', 'faces', 'facebook'])
-    print ['cats', 'cats', 'cots', 'digs', 'face', 'faces', 'facebook']
-    print ['cats', d.search('cats')]
-    print ['cost', d.search('cost')]
-    print ['cot', d.search('cot')]
-    print ['fac', d.search('fac')]
-    print ['facebok', d.search('facebok')]
-    print ['tractor', d.search('tractor')]
+def main():
+    #d = LevenTrie()
+    #d.insert_list(['cats', 'cats', 'cots', 'digs', 'face', 'faces', 'facebook'])
+    #print ['cats', 'cats', 'cots', 'digs', 'face', 'faces', 'facebook']
+    #print ['cats', d.search('cats')]
+    #print ['cost', d.search('cost')]
+    #print ['cot', d.search('cot')]
+    #print ['fac', d.search('fac')]
+    #print ['facebok', d.search('facebok')]
+    #print ['tractor', d.search('tractor')]
+
+    d = LevenClassifier()
+    l = d.unique_list([
+            'blah blah blah! spammy_competitor is better'.split(' '),
+            'blah blah blah! spammy_competitor is good'.split(' '),
+            'blah blah blah! spammy_competitor is better!'.split(' '),
+            'blah blah blah! spammy_competitor is much better!'.split(' '),
+            'blah blah blah! spammy_competitor should be considered'.split(' '),
+            'crash crash crash'.split(' ')
+        ])
+    print l
 
 
 if __name__ == '__main__':
-    tmp()
+    main()
