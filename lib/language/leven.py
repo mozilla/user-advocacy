@@ -41,8 +41,7 @@ class LevenClassifier(object):
 
         if len(entry) <= self.min_len:
             return True
-        threshold = 1 + (1 - self.threshold_ratio) * len(entry)
-        print threshold
+        threshold = 1 + (1 - self.threshold_ratio) * len(entry) # just a heuristic
 
         if self.leven_trie._num_sub_entries > 0:
             match = self.leven_trie.search(entry, threshold)
