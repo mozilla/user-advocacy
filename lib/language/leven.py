@@ -37,6 +37,14 @@ class LevenClassifier(object):
                 ret.append(entry)
         return ret
 
+    def unique_dict(self, entries):
+        ret = {}
+        for entry_key, entry in entries.iteritems():
+            is_unique = self.is_unique(entry)
+            if is_unique:
+                ret[entry_key] = entry
+        return ret
+
     def is_unique(self, entry):
 
         if len(entry) <= self.min_len:
@@ -200,29 +208,40 @@ class LevenTrie(object):
 
 
 
-#TODO: move this to the tests
-def main():
-    #d = LevenTrie()
-    #d.insert_list(['cats', 'cats', 'cots', 'digs', 'face', 'faces', 'facebook'])
-    #print ['cats', 'cats', 'cots', 'digs', 'face', 'faces', 'facebook']
-    #print ['cats', d.search('cats')]
-    #print ['cost', d.search('cost')]
-    #print ['cot', d.search('cot')]
-    #print ['fac', d.search('fac')]
-    #print ['facebok', d.search('facebok')]
-    #print ['tractor', d.search('tractor')]
-
-    d = LevenClassifier()
-    l = d.unique_list([
-            'blah blah blah! spammy_competitor is better'.split(' '),
-            'blah blah blah! spammy_competitor is good'.split(' '),
-            'blah blah blah! spammy_competitor is better!'.split(' '),
-            'blah blah blah! spammy_competitor is much better!'.split(' '),
-            'blah blah blah! spammy_competitor should be considered'.split(' '),
-            'crash crash crash'.split(' ')
-        ])
-    print l
-
-
-if __name__ == '__main__':
-    main()
+##TODO: move this to the tests
+#def main():
+#    #d = LevenTrie()
+#    #d.insert_list(['cats', 'cats', 'cots', 'digs', 'face', 'faces', 'facebook'])
+#    #print ['cats', 'cats', 'cots', 'digs', 'face', 'faces', 'facebook']
+#    #print ['cats', d.search('cats')]
+#    #print ['cost', d.search('cost')]
+#    #print ['cot', d.search('cot')]
+#    #print ['fac', d.search('fac')]
+#    #print ['facebok', d.search('facebok')]
+#    #print ['tractor', d.search('tractor')]
+#    from lib.language.word_types import dumb_tokenize
+#
+#    d1 = LevenClassifier()
+#    l1 = d1.unique_list([
+#            dumb_tokenize('blah blah blah! cat_browser is better'),
+#            dumb_tokenize('blah blah blah! cat_browser is good'),
+#            dumb_tokenize('blah blah blah! cat_browser is better!'),
+#            dumb_tokenize('blah blah blah! cat_browser is much better!'),
+#            dumb_tokenize('blah blah blah! cat_browser should be considered'),
+#            dumb_tokenize('crash crash crash')
+#        ])
+#    print l1
+#    d2 = LevenClassifier()
+#    l2 = d2.unique_dict({
+#            'id_a':dumb_tokenize('blah blah blah! cat_browser is better'),
+#            'id_b':dumb_tokenize('blah blah blah! cat_browser is good'),
+#            'id_c':dumb_tokenize('blah blah blah! cat_browser is better!'),
+#            'id_d':dumb_tokenize('blah blah blah! cat_browser is much better!'),
+#            'id_e':dumb_tokenize('blah blah blah! cat_browser should be considered'),
+#            'id_f':dumb_tokenize('crash crash crash')
+#        })
+#    print l2
+#
+#
+#if __name__ == '__main__':
+#    main()

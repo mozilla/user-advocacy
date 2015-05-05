@@ -60,16 +60,22 @@ def tokenize(comment, word_classifier = None):
         word_classifier = _DEFAULT_CLASSIFIER
 
     # Standardize encoding
-    if isinstance(comment, str):
-        comment = comment.decode('utf-8')
-    elif (not isinstance(comment, unicode)):
-        raise TypeError("comment should be str or unicode. Got " + type(comment))
-    comment = ''.join(c for c in unicodedata.normalize('NFD', comment) \
-                      if unicodedata.category(c) != 'Mn')
+    comment = standardize_encoding(comment)
 
     # Parse    
     return word_classifier.parse_comment(comment)
 
+def standardize_encoding(comment):
+    if isinstance(comment, str):
+        comment = comment.decode('utf-8')
+    elif (not isinstance(comment, unicode)):
+        raise TypeError("comment should be str or unicode. Got " + type(comment))
+    return ''.join(c for c in unicodedata.normalize('NFD', comment) \
+                      if unicodedata.category(c) != 'Mn')
+
+def dumb_tokenize(comment):
+    comment = standardize_encoding(comment)
+    return filter(None, re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment.encode('utf-8')))
 
 class WordClassifier(object):
     '''
@@ -133,10 +139,10 @@ class WordClassifier(object):
         comment = self._parse_comment_with_regexes(comment, words_dict)
 
         # Tokenize
-        words = re.split(r"[|,]|\s+|[^\w'.-]+|[-.'](\s|$)", comment.encode('utf-8'))
+        words = dumb_tokenize(comment)
 
-        num_words = len(words)/2
-        helpfulness = 10 if num_words > _HELPFULNESS_NUM_WORDS else 6
+        #TODO(rrayborn): better helpfulness
+        helpfulness = 10 if len(words) > _HELPFULNESS_NUM_WORDS else 6
         for word in words:
 
             helpfulness = min(self._parse_word(word, words_dict = words_dict), helpfulness)
@@ -295,6 +301,7 @@ class WordClassifier(object):
 
         return comment
 
+#TODO: move this to the tests
 #def main():
 ##    _word_classifier = WordClassifier()
 ##    print ["_word_classifier.is_spam('palemoon')          ", _word_classifier.is_spam('palemoon')]
@@ -315,7 +322,8 @@ class WordClassifier(object):
 #        a,b = tokenize(example)
 #        print a
 #        print b
-
-
-if __name__ == '__main__':
-    main()
+#        print dumb_tokenize(example)
+#
+#
+#if __name__ == '__main__':
+#    main()
