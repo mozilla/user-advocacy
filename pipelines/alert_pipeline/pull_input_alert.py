@@ -12,6 +12,7 @@ from email.utils import mktime_tz, parsedate_tz
 
 _TIMEFRAME = 14 # Days
 ALERT_FILENAME = 'input_alerts.json'
+ANDROID_ALERT_FILENAME = 'android_input_alerts.json'
 
 ALERT_TOKEN = environ['ALERT_TOKEN']
 _INPUT_URL = 'https://input.mozilla.org/api/v1/alerts/alert/?'
@@ -19,14 +20,16 @@ _INPUT_URL = 'https://input.mozilla.org/api/v1/alerts/alert/?'
 # TODO: make this env based.
 _OUTPUT_PATH = '/var/server/server/useradvocacy/data/static_json/'
 
-def main():
+
+
+def get_alerts(flavor, filename):
     headers = {
         'content-type': 'application/json',
         'accept': 'application/json; indent=4',
         'Fjord-Authorization': 'Token ' + ALERT_TOKEN,
     }
     qs_params = {
-        'flavors': 'word-based',
+        'flavors': flavor,
         'max': 10000
     }
     resp = requests.get(
@@ -36,7 +39,7 @@ def main():
     if resp.status_code == 200:
         file_path = path.join(
             _OUTPUT_PATH,
-            ALERT_FILENAME
+            filename
         )
         remove(file_path)
         file = open(file_path, 'w')
@@ -49,6 +52,10 @@ def main():
     else:
         print "Error: " + json.dumps(resp)
     
+def main():
+    get_alerts('word-based', ALERT_FILENAME)
+    get_alerts('android-word-based', ANDROID_ALERT_FILENAME)
+
 if __name__ == '__main__':
 
     main()
