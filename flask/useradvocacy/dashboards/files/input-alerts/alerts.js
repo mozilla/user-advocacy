@@ -26,12 +26,12 @@ function run() {
     }
     url = urls[product];
     $('#loading-throbber').show();
-    $('#main').hide();
+    $('#alert-list').hide();
     $('#error-message').hide();
     d3.json(url,function (error, json) {
         if (error) {
             console.log(error);
-            showErrorMessage(true, error.statusText);
+            showErrorMessage(true, "Server returned: " + error.statusText);
             return;
         }
         if (_.size(json.alerts) == 0) {
@@ -200,7 +200,6 @@ function getInputData(link_ids, callback, this_context) {
             return;
         }
         var array = json.results;
-        console.log(array);
         for (var i = 0; i < array.length; i++) {
             delete array[i].description_bigrams;
             input_json[array[i].id] = array[i];
@@ -258,13 +257,12 @@ function adjustControls() {
 }
 
 function updateChange(redraw, reload) {
-    setGlobals();
     var url = document.location.pathname;
     url = url + '?' + $.param(removeDefaultParams(parameters));
     history.pushState(parameters, 'Alerts dashboard', url);
+    setGlobals();
     if (reload) {
         run();
-        drawTables();
     } else if (redraw) {
         drawTables();
     }
@@ -331,22 +329,19 @@ function showErrorMessage (state, text) {
         console.log("showing error message (blank)");
         $('#loading-throbber').hide();
         $('#alert-list').hide();
-        $('#main').show();
         $('#error-message').show();
         $('#blank-text').show();
     } else if (state) {
         console.log("showing error message " + text);
         $('#loading-throbber').hide();
         $('#alert-list').hide();
-        $('#main').show();
         $('#error-message').show();
         $('#blank-text').hide();
         $('#error-text').empty().text(text);
     } else {
         $('#loading-throbber').hide();
-        $('#main').show();
         $('#error-message').hide();
-
+        $('#alert-list').show();
     }
 }
 
