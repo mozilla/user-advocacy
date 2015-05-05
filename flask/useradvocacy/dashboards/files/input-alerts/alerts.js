@@ -263,7 +263,8 @@ function updateChange(redraw, reload) {
     url = url + '?' + $.param(removeDefaultParams(parameters));
     history.pushState(parameters, 'Alerts dashboard', url);
     if (reload) {
-        run()
+        run();
+        drawTables();
     } else if (redraw) {
         drawTables();
     }
