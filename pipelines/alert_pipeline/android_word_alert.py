@@ -48,7 +48,7 @@ _MAX_ALERT_LINKS = 25 # Send at most this number of links
 _MAX_EMAIL_LINKS = 15 # Email at most this number of links
 
 ALERT_EMAIL_FROM = environ['ALERT_EMAIL_FROM']
-ALERT_EMAIL = environ['ALERT_EMAIL']
+ALERT_EMAIL = environ['ANDROID_ALERT_EMAIL']
 
 ALERT_TOKEN = environ['ALERT_TOKEN']
 
@@ -221,7 +221,7 @@ def email_results(email_list):
     if len(email_list) > 0:
 
         msg = MIMEText(email_body)
-        msg['Subject'] = "[Input Alert] " + ", ".join(shortwords)
+        msg['Subject'] = "[Android Input Alert] " + ", ".join(shortwords)
         msg['From'] = ALERT_EMAIL_FROM
         msg['To'] = ALERT_EMAIL
         server = smtplib.SMTP('localhost')
