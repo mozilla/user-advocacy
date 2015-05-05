@@ -43,6 +43,7 @@ then
 
         # restart server
         service apache2 restart
+        echo "Thanks for deploying. Now please go test your code!"
     fi
 
 else
