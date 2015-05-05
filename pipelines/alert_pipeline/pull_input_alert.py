@@ -30,7 +30,8 @@ def get_alerts(flavor, filename):
     }
     qs_params = {
         'flavors': flavor,
-        'max': 10000
+        'max': 1000
+        
     }
     resp = requests.get(
         _INPUT_URL + urllib.urlencode(qs_params),
