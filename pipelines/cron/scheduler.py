@@ -35,7 +35,10 @@ _JOBLIST = [
             'Fetch alerts'],
         ['0 */6 * * *',
             'python $CODE_PATH/pipelines/alert_pipeline/word_alert.py       >/tmp/alert_cron       2>&1',
-            'Alert Pipeline']
+            'Alert Pipeline'],
+        ['0 5 * * *',
+            'python $CODE_PATH/pipelines/alert_pipeline/android_word_alert.py       >/tmp/alert_cron       2>&1',
+            'Android Alert Pipeline']
     ]
 
 #TODO(rrayborn): this might need a csv or even a front end later

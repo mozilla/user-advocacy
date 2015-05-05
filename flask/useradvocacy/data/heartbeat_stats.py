@@ -51,7 +51,7 @@ def heartbeat_stats_return(args):
 
     where_clause = 'WHERE %s ' % ' AND '.join(where_statements)
 
-    if len(where_clause) = 0:
+    if len(where_clause) == 0:
         ret['messages'] = {'parameters': 'No parameters found'}
         return json.jsonify(ret) #TODO(rrayborn): throw code: , 400
 

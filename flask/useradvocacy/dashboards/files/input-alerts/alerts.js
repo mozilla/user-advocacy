@@ -1,8 +1,17 @@
 (function($, d3, window, _) {
 
 var parameters, sent_params, param_string;
+var min_severity, product;
 var results = {};
 var input_json = {};
+var urls = {
+    'desktop': '/data/static/json/input_alerts.json',
+    'android': '/data/static/json/android_input_alerts.json',
+    'default': '/data/static/json/input_alerts.json'
+};
+var reloadParams = {
+    'product': true
+}
 
 function startup() {
     parameters = $.deparam(document.location.search.substring(1));
@@ -11,14 +20,18 @@ function startup() {
 }
 
 function run() {
-    url = '/data/static/json/input_alerts.json';
+    if (!(product in urls)) {
+        showErrorMessage(true, "Invalid Product: " + product);
+        return;
+    }
+    url = urls[product];
     $('#loading-throbber').show();
-    $('#main').hide();
+    $('#alert-list').hide();
     $('#error-message').hide();
     d3.json(url,function (error, json) {
         if (error) {
             console.log(error);
-            showErrorMessage(true, error);
+            showErrorMessage(true, "Server returned: " + error.statusText);
             return;
         }
         if (_.size(json.alerts) == 0) {
@@ -187,7 +200,6 @@ function getInputData(link_ids, callback, this_context) {
             return;
         }
         var array = json.results;
-        console.log(array);
         for (var i = 0; i < array.length; i++) {
             delete array[i].description_bigrams;
             input_json[array[i].id] = array[i];
@@ -224,7 +236,7 @@ function summary_parse(summary) {
     }
 }
 
-severityScale = d3.scale.linear()
+var severityScale = d3.scale.linear()
     .domain([2,3,4,5,6,7,8,9,10])
     .clamp(true)
     .range(['rgba(255,255,204,0.8)',
@@ -244,12 +256,14 @@ function adjustControls() {
     $("#min_severity").val(min_severity);
 }
 
-function updateChange(redraw) {
-    setGlobals();
+function updateChange(redraw, reload) {
     var url = document.location.pathname;
     url = url + '?' + $.param(removeDefaultParams(parameters));
     history.pushState(parameters, 'Alerts dashboard', url);
-    if (redraw) {
+    setGlobals();
+    if (reload) {
+        run();
+    } else if (redraw) {
         drawTables();
     }
     adjustControls();
@@ -257,6 +271,7 @@ function updateChange(redraw) {
 
 function setGlobals() {
     min_severity = parameters.min_severity ? parameters.min_severity : 'default';
+    product = parameters.product ? parameters.product : 'default';
 }
 
 function removeKnownParams (p) {
@@ -282,7 +297,11 @@ function changeParam(type, value) {
         value = $("#" + type).val()
     }
     parameters[type] = value ? value : 'default';
-    updateChange(true);
+    if (type in reloadParams) {
+        updateChange(true, true);
+    } else {
+        updateChange(true, false);
+    }
 }
 
 window.changeParam = changeParam;
@@ -307,21 +326,22 @@ function updateForm() {
 
 function showErrorMessage (state, text) {
     if (state && (text === undefined || text == '' || text === null)) {
+        console.log("showing error message (blank)");
         $('#loading-throbber').hide();
-        $('#main').hide();
+        $('#alert-list').hide();
         $('#error-message').show();
         $('#blank-text').show();
     } else if (state) {
+        console.log("showing error message " + text);
         $('#loading-throbber').hide();
-        $('#main').hide();
+        $('#alert-list').hide();
         $('#error-message').show();
         $('#blank-text').hide();
         $('#error-text').empty().text(text);
     } else {
         $('#loading-throbber').hide();
-        $('#main').show();
         $('#error-message').hide();
-
+        $('#alert-list').show();
     }
 }
 
