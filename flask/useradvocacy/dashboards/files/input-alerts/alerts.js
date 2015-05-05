@@ -329,12 +329,14 @@ function showErrorMessage (state, text) {
     if (state && (text === undefined || text == '' || text === null)) {
         console.log("showing error message (blank)");
         $('#loading-throbber').hide();
+        $('#alert-list').hide();
         $('#main').show();
         $('#error-message').show();
         $('#blank-text').show();
     } else if (state) {
         console.log("showing error message " + text);
         $('#loading-throbber').hide();
+        $('#alert-list').hide();
         $('#main').show();
         $('#error-message').show();
         $('#blank-text').hide();
