@@ -73,6 +73,8 @@ class LevenTrie(object):
         self._node = None
         self._node_count = 0
 
+        self._searches    = {}
+
         #TODO setters
         self.gap_penalty = gap_penalty
         self.switch_penalty = switch_penalty
@@ -112,22 +114,26 @@ class LevenTrie(object):
     # SEARCH 
     def search(self, entry, threshold = 1.5):
         tmp = self._search(entry, threshold)
+        self._clear_searches()
         return tmp[0]
 
-    def _search(self, entry, threshold, tries = None):
+    def _clear_searches(self):
+        k._searches = {}
+        for v in self._sub_trie.values():
+            v._clear_searches()
+
+
+    def _search(self, entry, threshold):
 
         record = [None, None]
         if threshold < 0:
             return record
 
-        if tries is None:
-            tries = {}
-        key = self.__repr__() + str(entry)
-        if key in tries.keys():
-            if threshold < tries[key]:
+        key = str(entry)
+        if key in self._searches.keys():
+            if threshold <= self._searches[key]:
                 return record
-        tries[key] = threshold
-
+        self._searches[key] = threshold
 
         min_diff = abs(len(entry) - self._sub_trie_min_depth)
 
@@ -150,17 +156,17 @@ class LevenTrie(object):
         else:
             # shorten entry
             record = self._list_max(record, 
-                    self._search(entry[1:], threshold - self.gap_penalty, tries = tries))
+                    self._search(entry[1:], threshold - self.gap_penalty))
 
         if search_trie:
-            for k,v in self._sub_trie.items():
+            for k,v in self._sub_trie.iteritems():
                 # shorten words
                 record = self._list_max(record, 
-                        v._search(entry, threshold - self.gap_penalty, tries = tries))
+                        v._search(entry, threshold - self.gap_penalty))
                 # shorten entry and words
                 if shorten_entry:
                     record = self._list_max(record, 
-                            v._search(entry[1:], threshold - self._diff(entry[0], k), tries = tries))
+                            v._search(entry[1:], threshold - self._diff(entry[0], k)))
         
         return record
     
@@ -203,7 +209,7 @@ class LevenTrie(object):
             s += '\n' + count * '\t' + self._node + ' ' + str(self._node_count) + ' ' + str(self._sub_trie_min_depth)
             count += 1
         for ld in self._sub_trie.values():
-            s += ld._get_str(count)
+            s += ld._get_strgit(count)
         return s
 
 
