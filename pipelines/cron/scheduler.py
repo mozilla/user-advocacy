@@ -12,9 +12,9 @@ __maintainer__ = 'Rob Rayborn'
 __email__      = 'rrayborn@mozilla.com'
 __status__     = 'Production'
 
-
-from crontab import CronTab
 import os
+from crontab import CronTab
+
 
 #TODO(rrayborn): this might need a csv or even a front end later
 _JOBLIST = [

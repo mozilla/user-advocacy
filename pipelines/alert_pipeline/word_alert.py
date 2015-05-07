@@ -1,30 +1,30 @@
 #!/usr/local/bin/python
 
-import sys
-from os import path, environ
-from lib.database.input_db import Db as inputDb
 import csv
-import json
-import requests
-import re
 import datetime as dt
-from lib.general.simplewarn import warn
-import smtplib
-from email.mime.text import MIMEText
-from sqlalchemy import sql
-from textwrap import dedent
-from math import log, floor
 import httplib
-httplib.HTTPConnection.debuglevel = 1
-from pytz import timezone as tz
+import json
+import operator
+import re
+import smtplib
+import sys
+from collections import defaultdict
+from email.mime.text import MIMEText
+from math import log, floor
+from os import path, environ
+from textwrap import dedent
 
+import requests
+from pytz import timezone as tz
+from sqlalchemy import sql
 from sqlalchemy.exc import OperationalError
 
-import operator
-
-from collections import defaultdict
+from lib.database.input_db import Db as inputDb
 from lib.general.counters import ItemCounterDelta
+from lib.general.simplewarn import warn
 from lib.language.word_types import tokenize
+
+httplib.HTTPConnection.debuglevel = 1
 
 _VERSION = 2 # Update this when you update stuff (ints only)
 _TIMEFRAME = 12 # Hours

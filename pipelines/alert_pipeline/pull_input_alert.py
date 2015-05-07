@@ -1,14 +1,16 @@
 #!/usr/local/bin/python
 
-import sys
-from os import path, environ, remove
-import json
-import requests
 import datetime
 import httplib
-httplib.HTTPConnection.debuglevel = 1
+import json
+import sys
 import urllib
 from email.utils import mktime_tz, parsedate_tz
+from os import path, environ, remove
+
+import requests
+
+httplib.HTTPConnection.debuglevel = 1
 
 _TIMEFRAME = 14 # Days
 ALERT_FILENAME = 'input_alerts.json'

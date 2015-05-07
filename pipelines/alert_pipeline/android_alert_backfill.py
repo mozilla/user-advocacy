@@ -1,12 +1,12 @@
 #!/usr/local/bin/python
-
-import sys
+import argparse
 import datetime as dt
+import sys
 
 from lib.general.simplewarn import warn
 from pipelines.alert_pipeline.android_word_alert import process_alerts
 
-import argparse
+
 
 
 
