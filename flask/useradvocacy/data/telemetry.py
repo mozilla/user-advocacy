@@ -711,7 +711,7 @@ def _stats_query(week, version, os, channel, target = None):
                 stats.measure_value        AS value,
                 SUM(stats.active_users)    AS active_users,
                 SUM(stats.potential_users) AS potential_users,
-                SUM(stats.users)           AS `count`
+                COALESCE(SUM(stats.users),0) AS `count`
             FROM
                 telemetry.weekly_telemetry_stats       stats
                 LEFT JOIN telemetry.telemetry_measures measures 
