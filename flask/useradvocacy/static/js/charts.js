@@ -290,14 +290,29 @@ function lineChart() {
         $selection.empty();
         selection.each(function(data) {
             data = data.map(function(d, i) {
-                return {
+                var output = {
                     x_value: xValue.call(data, d, i),
                     value: yValue.call(data, d, i),
                     x_tooltip: xTooltip.call(data, d, i),
                     bar_tooltip: barTooltip.call(data, d, i),
                     original_datum: d
-                }
+                };
+                output.display = !(isNaN(output.x_value) || isNaN(output.value));
+                return output;
             });
+            
+            // Convert isolated points to points
+            
+            var points = data.map(function (d, i, arr) {
+                if (!d.display) {
+                    return undefined;
+                }
+                if ((i == 0 || !arr[i-1].display) && !arr[i+1].display) {
+                    return d;
+                } else {
+                    return undefined;
+                }
+            }).filter(function(d) {return d !== undefined });
 
             if (givenWidth === null) {
                 width = $selection.width();
@@ -363,12 +378,34 @@ function lineChart() {
                 .y(function(d) {
                     return Y(d.value);
                 })
-            g.append("path").attr("class", "line")
+            g.append("path").classed({"line": true, "line-line": true})
                 .datum(data)
                 .attr("d", function(d) { return line(d); })
                 .style("stroke", fillColor)
-                .style("stroke-width", "3px")
+                .style("stroke-width", 2)
                 .style("fill-opacity", 0);
+            
+            var line_points = g.append("g");
+            line_points.selectAll(".line-points")
+                .data(points)
+                .enter().append("circle")
+                .classed({"line": true, "line-points": true})
+                .attr("cx", function(d) {
+                    return X(d.x_value);
+                })
+                .attr("cy", function(d) {
+                    return Y(d.value);
+                })
+                .attr("r", 1)
+                .style("stroke-width", 2)                
+                .style("stroke", function(d) {
+                    return fillColor
+                })
+                .style("fill", function(d) {
+                    return fillColor
+                })
+                .style("fill-opacity", 1)
+
                 
             g.selectAll(".axis path")
                 .style("fill", "none")
@@ -563,7 +600,27 @@ function timeScaleLine() {
                     series.values.forEach(function(d) {
                         d.date = parseDate(xValue(d));
                     });
+                    series.points = series.values.map(function(d) {
+                            if (d === undefined) {
+                                return null;
+                            } else if (isNaN(yValue(d))) {
+                                return null;
+                            } else {
+                                return d;
+                            }
+                        }).map(function (d,i,arr) { 
+                        if ((i == 0 || arr[i-1] === null) 
+                            && arr[i+1] === null && d !== null) {
+                            d.realname = series.realname;
+                            return d;
+                        } else {
+                            return undefined;
+                        }
+                    }).filter(function(d) {return !(d == undefined || d == null) })
                 }
+                console.log("points", series.points);
+
+                console.log("data:",data);
 
                 if (legendValue && countSeries > 1) {
                     legendValue = true;
@@ -671,17 +728,43 @@ function timeScaleLine() {
                 .attr("class", "series");
 
             series.append("path")
-                .attr("class", "line")
+                .classed({"line": true, "line-line": true})
                 .attr("d", function(d) {
                     return line(valuesAccessor(d));
                 })
                 .style("stroke", function(d) {
-                    return color(nameLabel(d))
+                    return color(d.realname)
                 })
                 .style("stroke-width", 2)
                 .style("fill", "none")
                 .on("mouseenter", boldLine)
                 .on("mouseleave", thinLine);
+
+            var line_points = series.append("g");
+            line_points.selectAll(".line-points")
+                .data(function(d) {
+                    return d.points;
+                })
+                .enter().append("circle")
+                .classed({"line": true, "line-points": true})
+                .attr("cx", function(d) {
+                    return xScale(d.date);
+                })
+                .attr("cy", function(d) {
+                    return yScale(yValue(d));
+                })
+                .attr("r", 1)
+                .style("stroke-width", 2)                
+                .style("stroke", function(d) {
+                    return color(d.realname)
+                })
+                .style("fill", function(d) {
+                    return color(d.realname)
+                })
+                .style("fill-opacity", 1)
+                .on("mouseenter", boldLine)
+                .on("mouseleave", thinLine);
+
             g.append("g").attr("class", "x axis");
             g.append("g").attr("class", "y axis");
 
@@ -790,7 +873,7 @@ function timeScaleLine() {
     function boldLine(d) {
         d3.selectAll(".lines .line")
             .each(function(c, i) {
-                if (d.name == c.name) {
+                if (d.realname == c.realname) {
                     d3.select(this)
                         .transition()
                         .style("stroke-width", 4)
