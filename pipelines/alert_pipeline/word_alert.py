@@ -134,7 +134,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
 
     for row in results:
         (word_dict, value) = tokenize(row.description)
-        if value == 0:
+        if value < 1:
             continue
         for (key, word_set) in word_dict.iteritems():
             if (key is None) or not re.match('\S', key):
