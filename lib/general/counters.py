@@ -138,6 +138,23 @@ class ItemCounter(object):
 
         self.count += 1
 
+    def remove(self, link = None, meta = None):
+        
+        self.metadata.subtract(meta)
+        
+        if link is not None:
+            if isinstance(link, (set, list)):
+                for i in link:
+                    if i in link_list:
+                        self.link_list.discard(i)
+                        self.count -= 1
+            else:
+                if link in link_list:
+                    self.link_list.discard(link)
+                    self.count -= 1
+        else:
+            self.count -= 1
+
     def __str__(self):
         return 'Item with key %s, count %d' % (
                 self.key,

@@ -102,8 +102,8 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         return
     
     for row in results:
-        (word_dict, value) = tokenize(row.description)
-        if value == 0:
+        (word_dict, value) = tokenize(row.description, id = row.id)
+        if value < 1:
             continue
         for (key, word_set) in word_dict.iteritems():
             if (key is None) or not re.match('\S', key):
@@ -111,6 +111,8 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
             delta[key].base.insert(key = key, link = (row.id, value), meta = word_set)
         base_total += 1
 
+    after_comments = dict()
+    
     new_data_sql = """
         SELECT description, MIN(id) as id
         FROM feedback_response fr
@@ -133,7 +135,8 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         return
 
     for row in results:
-        (word_dict, value) = tokenize(row.description)
+        (word_dict, value) = tokenize(row.description, id = row.id)
+        after_comments[row.id] = row.description
         if value < 1:
             continue
         for (key, word_set) in word_dict.iteritems():
@@ -149,6 +152,8 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
     #Generate alerts
     
     alert_count = 0
+    alerted_feedback = dict()
+    
     
     for (k,v) in delta.iteritems():
         v.set_thresholds(diff_pct = _DIFF_PCT_MIN, diff_abs = _DIFF_ABS_MIN)
@@ -156,10 +161,33 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         v.end_time = tz('UTC').normalize(date)
         if (v.is_significant and v.severity >= _ALERT_SEV_MIN
                 and v.after.count >= _MIN_COUNT_THRESHOLD):
-            alert_count += 1
+            for link_item in v.after.link_list:
+                alerted_feedback[link_item[0]] = link_item[1]
+            v.alert = True
+    
+    test_spam = map(lambda x: (x, after_comments[x]), 
+        alerted_feedback.keys())
+    spam = set(detect_spam(test_spam))
+    spam_count = len(spam)
+    
+    for (k,v) in delta.iteritems():
+        if (v.alert):
+            for s in spam:
+                if s in v.after.link_list:
+                    v.after.remove(link = (s, alerted_feedback[s]))
+                    v.alert = False
+    
+    after_total -= spam_count
+
+    for (k,v) in delta.iteritems():
+        v.set_potentials(base = base_total, after = after_total)
+        if (v.is_significant and v.severity >= _ALERT_SEV_MIN
+            and v.after.count >= _MIN_COUNT_THRESHOLD):
             if (not debug or debug_file != sys.stdout):
                 print "Emitting alert for %s" % v.after.sorted_metadata[0]
             v.emit(debug = debug, debug_file = debug_file)
+            alert_count += 1
+
     
     if alert_count <= 0:
         print "No alerts today"
@@ -238,6 +266,7 @@ class WordDeltaCounter (ItemCounterDelta):
         now = dt.datetime.utcnow()
         now = tz('UTC').localize(now)
         self.end_time = now - (dt.timedelta(microseconds=now.microsecond))
+        self.alert = False
 
     @property
     def severity (self):
