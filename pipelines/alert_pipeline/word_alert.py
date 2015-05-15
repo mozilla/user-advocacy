@@ -230,20 +230,12 @@ def email_results(email_list):
         link_list.sort(key = lambda x:(x[1], x[0]), reverse=True)
         link_list = link_list[:_MAX_EMAIL_LINKS]
         for link in link_list :
-            comment_sql = sql.select([rfr.c.description]).where(rfr.c.id == link[0])
             email_body += "\n<https://input.mozilla.org/dashboard/response/%s>:\n" % \
                 (str(link[0]))
-            try:
-                rows = input_db.execute(comment_sql)
-                for item in rows:
-                    if len(item.description) < 500:
-                        email_body += item.description
-                    else:
-                        email_body += item.description[:450] + "..."
-                rows.close()
-
-            except (OperationalError):
-                email_body = "<DB timeout fetching this input.>"
+            if len(after_comments[link[0]]) < 500:
+                email_body += item.description
+            else:
+                email_body += after_comments[link[0]][:450] + "..."
                 
         email_body += "\n\n"
         shortwords.append(v.after.sorted_metadata[0])
