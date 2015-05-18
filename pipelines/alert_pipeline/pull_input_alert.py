@@ -22,7 +22,7 @@ _INPUT_URL = 'https://input.mozilla.org/api/v1/alerts/alert/?'
 # TODO: make this env based.
 _OUTPUT_PATH = '/var/server/server/useradvocacy/data/static_json/'
 
-
+end_time = datetime.datetime.now() - datetime.timedelta(days=_TIMEFRAME)
 
 def get_alerts(flavor, filename):
     headers = {
@@ -32,8 +32,8 @@ def get_alerts(flavor, filename):
     }
     qs_params = {
         'flavors': flavor,
-        'max': 1000
-        
+        'max': 3000,
+        'end_time_start': end_time.isoformat()
     }
     resp = requests.get(
         _INPUT_URL + urllib.urlencode(qs_params),
