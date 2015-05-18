@@ -22,6 +22,7 @@ from sqlalchemy.exc import OperationalError
 from lib.database.input_db import Db as inputDb
 from lib.general.counters import ItemCounterDelta
 from lib.general.simplewarn import warn
+from lib.language.leven import SpamDetector
 from lib.language.word_types import tokenize
 
 httplib.HTTPConnection.debuglevel = 1
@@ -102,7 +103,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         return
     
     for row in results:
-        (word_dict, value) = tokenize(row.description, id = row.id)
+        (word_dict, value) = tokenize(row.description, input_id = row.id)
         if value < 1:
             continue
         for (key, word_set) in word_dict.iteritems():
@@ -135,7 +136,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         return
 
     for row in results:
-        (word_dict, value) = tokenize(row.description, id = row.id)
+        (word_dict, value) = tokenize(row.description, input_id = row.id)
         after_comments[row.id] = row.description
         if value < 1:
             continue
@@ -154,7 +155,6 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
     alert_count = 0
     alerted_feedback = dict()
     
-    
     for (k,v) in delta.iteritems():
         v.set_thresholds(diff_pct = _DIFF_PCT_MIN, diff_abs = _DIFF_ABS_MIN)
         v.set_potentials(base = base_total, after = after_total)
@@ -165,20 +165,20 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
                 alerted_feedback[link_item[0]] = link_item[1]
             v.alert = True
     
-    test_spam = map(lambda x: (x, after_comments[x]), 
-        alerted_feedback.keys())
-    spam = set(detect_spam(test_spam))
-    spam_count = len(spam)
+    test_spam = { x: after_comments[x] for x in alerted_feedback.keys() }
+    spam = SpamDetector().check_entries_for_spam(test_spam)
+    spam_count = len(spam.keys())
+    print spam
     
     for (k,v) in delta.iteritems():
         if (v.alert):
-            for s in spam:
+            for s in spam.keys():
                 if s in v.after.link_list:
                     v.after.remove(link = (s, alerted_feedback[s]))
                     v.alert = False
     
     after_total -= spam_count
-
+    
     for (k,v) in delta.iteritems():
         v.set_potentials(base = base_total, after = after_total)
         if (v.is_significant and v.severity >= _ALERT_SEV_MIN
