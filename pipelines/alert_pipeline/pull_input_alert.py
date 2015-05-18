@@ -19,8 +19,7 @@ ANDROID_ALERT_FILENAME = 'android_input_alerts.json'
 ALERT_TOKEN = environ['ALERT_TOKEN']
 _INPUT_URL = 'https://input.mozilla.org/api/v1/alerts/alert/?'
 
-# TODO: make this env based.
-_OUTPUT_PATH = '/var/server/server/useradvocacy/data/static_json/'
+_OUTPUT_PATH = path.join(environ['SERVER_PATH'],'data/static_json/')
 
 end_time = datetime.datetime.now() - datetime.timedelta(days=_TIMEFRAME)
 
