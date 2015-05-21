@@ -15,117 +15,166 @@ __status__ = "Development"
 
 import re
 import csv
+from lib.database.backend_db  import Db as UA_DB
 
 _GAP_PENALTY = 1
 _SWITCH_PENALTY = 1
 
+class LevenNode(object):
+    def __init__(self, entry, metadata = None):
+        '''
+        An object to store information relevant to a single Node on our 
+        LevenTrie.
 
-class LevenClassifier(object):
-    def __init__(self, entries = None, gap_penalty = _GAP_PENALTY, 
-                switch_penalty = _SWITCH_PENALTY, min_len = 3, threshold_ratio = .75):
-        self.min_len          = min_len
-        self.threshold_ratio  = threshold_ratio
-        self.leven_trie       = LevenTrie(entries = entries, 
-                                          gap_penalty = gap_penalty,
-                                          switch_penalty = switch_penalty)
+        Args:
+            entry    (string):     The entry's value.
+            metadata (<anything>): The entry's metadata info. [Default: None]
 
-    def unique_list(self, entries):
-        ret = []
-        for entry in entries:
-            is_unique = self.is_unique(entry)
-            if is_unique:
-                ret.append(entry)
-        return ret
+        '''
+        self.entry              = entry
+        self.metadata           = []
+        self.collisions         = 0
+        self.duplicates         = 0
+        if metadata:
+            self.metadata.append(metadata)
 
-    def unique_dict(self, entries):
-        ret = {}
-        for entry_key, entry in entries.iteritems():
-            is_unique = self.is_unique(entry)
-            if is_unique:
-                ret[entry_key] = entry
-        return ret
+    def add_metadata(self, metadata):
+        '''
+        Adds to our metadata list. Increments the number of duplicates.
 
-    def is_unique(self, entry):
+        Args:
+            metadata (<anything>): The entry's metadata info.
 
-        if len(entry) <= self.min_len:
-            return True
-        threshold = 1 + (1 - self.threshold_ratio) * len(entry) # just a heuristic
-
-        if self.leven_trie._num_sub_entries > 0:
-            match = self.leven_trie.search(entry, threshold)
-        else:
-            match = False
-
-        if match:
-            return False
-        else:
-            self.leven_trie.insert(entry)
-            return True
-
+        '''
+        self.metadata.append(metadata)
+        self.duplicates += 1
 
 
 class LevenTrie(object):
-    def __init__(self, entries = None, gap_penalty = _GAP_PENALTY, 
-                switch_penalty = _SWITCH_PENALTY):
-        self._sub_trie = {}
-        self._num_sub_entries = 0
-        self._sub_trie_min_depth = 0
-        self._node = None
-        self._node_count = 0
+    def __init__(self, 
+                 entries        = None, 
+                 gap_penalty    = _GAP_PENALTY, 
+                 switch_penalty = _SWITCH_PENALTY):
+        '''
+        An object that builds/represents a Levenstein Trie.
 
-        self._searches    = {}
+        Args:
+            entries        (list):  A list of entries to insert in our trie.
+                           (dict):  A list of entries to insert in our trie. metadata -> entry
+            gap_penalty    (float): The penalty for a missing entry.
+            switch_penalty (float): The penalty for an incorrect entry.
+
+        '''
+        self._node               = None
+
+        self._sub_trie           = {}
+        self._num_sub_entries    = 0
+        self._sub_trie_min_depth = 0
+
+        self._searches           = {}
 
         #TODO setters
-        self.gap_penalty = gap_penalty
+        self.gap_penalty    = gap_penalty
         self.switch_penalty = switch_penalty
 
-        self.insert_list(entries)
+        if entries:
+            if isinstance(entries,list):
+                self.insert_list(entries)
+            elif isinstance(entries,dict):
+                self.insert_dict(entries)
+            else:
+                Warning('entries type not recognized.')
 
     # INSERT
     def insert_list(self, entries):
-        if not entries:
-            return
+        '''
+        Inserts a list of entries into our a Levenstein Trie.
+
+        Args:
+            entries (list):  A list of entries to insert in our trie.
+
+        '''
         for entry in entries:
             self.insert(entry)
 
-    def insert(self, entry):
-        if not entry:
-            return
+    def insert_dict(self, entries):
+        '''
+        Inserts a dict of entries into our a Levenstein Trie.
+
+        Args:
+            entries (dict):  A list of entries to insert in our trie. metadata -> entry
+
+        '''
+        for metadata, entry in entries.iteritems():
+            self.insert(entry, metadata = metadata)
+
+    def insert(self, entry, metadata = None):
+        '''
+        Inserts an entry into our a Levenstein Trie.
+
+        Args:
+            entry    (iterable): An iterable entry.
+            metadata (anything): The entry's metadata. [Default: None]
+
+        Returns:
+            success (bool): Whether the insert was unique
+            node    (Node): The Node that was inserted
+        '''
+        # returns success, Node
+        return self._insert(entry, entry, metadata = metadata)
+
+    def _insert(self, entry, entry_name, metadata):
+        self._num_sub_entries += 1
+        if not entry_name:
+            entry_name = str(entry)
+
         if len(entry) < self._sub_trie_min_depth:
             self._sub_trie_min_depth = len(entry) 
-        self._insert(entry)
 
-    def _insert(self, entry, whole_entry = None):
-        self._num_sub_entries += 1
-        if not whole_entry:
-            whole_entry = str(entry)
         if len(entry) == 0:
-            self._node = whole_entry
-            self._node_count += 1
-            return 1
+            if self._node:
+                self._node.add_metadata(metadata)
+                duplicate = False
+            else:
+                self._node = LevenNode(entry_name, metadata = metadata)
+                duplicate = True
+            return duplicate, self._node
         
-        if not entry[0] in self._sub_trie:
-                self._sub_trie[entry[0]] = LevenTrie(
-                        gap_penalty = self.gap_penalty,
-                        switch_penalty = self.switch_penalty
-                    )    
-        return self._sub_trie[entry[0]]._insert(entry[1:], whole_entry)
+        next_item = entry[0]
+        if not next_item in self._sub_trie:
+            self._sub_trie[next_item] = LevenTrie(
+                    gap_penalty = self.gap_penalty,
+                    switch_penalty = self.switch_penalty
+                )    
+        return self._sub_trie[next_item]._insert(entry[1:], entry_name = entry_name, metadata = metadata)
    
     # SEARCH 
     def search(self, entry, threshold = 1.5):
-        tmp = self._search(entry, threshold)
+        '''
+        Searches for an entry into our a Levenstein Trie.
+
+        Args:
+            entry     (iterable): An iterable entry.
+            threshold (float):    The similarity threshold. [Default: 1.5]
+
+        Returns:
+            score   (bool): The similarity score (1 is completely different,0 is the same) TODO(rrayborn): should we invert this?
+            node    (Node): The Node that was found
+        '''
+        # Returns threshold, Node
+        score, match = self._search(entry, threshold)
         self._clear_searches()
-        return tmp[0]
+        return ((threshold - score) if score else threshold)/threshold, match
 
     def _clear_searches(self):
-        k._searches = {}
+        self._searches = {}
         for v in self._sub_trie.values():
             v._clear_searches()
 
 
     def _search(self, entry, threshold):
-
         record = [None, None]
+
         if threshold < 0:
             return record
 
@@ -150,7 +199,9 @@ class LevenTrie(object):
         if not shorten_entry:
             # shorten neither
             if self._node:
-                return [self._node, threshold]
+                self._node.collisions += 1
+                record = [threshold, self._node] 
+                return record
             elif threshold < self.gap_penalty*min_diff:
                 return record
         else:
@@ -169,85 +220,211 @@ class LevenTrie(object):
                             v._search(entry[1:], threshold - self._diff(entry[0], k)))
         
         return record
-    
-    # CSV loader/saver
-    def load_csv(self, filename):
-        with open(filename, 'rb') as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',', quotechar='\"')
-            for row in csv_reader:
-                self.abusive_words_trie.insert_list(row)
-    
-    def save_csv(self, filename):
-        with open(filename, 'wb') as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter=',',
-                            quotechar='\"', quoting=csv.QUOTE_MINIMAL)
-            csv_writer.writerow(self.get_list())
 
-    def get_list(self, ):
-        l = []
+    def _clear_collisions(self):
         if self._node:
-            for i in range(0, self._node_count):
-                l.append(self._node)
-        for ld in self._sub_trie.values():
-            l.extend(ld.get_list())
-        return l
+            self._node.collisions = 0
+        for v in self._sub_trie.values():
+            v._clear_collisions()
+
+# THIS IS NOW OUT OF DATE AND UNUSED
+#    # CSV loader/saver
+#    def load_csv(self, filename):
+#        with open(filename, 'rb') as csv_file:
+#            csv_reader = csv.reader(csv_file, delimiter=',', quotechar='\"')
+#            for row in csv_reader:
+#                self.abusive_words_trie.insert_list(row)
+#    
+#    def save_csv(self, filename):
+#        with open(filename, 'wb') as csv_file:
+#            csv_writer = csv.writer(csv_file, delimiter=',',
+#                            quotechar='\"', quoting=csv.QUOTE_MINIMAL)
+#            csv_writer.writerow(self.get_list())
+#
+#    def get_list(self, ):
+#        l = []
+#        if self.node:
+#            for i in range(0, self._node_count):
+#                l.append(self._node)
+#        for ld in self._sub_trie.values():
+#            l.extend(ld.get_list())
+#        return l
 
     # HELPER FUNCTIONS
     def _diff(self, v1, v2):
         return 0 if v1 == v2 else self.switch_penalty
 
     def _list_max(self, l1, l2):
-        return l2 if l2[1] >= l1[1] else l1
+        return l2 if l2[0] >= l1[0] else l1
     
-    # STR FUNCTION
-    def __str__(self):
-        return self._get_str()[1:]
-
-    def _get_str(self, count = 0):
-        s = ''
-        if self._node:
-            s += '\n' + count * '\t' + self._node + ' ' + str(self._node_count) + ' ' + str(self._sub_trie_min_depth)
-            count += 1
-        for ld in self._sub_trie.values():
-            s += ld._get_strgit(count)
-        return s
 
 
+class LevenClassifier(LevenTrie):
+                 #entries         = None,
+            #entries          (list):  A list of entries to insert in our trie.
+            #                 (dict):  A list of entries to insert in our trie. metadata -> entry
+                           #entries        = entries, 
+    def __init__(self,  
+                 gap_penalty     = _GAP_PENALTY, 
+                 switch_penalty  = _SWITCH_PENALTY, 
+                 min_len         = 3,
+                 max_len         = 10000, 
+                 threshold_ratio = .75):
+        '''
+        A Levenstein Trie based classifier.
 
-##TODO: move this to the tests
-#def main():
-#    #d = LevenTrie()
-#    #d.insert_list(['cats', 'cats', 'cots', 'digs', 'face', 'faces', 'facebook'])
-#    #print ['cats', 'cats', 'cots', 'digs', 'face', 'faces', 'facebook']
-#    #print ['cats', d.search('cats')]
-#    #print ['cost', d.search('cost')]
-#    #print ['cot', d.search('cot')]
-#    #print ['fac', d.search('fac')]
-#    #print ['facebok', d.search('facebok')]
-#    #print ['tractor', d.search('tractor')]
-#    from lib.language.word_types import dumb_tokenize
-#
-#    d1 = LevenClassifier()
-#    l1 = d1.unique_list([
-#            dumb_tokenize('blah blah blah! cat_browser is better'),
-#            dumb_tokenize('blah blah blah! cat_browser is good'),
-#            dumb_tokenize('blah blah blah! cat_browser is better!'),
-#            dumb_tokenize('blah blah blah! cat_browser is much better!'),
-#            dumb_tokenize('blah blah blah! cat_browser should be considered'),
-#            dumb_tokenize('crash crash crash')
-#        ])
-#    print l1
-#    d2 = LevenClassifier()
-#    l2 = d2.unique_dict({
-#            'id_a':dumb_tokenize('blah blah blah! cat_browser is better'),
-#            'id_b':dumb_tokenize('blah blah blah! cat_browser is good'),
-#            'id_c':dumb_tokenize('blah blah blah! cat_browser is better!'),
-#            'id_d':dumb_tokenize('blah blah blah! cat_browser is much better!'),
-#            'id_e':dumb_tokenize('blah blah blah! cat_browser should be considered'),
-#            'id_f':dumb_tokenize('crash crash crash')
-#        })
-#    print l2
-#
-#
-#if __name__ == '__main__':
-#    main()
+        Args:
+            gap_penalty     (float): The penalty for a missing entry.
+            switch_penalty  (float): The penalty for an incorrect entry.
+            min_len           (int): The minimum length of an entry.
+            max_len           (int): The maximum length of an entry.
+            threshold_ratio (float): A ratio used in our threshold heuristic. eg
+                                     1 + (1 - self.threshold_ratio) * len(entry)
+
+        '''
+        LevenTrie.__init__(self,
+                           gap_penalty    = gap_penalty,
+                           switch_penalty = switch_penalty)
+        self.min_len          = min_len
+        self.max_len          = max_len
+        self.threshold_ratio  = threshold_ratio
+
+#    def unique_list(self, entries):
+#        # returns, unique_entries, non_unique_entries
+#        unique     = []
+#        non_unique = []
+#        for entry in entries:
+#            is_unique, _ignore = self.insert_unique(entry)
+#            if is_unique:
+#                ret.append((entry,metadata))
+#        return ret
+
+    def unique_dict_keys(self, entries):
+        '''
+        Returns a dict of unique and non-unique entries.
+
+        Args:
+            entries (dict): {metadata_key -> entry}
+
+        Returns:
+            unique_dict     (dict): {unique_key     -> unique_key}
+            non_unique_dict (dict): {non_unique_key -> unique_key}
+        '''
+        # takes {entry_key -> [entry_data]}
+        # returns:
+        #   {unique_key     -> unique_key}
+        #   {non_unique_key -> unique_key}
+        unique     = {} # unique_key     -> unique_key
+        non_unique = {} # non_unique_key -> unique_key
+        for entry_key, entry in entries.iteritems():
+            is_unique, metadata = self.insert_unique(entry, metadata = entry_key)
+            if is_unique:
+                unique[metadata] = metadata
+            else:
+                non_unique[entry_key] = metadata
+        return unique, non_unique
+
+    # TODO(rrayborn): should below this be its own class? ======================
+    def insert_unique(self, entry, metadata = None):
+        '''
+        Inserts the entry if it's unique.  Returns the closest entry's metadata
+
+        Args:
+            entry    (iterable): An iterable entry.
+            metadata (anything): The entry's metadata. [Default: None]
+
+        Returns:
+            is_unique      (bool): Whether the entry is unique
+            metadata   (anything): The metadata of the closet entry (including the current entry)
+        '''
+
+        # Returns result, metadata
+        if len(entry) <= self.min_len:
+            return True, metadata
+        entry = entry[:self.max_len]
+        threshold = self._get_threshold(entry)
+
+        _ignore, node = self.search(entry, threshold)
+
+        if node:
+            return False, node.metadata[0]
+        else:
+            success, node = self.insert(entry, metadata = metadata)
+            if not success:
+                raise Exception('This should never execute.')
+            return True, node.metadata[0]
+
+    def _get_threshold(self, entry):
+        return 1 + (1 - self.threshold_ratio) * len(entry) # just a heuristic
+
+
+class SpamDetector(LevenClassifier):
+                 #entries         = None, 
+                #entries         = None, 
+    def __init__(self,
+                 gap_penalty     = _GAP_PENALTY, 
+                 switch_penalty  = _SWITCH_PENALTY,
+                 min_len         = 3, 
+                 max_len         = 50, 
+                 threshold_ratio = .75,
+                 db              = None):
+        '''
+        An object that uses a Levenstein based heuristic of spam/similarity
+        detection.
+
+        Args:
+            gap_penalty     (float): The penalty for a missing entry.
+            switch_penalty  (float): The penalty for an incorrect entry.
+            min_len           (int): The minimum length of an entry.
+            max_len           (int): The maximum length of an entry.
+            threshold_ratio (float): A ratio used in our threshold heuristic. eg
+                                     1 + (1 - self.threshold_ratio) * len(entry)
+            db                 (DB): Our local input database
+
+        '''
+        LevenClassifier.__init__(
+                self, 
+                gap_penalty     = gap_penalty,
+                switch_penalty  = switch_penalty,
+                min_len         = min_len,
+                max_len         = max_len, 
+                threshold_ratio = threshold_ratio
+            )
+        self.db = db if db else UA_DB('input', is_persistent = True)
+
+    def check_entries_for_spam(self, entries):
+        '''
+        Checks a dict of entries for Spam.  Inserts matches in our DB.  Returns non-unique entries.
+
+        Args:
+            entries (dict): {metadata_key -> entry}
+
+        Returns:
+            non_unique (dict): {metadata_key -> entry}
+
+        Side-Effect:
+            Updates our input.input_metadata table.
+
+        '''
+        unique, non_unique = self.unique_dict_keys(entries)
+        for non_unique_id, unique_id in non_unique.iteritems():
+            self.insert_spam(non_unique_id, unique_id)
+        return non_unique
+
+    def insert_spam(self, input_id, spam_id):
+        '''
+        Inserts spam entries into input.input_metadata.
+
+        Args:
+            input_id (int): The input id of the root comment
+            input_id (int): The input id of the spam comment
+
+        Side-Effect:
+            Updates our input.input_metadata table.
+        '''
+        query = '''
+                UPDATE input_metadata SET
+                    spam_root_input_id=%d
+                    WHERE input_id=%d
+                ;''' % (spam_id, input_id)
+        self.db.execute_sql(query)
