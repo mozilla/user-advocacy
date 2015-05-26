@@ -204,7 +204,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
                 email_list.add(v)
         email_results(email_list)
 
-def email_results(email_list):
+def email_results(email_list, after_comments):
     email_body = ''
     shortwords = []
     for v in email_list:
@@ -229,7 +229,7 @@ def email_results(email_list):
             email_body += "\n<https://input.mozilla.org/dashboard/response/%s>:\n" % \
                 (str(link[0]))
             if len(after_comments[link[0]]) < 500:
-                email_body += item.description
+                email_body += after_comments[link[0]]
             else:
                 email_body += after_comments[link[0]][:450] + "..."
                 
