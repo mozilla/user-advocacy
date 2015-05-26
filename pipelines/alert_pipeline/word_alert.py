@@ -205,12 +205,8 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         email_results(email_list)
 
 def email_results(email_list):
-    input_db = inputDb('input_mozilla_org_new')
     email_body = ''
     shortwords = []
-    
-    rfr = input_db.get_table('feedback_response')
-        
     for v in email_list:
         email_body += "===== Lvl %d ALERT FOR %s: =====\n" % (
             v.severity,
