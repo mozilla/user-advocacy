@@ -202,7 +202,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
             if (v.is_significant and v.severity >= _EMAIL_SEV_MIN
                 and v.after.count >= _MIN_COUNT_THRESHOLD):
                 email_list.add(v)
-        email_results(email_list)
+        email_results(email_list, after_comments)
 
 def email_results(email_list, after_comments):
     email_body = ''
