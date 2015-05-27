@@ -22,6 +22,7 @@ from sqlalchemy.exc import OperationalError
 from lib.database.input_db import Db as inputDb
 from lib.general.counters import ItemCounterDelta
 from lib.general.simplewarn import warn
+from lib.language.leven import SpamDetector
 from lib.language.word_types import tokenize
 
 httplib.HTTPConnection.debuglevel = 1
@@ -102,8 +103,8 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         return
     
     for row in results:
-        (word_dict, value) = tokenize(row.description)
-        if value == 0:
+        (word_dict, value) = tokenize(row.description, input_id = row.id)
+        if value < 1:
             continue
         for (key, word_set) in word_dict.iteritems():
             if (key is None) or not re.match('\S', key):
@@ -111,6 +112,8 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
             delta[key].base.insert(key = key, link = (row.id, value), meta = word_set)
         base_total += 1
 
+    after_comments = dict()
+    
     new_data_sql = """
         SELECT description, MIN(id) as id
         FROM feedback_response fr
@@ -133,7 +136,8 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         return
 
     for row in results:
-        (word_dict, value) = tokenize(row.description)
+        (word_dict, value) = tokenize(row.description, input_id = row.id)
+        after_comments[row.id] = row.description
         if value < 1:
             continue
         for (key, word_set) in word_dict.iteritems():
@@ -149,6 +153,7 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
     #Generate alerts
     
     alert_count = 0
+    alerted_feedback = dict()
     
     for (k,v) in delta.iteritems():
         v.set_thresholds(diff_pct = _DIFF_PCT_MIN, diff_abs = _DIFF_ABS_MIN)
@@ -156,10 +161,33 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
         v.end_time = tz('UTC').normalize(date)
         if (v.is_significant and v.severity >= _ALERT_SEV_MIN
                 and v.after.count >= _MIN_COUNT_THRESHOLD):
-            alert_count += 1
+            for link_item in v.after.link_list:
+                alerted_feedback[link_item[0]] = link_item[1]
+            v.alert = True
+    
+    test_spam = { x: after_comments[x] for x in alerted_feedback.keys() }
+    spam = SpamDetector().check_entries_for_spam(test_spam)
+    spam_count = len(spam.keys())
+    print spam
+    
+    for (k,v) in delta.iteritems():
+        if (v.alert):
+            for s in spam.keys():
+                if s in v.after.link_list:
+                    v.after.remove(link = (s, alerted_feedback[s]))
+                    v.alert = False
+    
+    after_total -= spam_count
+    
+    for (k,v) in delta.iteritems():
+        v.set_potentials(base = base_total, after = after_total)
+        if (v.is_significant and v.severity >= _ALERT_SEV_MIN
+            and v.after.count >= _MIN_COUNT_THRESHOLD):
             if (not debug or debug_file != sys.stdout):
                 print "Emitting alert for %s" % v.after.sorted_metadata[0]
             v.emit(debug = debug, debug_file = debug_file)
+            alert_count += 1
+
     
     if alert_count <= 0:
         print "No alerts today"
@@ -174,15 +202,11 @@ def process_alerts(date = None, debug = False, debug_file = sys.stdout, email = 
             if (v.is_significant and v.severity >= _EMAIL_SEV_MIN
                 and v.after.count >= _MIN_COUNT_THRESHOLD):
                 email_list.add(v)
-        email_results(email_list)
+        email_results(email_list, after_comments)
 
-def email_results(email_list):
-    input_db = inputDb('input_mozilla_org_new')
+def email_results(email_list, after_comments):
     email_body = ''
     shortwords = []
-    
-    rfr = input_db.get_table('feedback_response')
-        
     for v in email_list:
         email_body += "===== Lvl %d ALERT FOR %s: =====\n" % (
             v.severity,
@@ -202,20 +226,12 @@ def email_results(email_list):
         link_list.sort(key = lambda x:(x[1], x[0]), reverse=True)
         link_list = link_list[:_MAX_EMAIL_LINKS]
         for link in link_list :
-            comment_sql = sql.select([rfr.c.description]).where(rfr.c.id == link[0])
             email_body += "\n<https://input.mozilla.org/dashboard/response/%s>:\n" % \
                 (str(link[0]))
-            try:
-                rows = input_db.execute(comment_sql)
-                for item in rows:
-                    if len(item.description) < 500:
-                        email_body += item.description
-                    else:
-                        email_body += item.description[:450] + "..."
-                rows.close()
-
-            except (OperationalError):
-                email_body = "<DB timeout fetching this input.>"
+            if len(after_comments[link[0]]) < 500:
+                email_body += after_comments[link[0]]
+            else:
+                email_body += after_comments[link[0]][:450] + "..."
                 
         email_body += "\n\n"
         shortwords.append(v.after.sorted_metadata[0])
@@ -238,6 +254,7 @@ class WordDeltaCounter (ItemCounterDelta):
         now = dt.datetime.utcnow()
         now = tz('UTC').localize(now)
         self.end_time = now - (dt.timedelta(microseconds=now.microsecond))
+        self.alert = False
 
     @property
     def severity (self):

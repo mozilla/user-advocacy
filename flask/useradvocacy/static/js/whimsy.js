@@ -32,7 +32,7 @@
                         'Arrrrvocacy','Arrrrrvocacy','Arrrrrrrrrrrvocacy',
                         'Arrrrrrrrrrrrrrrrrrrrrvocacy'],
         'Canada'    :   ['Eh?vocacy'],
-        'Go'        :   ['SFGiants', 'Niners'],
+        'Go'        :   ['SFGiants', 'Niners', 'Warriors'],
         'Congrats'  :   ['Matt&amp;Jess', 'Tyler&amp;Emily'],
         'Heartbeat' :   [   '&#x2605;&#x2605;&#x2605;&#x2605;&#x2605',
                             '&#x2605;&#x2605;&#x2605;&#x2605;&#x2606',
@@ -44,6 +44,8 @@
     
     var sum = _.reduce(titles, function (a,w) { return a+w }, 0);
     function randomNavTitle (whimsy) {
+        var nav_grey = $('.navbar-brand .large-grey-text');
+        var nav_red = $('.navbar-brand .large-red-text');
         if (whimsy) {
             var rand = _.random(0, sum, true);
             var rolling = 0;
@@ -55,24 +57,48 @@
                     return false;
                 }
             });
+                        
             if(item.match('^fa\-')) {
-                $('.navbar-brand .large-grey-text').html(
-                    '<i class="fa '+item+'"></i> ');
-                $('.navbar-brand .large-red-text').text('Advocacy');
+                nav_grey.html('<i class="fa '+item+'"></i> ');
+                nav_red.text('Advocacy');
             } else if (exceptions[item]) {
-                $('.navbar-brand .large-grey-text').text(item);
-                $('.navbar-brand .large-red-text').html(_.sample(exceptions[item]));
+                nav_grey.text(item);
+                nav_red.html(_.sample(exceptions[item]));
             } else if (item.match('^\&\#')) {
-                $('.navbar-brand .large-grey-text').html(
-                '<span style="font-weight: 300">'+item+'</span> ');
-                $('.navbar-brand .large-red-text').text('Advocacy');
+                nav_grey.html('<span style="font-weight: 300">'+item+'</span> ');
+                nav_red.text('Advocacy');
             } else {
-                $('.navbar-brand .large-grey-text').text(item);
-                $('.navbar-brand .large-red-text').text('Advocacy');
+                nav_grey.text(item);
+                nav_red.text('Advocacy');
             }
+            
+            // Here is the code for Matt's wedding! Don't delete until Matt gets
+            // back from his wedding.
+            
+            var today = new Date();
+            var wedding_start = new Date("2015-06-25");
+            var wedding_end = new Date("2015-07-13");
+            
+            if(today < wedding_end && today > wedding_start) {
+                item = _.sample(['Pirate','&#9760;', 'Congrats']);
+                if (item == 'Congrats') {
+                    nav_grey.text(item);
+                    nav_red.text('Matt&Jess');
+                }
+                else if (exceptions[item]) {
+                    nav_grey.text(item);
+                    nav_red.html(_.sample(exceptions[item]));
+                } else if (item.match('^\&\#')) {
+                    nav_grey.html('<span style="font-weight: 300">'+item+'</span> ');
+                    nav_red.text('Advocacy');
+                }
+            }
+            
+            // end code for Matt's wedding
+            
         } else {
-            $('.navbar-brand .large-grey-text').text('User');
-            $('.navbar-brand .large-red-text').text('Advocacy');
+            nav_grey.text('User');
+            nav_red.text('Advocacy');
         }
     }
     

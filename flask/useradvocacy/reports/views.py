@@ -3,7 +3,7 @@
 '''Templating engine for reports'''
 
 
-from flask import (current_app, Flask, Blueprint, request, render_template, url_for, flash, redirect, session, send_from_directory, safe_join, Response)
+from flask import (current_app, Flask, Blueprint, request, render_template, url_for, flash, redirect, session, send_from_directory, safe_join, Response, jsonify)
 from werkzeug.exceptions import Unauthorized, Forbidden, NotFound, BadRequest, Conflict
                     
 from useradvocacy.extensions import login_manager
@@ -87,10 +87,54 @@ def selector():
         else:
             flash_errors(form)
     return render_template('selector.html',form=form)
-    
+
+# TODO: rewrite API.json to take parameters instead of just returning.
+# TODO: return metadata along with individual reports.
+# (see also: home_project_api())
+
+@blueprint.route("/api.json", methods=["GET"])
+def home_api():
+    reports = Report.query.order_by("updated").limit(100).all()
+    result = []
+    for report in reports:
+        if (not (current_user and current_user.is_authenticated() and
+            current_user.is_admin)
+            and not report.published):
+            continue
+        item = {
+            'path'      : url_for(".home") + str(report),
+            'filename'  : report.filename,
+            'project'   : report.project,
+            'created'   : report.created,
+            'updated'   : report.updated,
+            'title'     : report.title
+        }
+        result.append(item)
+    return jsonify(results = result)
+
 @blueprint.route("/<project>/", methods=["GET"])
 def home_project(project):
     return redirect(url_for(".home") + "#" + project)
+
+@blueprint.route("/<project>/api.json", methods=["GET"])
+def home_project_api(project):
+    reports = Report.query.filter_by(project = project).order_by("updated").all()
+    result = []
+    for report in reports:
+        if (not (current_user and current_user.is_authenticated() and
+            current_user.is_admin)
+            and not report.published):
+            continue
+        item = {
+            'path'      : url_for(".home") + str(report),
+            'filename'  : report.filename,
+            'project'   : report.project,
+            'created'   : report.created,
+            'updated'   : report.updated,
+            'title'     : report.title
+        }
+        result.append(item)
+    return jsonify(results = result)
 
 
 @blueprint.route("/<project>/<filename>/", methods=["GET", "POST"])

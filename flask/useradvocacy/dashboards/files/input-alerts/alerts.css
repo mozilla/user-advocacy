@@ -55,6 +55,36 @@
     background-color: rgba(256,256,256, 1);
 }
 
+/* Report listing */
+
+#report-list .report-item {
+    display: block;
+    margin: 0 -5px 0 -5px;
+    padding: 5px 5px 5px 5px;
+    border-radius: 5px;
+}
+
+#report-list .report-item p {
+    font: 14px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
+    font-weight: 500;
+    margin: 0;
+}
+
+#report-list a {
+    text-decoration: none;
+    color: #000;
+}
+
+#report-list a:hover {
+    background-color: rgba(0,0,0, 0.1);
+}
+
+#report-list .report-item .report-date {
+    font-size: 80%;
+    font-weight: 300;
+}
+
+
 #controls h4 {
     font: 18px "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
     font-weight: 500;
@@ -128,6 +158,11 @@
 }
 
 .whimsy #controls .btn-default:not(.active):not(select):hover  {
+    background: linear-gradient(135deg, hsla(135,100%,50%, 0.7), hsla(180,100%,50%, 0.7),hsla(225,100%,50%, 0.7),hsla(270,100%,50%, 0.7), hsla(315,100%,50%, 0.7),hsla(0,100%,50%, 0.7), hsla(45,100%,50%, 0.7), hsla(90,100%,50%, 0.7), hsla(135,100%,50%, 0.7));
+    color: white;
+}
+
+.whimsy #report-list a:hover  {
     background: linear-gradient(135deg, hsla(135,100%,50%, 0.7), hsla(180,100%,50%, 0.7),hsla(225,100%,50%, 0.7),hsla(270,100%,50%, 0.7), hsla(315,100%,50%, 0.7),hsla(0,100%,50%, 0.7), hsla(45,100%,50%, 0.7), hsla(90,100%,50%, 0.7), hsla(135,100%,50%, 0.7));
     color: white;
 }

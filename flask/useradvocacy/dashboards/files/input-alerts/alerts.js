@@ -6,8 +6,11 @@ var results = {};
 var input_json = {};
 var urls = {
     'desktop': '/data/static/json/input_alerts.json',
-    'android': '/data/static/json/android_input_alerts.json',
-    'default': '/data/static/json/input_alerts.json'
+    'android': '/data/static/json/android_input_alerts.json'
+};
+var reportUrls = {
+    'desktop': '/reports/AlertReports/api.json',
+    'android': '/reports/AlertReportsAndroid/api.json'
 };
 var reloadParams = {
     'product': true
@@ -16,6 +19,7 @@ var reloadParams = {
 function startup() {
     parameters = $.deparam(document.location.search.substring(1));
     setGlobals();
+    adjustControls();
     run();
 }
 
@@ -24,6 +28,7 @@ function run() {
         showErrorMessage(true, "Invalid Product: " + product);
         return;
     }
+    getReports();
     url = urls[product];
     $('#loading-throbber').show();
     $('#alert-list').hide();
@@ -64,9 +69,55 @@ function run() {
             })
             return d;
         }).sortBy(['datetime', 'severity']).reverse().value();
-        updateChange(true);
+        updateChange(true, false);
     });
 
+}
+
+function getReports() {
+    $('#report-list').empty();
+    d3.json(reportUrls[product], function(error,json) {
+        if (error) {
+            $('#report-list').addClass('report-error')
+            .text('No alert data found.');
+            return
+        }
+        data = json.results;
+        if (data.length < 1) {
+            $('#report-list').addClass('report-error')
+            .text('No alert data found.');
+            return
+        }
+        data = _(data).sortBy('updated') // Change to 'created' if needed
+            .reverse().value();
+        data = data.slice(0,5); // Edit this number to set number of reports shown
+        report_list = d3.select('#report-list');
+        report_items = report_list.selectAll('.report-item').data(data)
+            .enter()
+            .append('a')
+            .attr('href', function (d) { return d.path })
+            .classed({
+                'report-item': true
+            });
+        report_items.append('p')
+            .text(function (d) {
+                return d.title
+            })
+            .classed({
+                'report-title': true,
+            })
+        report_items
+            .append('p')
+            .text(function (d) {
+                var dt = new Date(d.updated);
+                return "Updated: " + dt.toLocaleFormat('%b %e %l:%M%p') 
+            })
+            .classed({
+                'report-date': true,
+                'text-right': true
+            });
+        
+    });
 }
 
 function drawTables() {
@@ -254,6 +305,7 @@ var severityScale = d3.scale.linear()
 
 function adjustControls() {
     $("#min_severity").val(min_severity);
+    $("#product").val(product);
 }
 
 function updateChange(redraw, reload) {
@@ -271,7 +323,7 @@ function updateChange(redraw, reload) {
 
 function setGlobals() {
     min_severity = parameters.min_severity ? parameters.min_severity : 'default';
-    product = parameters.product ? parameters.product : 'default';
+    product = parameters.product ? parameters.product : 'desktop';
 }
 
 function removeKnownParams (p) {
@@ -309,7 +361,7 @@ window.changeParam = changeParam;
 window.addEventListener('popstate', function(event) {
     if (event.state !== null) {
         parameters = event.state;
-        updateChange(true);
+        updateChange(true, false);
     } else {
         startup();
     }
