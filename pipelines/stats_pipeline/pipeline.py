@@ -40,8 +40,8 @@ _BASE_SQL_FILE        = _PIPELINE_PATH + 'base.sql'
 _SUMO_SQL_FILE        = _PIPELINE_PATH + 'sumo.sql'
 _ADIS_SQL_FILE        = _PIPELINE_PATH + 'adis.sql'
 _QUERY_FILE_PATTERN   = _PIPELINE_PATH + 'daily_%s_stats.sql'
-_DESKTOP_FILE_PATTERN = 'daily_desktop_stats.sql'
-_MOBILE_FILE_PATTERN  = 'daily_mobile_stats.sql'
+_DESKTOP_FILE_PATTERN = _PIPELINE_PATH + 'daily_desktop_stats.sql'
+_MOBILE_FILE_PATTERN  = _PIPELINE_PATH + 'daily_mobile_stats.sql'
 #FLAGS = gflags.FLAGS
 #
 #gflags.DEFINE_integer('my_version', 0, 'Version number.')
@@ -59,7 +59,7 @@ def main():
 
 def update(
             product    = 'both',
-            start_date = (date.today() - timedelta(days=7)).strftime('%Y-%m-%d'),
+            start_date = (date.today() - timedelta(days=15)).strftime('%Y-%m-%d'),
             end_date   = (date.today() - timedelta(days=1)).strftime('%Y-%m-%d'),
             ua_db      = None,
             input_db   = None,
@@ -68,6 +68,7 @@ def update(
 
     if not ua_db:
         ua_db    = UA_DB('sentiment', is_persistent = True)
+        ua_db.execute_sql('SET autocommit=1;')
     if not input_db:
         input_db = Input_DB(is_persistent = True)
     if not sumo_db:

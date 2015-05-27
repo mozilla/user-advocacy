@@ -25,6 +25,7 @@ class Database(object):
         meta = sqlalchemy.schema.MetaData(bind=engine, schema=database_name)
         meta.reflect()
         self.engine = engine
+        #self.engine.execution_options(autocommit=True)
         if is_persistent:
             self.conn = self.engine.connect()
         self.Metadata = meta
@@ -61,7 +62,7 @@ class Database(object):
 
     #======== More Specific Helper Functions ===================================
 
-    def janky_execute_sql_wrapper(self, sql, query_vars = None):
+    def janky_execute_sql_wrapper(self, sql, query_vars = None, *multiparams, **params):
         '''
         SQL statements with more than one query were erroring out,
         This is a hacky fix.
@@ -70,9 +71,9 @@ class Database(object):
         for query in queries:
             if query != '':
                 if query_vars:
-                    self.execute_sql(query, query_vars)
+                    self.execute_sql(query, query_vars, *multiparams, **params)
                 else:
-                    self.execute_sql(query)
+                    self.execute_sql(query, *multiparams, **params)
     
     def insert_csv_into_table(self,
                               filename,
@@ -128,7 +129,7 @@ class Database(object):
                 new_cf[i] = v
                 i += 1
             col_fields = new_cf
-
+        
         first_key = col_fields.keys()[0]
         col_type = type(first_key)
         if isinstance(first_key, (int, long)):
