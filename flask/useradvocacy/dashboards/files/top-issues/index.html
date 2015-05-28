@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block css %}
+  <link href="../static/css/charts.css" rel="stylesheet">
+  <link href="issues.css" rel="stylesheet">
+{% endblock %}
+{% block page_title %}
+Top issues
+{% endblock %}
+
+{% block content %}
+<div class='row'>
+<h2 id="title-string">Current alerts</h2>
+<div class="col-md-12" id="main">
+<div id="issue-list"></div>
+<div class="col-md-6 col-md-offset-2 jumbotron" id="error-message">
+    <h2>Something went wrong:</h2>
+    <p class="text-center" id="blank-text">We've had some kind of problem getting the data.</p>
+    <p class="text-center" id="error-text"></p>
+</div>
+<div class="col-md-10 jumbotron" id="loading-throbber">
+    <h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>
+    <p>We're trying to get you your data, or at least some kind of valid error message. If you see this for an extended period of time, try a shift-refresh.</p>
+</div>
+</div>
+</div>
+        
+
+{% endblock %}
+{% block js %}
+    <script src="issues.js"></script>
+{% endblock%}
