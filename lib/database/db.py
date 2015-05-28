@@ -17,7 +17,7 @@ from sqlalchemy.sql import text, select
 
 def init_engine (uri):
     return sqlalchemy.create_engine(uri + "?charset=utf8&use_unicode=0", 
-        echo=False, encoding='utf-8', pool_recycle=1200, pool_size=16)
+        echo=False, encoding='utf-8', pool_recycle=500, pool_size=16)
 
 class Database(object):
     """Database object. Represents an explicitly named DB accessed from a given engine."""
