@@ -24,7 +24,10 @@ blueprint = Blueprint('dashboards', __name__, static_folder="./static",
 
 @blueprint.route("/", methods=["GET"])
 def home():
-    return render_template('templates/dashboards.html')
+    try:
+        return render_template('templates/dashboards.html')
+    except IOError:
+        raise NotFound
 
 @blueprint.route("static/css/<file>", methods=["GET"])
 def serve_css(file):
@@ -40,11 +43,17 @@ def serve_js(file):
 
 @blueprint.route("/<name>/", methods=["GET"])
 def dash_server(name):
-    return render_template(safe_join(safe_join("files",name),"index.html"))
+    try:
+        return render_template(safe_join(safe_join("files",name),"index.html"))
+    except IOError:
+        raise NotFound
     
 @blueprint.route("/<name>/<file>.html", methods=["GET"])
 def dash_html_server(name, file):
-    return render_template(safe_join(safe_join("files",name),file + ".html"))
+    try:
+        return render_template(safe_join(safe_join("files",name),file + ".html"))
+    except IOError:
+        raise NotFound
 
 @blueprint.route("/<name>/<file>", methods=["GET"])
 def file_server(name, file):
