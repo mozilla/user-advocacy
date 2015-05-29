@@ -417,7 +417,7 @@ class SpamDetector(LevenClassifier):
 
         Args:
             input_id (int): The input id of the root comment
-            input_id (int): The input id of the spam comment
+            spam_id  (int): The input id of the spam comment
 
         Side-Effect:
             Updates our input.input_metadata table.

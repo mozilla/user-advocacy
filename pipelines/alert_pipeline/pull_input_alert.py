@@ -1,5 +1,10 @@
 #!/usr/local/bin/python
 
+'''
+Pulls the alerts from Input and stores them locally.  
+This is because it's an authenticated client side.
+'''
+
 import datetime
 import httplib
 import json
