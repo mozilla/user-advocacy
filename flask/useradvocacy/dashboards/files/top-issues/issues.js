@@ -11,9 +11,10 @@ main_selector = selector,
 input_api = 'https://input.mozilla.org/api/v1/feedback/histogram/?date_delta=180d&',
 input_link = 'https://input.mozilla.org/en-US/?',
 url = config_url,
-x_max = new Date(1970,0,0),
-x_min = new Date(2100,11,0),
+x_max = new Date(2014,0,0),
+x_min = new Date(),
 annoteDates = null;
+x_min.setDate(x_min.getDate() + 7);
 
 if (id == '' || id === undefined || id === null) {
     id = _.sample("abcdefghijklmnopqrstuvwxyz",5).join('');
@@ -34,10 +35,12 @@ function chart() {
                 .classed('row trends-' + id, true);
             title = divs.append('div')
                 .classed('col-md-2 trendtitles-' + id, true);
+            title.append('div').classed('spacer hidden-sm hidden-xs', true)
+                .attr('height', '10%')
             title.append('p').text(function(d) { return d.name})
                 .classed('lead', true)
                 .style('color', function(d) {return color(d.shortname)})
-                .style('margin', '10% 10px 5px 10px');
+                .style('margin', '10px 10px 5px 10px');
             title.append('p').text(function(d) { return d.description})
                 .classed('trend-description small', true)
                 .style('margin', '5px 10px 0 10px');
@@ -63,12 +66,18 @@ function chart() {
         })
         .fail(function(error) {
             var errorText = error.statusText ? error.statusText : "No Response";
-            showErrorMessage(true, "No data found here. Go about your day. " + errorText);
+            showErrorMessage(true, "No trends to chart. Go about your day. " + errorText);
         });
 }
 
 function renderAnnotationsScale() {
     var annoteChart = d3.select('.annote-chart-'+ id +' svg');
+    if (x_min > x_max) {
+        var x_min_place = x_min;
+        x_min = x_max;
+        x_max = x_min_place;
+        xScale.domain([x_min, x_max]);
+    }
     if (annoteDates !== null || annoteDates.length == 0) {
         var eventLines = annoteChart.append('g').classed('annotations', true)
             .selectAll('g')
@@ -204,7 +213,16 @@ function render (d, i) {
     })
     .fail(function (error) {
         errorText = error.statusText ? error.statusText : "No Response";
-        d3.select(selection).text("NO DATA " +  errorText);
+        svg = d3.select(selection).append('svg');
+        svg.attr("height", 100); 
+        width = $(selection).width();
+        xScale.domain([x_min, x_max]).range([0, width]);
+        svg.attr("width", width);
+        svg.append('text').text("No data from server: " +  errorText).attr({
+            'x': 30,
+            'y': 55
+        });
+        xScaleGraphedP.resolve();
     })
 }
 
