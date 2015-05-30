@@ -261,11 +261,15 @@ function showErrorMessage (state, text) {
 function hoverDiv(d) {
     d3.select(this).select('.trendtitles-' + id).select('p.lead')
     .style('font-weight', 600);
+    d3.select(this).select('.trendgraphs-' + id).selectAll('path')
+    .style('stroke-width', 3);
 }
 
 function unhoverDiv(d) {
     d3.selectAll('.trendtitles-' + id).selectAll('p.lead')
-        .style('font-weight', null)
+        .style('font-weight', null);
+    d3.selectAll('.trendgraphs-' + id).selectAll('path')
+        .style('stroke-width', 2);
 }
 
 function sendClick(d) {
