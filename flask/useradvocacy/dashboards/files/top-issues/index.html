@@ -9,7 +9,7 @@ Top issues
 
 {% block content %}
 <div class='row'>
-<h2 id="title-string">Current alerts</h2>
+<h2 id="title-string">Top issues</h2>
 <div class="col-md-12" id="main">
 <div id="issue-list"></div>
 <div class="col-md-6 col-md-offset-2 jumbotron" id="error-message">
@@ -27,5 +27,8 @@ Top issues
 
 {% endblock %}
 {% block js %}
+    <script src="{{ url_for('static', filename='js/d3promise.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
     <script src="issues.js"></script>
+    <script src="desktop-issues.js"></script>
 {% endblock%}
