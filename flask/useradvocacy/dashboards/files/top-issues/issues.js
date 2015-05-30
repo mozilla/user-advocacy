@@ -143,7 +143,6 @@ function render (d, i) {
         var local_min = X(_.min(data, X));
         x_max = (x_max > local_max)?x_max:local_max;
         x_min = (x_min < local_min)?x_min:local_min;
-        console.log(x_max, x_min);
         var val_max = _.max(data, function (e) {return e[1]})[1];
         var val_min = _.min(data, function (e) {return e[1]})[1];
         var val_mh = d.baseline;
