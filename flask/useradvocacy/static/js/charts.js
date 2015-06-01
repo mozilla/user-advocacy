@@ -1454,7 +1454,7 @@ error_selectors = {
 main_selector = selector === undefined ? null : selector,
 api_base = 'https://input.mozilla.org/api/v1/feedback/histogram/?',
 extra_params = ['date_delta=180d']
-default_link = 'https://input.mozilla.org/en-US/?',
+link_base = 'https://input.mozilla.org/en-US/?',
 url = config_url,
 x_max = new Date(2014,0,0),
 x_min = new Date(),
@@ -1725,7 +1725,8 @@ function unhoverDiv(d) {
 }
 
 function sendClick(d) {
-    window.location.assign(input_link + d.query);
+    var link_url = d.link || (link_base + d.query);
+    window.location.assign(link_url);
 }
 
 chart.loading_throbber = function (_) {
@@ -1758,6 +1759,12 @@ chart.height_factor = function(_) {
 chart.extra_params = function(_) {
     if (!arguments.length) return extra_params;
     extra_params = _;
+    return chart;
+};
+
+chart.link_base = function(_) {
+    if (!arguments.length) return link_base;
+    link_base = _;
     return chart;
 };
 
