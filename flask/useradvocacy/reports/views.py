@@ -155,8 +155,9 @@ def display(project, filename):
 @login_required
 @check_admin
 def edit(project, filename):
+    template_name = request.args.get('template', 'default')
     report = Report.query.filter_by(project = project, filename = filename).first()
-    default_template = Template.query.filter_by(name = 'default').first()
+    default_template = Template.query.filter_by(name = template_name).first()
     form = None
     if report:
         form = EditorForm(project_field=project, filename_field=filename, 
