@@ -46,17 +46,22 @@ var input_sentiment_chart = sentimentChart()
         return d.input_average * 2;
     });
 
-/*TODO: refactor this whole thing to use promises.*/
+/*TODO: Add fail() handling for all of these. */
 
 var annoter = makeAnnotations();
 
-var noteP = $.when(d3.jsonPromise("/data/static/json/desktop-annotations.json"))
+var resolvedNoteP = $.Deferred();
+
+var noteP = d3.jsonPromise("/data/static/json/desktop-annotations.json")
     .done(function(note_data) {
         notes = annoter(note_data);
         heartbeat_rating_chart.annotations(notes);
         heartbeat_response_chart.annotations(notes);
         input_by_time_chart.annotations(notes);
         input_sentiment_chart.annotations(notes);
+        resolvedNoteP.resolve();
+    }).fail(function (error) {
+        resolvedNoteP.resolve();
     });
 
 var HBratingP = $.when(
@@ -137,26 +142,26 @@ var inputSentimentP = $.when(d3.jsonPromise("/data/api/v1/stats?measures=input_a
     });
 
 
-$.when(noteP, HBratingP)
+$.when(resolvedNoteP, HBratingP)
     .done(
         function() {
             d3.select("#chart1").call(heartbeat_rating_chart);
         });
 
 
-$.when(noteP, HBrespRateP)
+$.when(resolvedNoteP, HBrespRateP)
     .done(
         function() {
             d3.select("#chart2").call(heartbeat_response_chart);
         });
 
-$.when(noteP, inputAvgP)
+$.when(resolvedNoteP, inputAvgP)
     .done(
         function() {
             d3.select("#chart3").call(input_by_time_chart);
         });
 
-$.when(noteP, inputSentimentP)
+$.when(resolvedNoteP, inputSentimentP)
     .done(
         function() {
             d3.select("#chart4").call(input_sentiment_chart);

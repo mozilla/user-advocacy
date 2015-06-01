@@ -798,7 +798,7 @@ function timeScaleLine() {
                 .style("fill", "none")
                 .style("stroke", "#000");
 
-            if (annoteDates !== null || annoteDates.length == 0) {
+            if (annoteDates !== null && annoteDates.length > 0) {
                 var eventLines = g.append('g').classed('annotations', true)
                     .selectAll('g')
                     .data(annoteDates)
@@ -1272,7 +1272,7 @@ function sentimentChart() {
                 .style("fill", "none")
                 .style("stroke", "#000");
 
-            if (annoteDates !== null) {
+            if (annoteDates !== null && annoteDates.length > 0) {
                 var eventLines = g.append('g').classed('annotations', true)
                     .selectAll('g')
                     .data(annoteDates)
