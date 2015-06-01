@@ -3,25 +3,25 @@
         {
             "name":        "Slowness",
             "shortname":   "desktop-slow",
-            "query":       "q=slow+speed+lag+laggy+fast+faster+fastest+slowest+slower&product=Firefox&locale=en-US&happy=0",
+            "query":       "q=slow+speed+lag+laggy+fast+faster+fastest+slowest+slower",
             "description": "Slowness in Firefox. Includes terms like slow, lag, etc."
         },
         {
             "name":        "Crashing",
             "shortname":   "desktop-crash",
-            "query":       "q=crash+crashing+\"shut+down\"&product=Firefox&locale=en-US&happy=0",
+            "query":       "q=crash+crashing+\"shut+down\"",
             "description": "Crashiness in Firefox. Includes terms like crash, etc."
         },
         {
             "name":        "Freezing",
             "shortname":   "desktop-freeze",
-            "query":       "q=freeze+froze+frozen+hang&product=Firefox&locale=en-US&happy=0",
+            "query":       "q=freeze+froze+frozen+hang",
             "description": "Freezing in Firefox. Includes terms like freeze, hang, etc."
         },
         {
             "name":        "Video",
             "shortname":   "desktop-video",
-            "query":       "q=video+html5+flash+flush+youtube+vimeo&product=Firefox&locale=en-US&happy=0",
+            "query":       "q=video+html5+flash+flush+youtube+vimeo",
             "description": "Video issues in Firefox. Includes terms like Flash, video, etc."
         }
     ]
