@@ -1482,7 +1482,8 @@ function chart(selection) {
             showErrorMessage(false);
             divs = main.selectAll('.trends-' + id).data(data.trends)
                 .enter().append('div')
-                .classed('row trends-' + id, true);
+                .classed('row trends-' + id, true)
+                .style('cursor', 'pointer');
             title = divs.append('div')
                 .classed('col-md-2 trendtitles-' + id, true);
             title.append('div').classed('spacer hidden-sm hidden-xs', true)
