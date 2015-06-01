@@ -161,7 +161,8 @@ def process_alerts(product,
             and v.after.count >= _MIN_COUNT_THRESHOLD):
             if (not debug or debug_file != sys.stdout):
                 print 'Emitting alert for %s' % v.after.sorted_metadata[0]
-            v.emit(debug = debug, flavor = flavor, debug_file = debug_file)
+            v.emit(timeframe = new, flavor = flavor, 
+                   debug = debug, debug_file = debug_file)
             has_alerts = True
 
     if not has_alerts:
@@ -298,7 +299,7 @@ class WordDeltaCounter (ItemCounterDelta):
             return 10
         return int(floor(value))
         
-    def emit(self, flavor = 'unknown', debug = False, debug_file = sys.stdout):
+    def emit(self, timeframe = None, flavor = 'unknown', debug = False, debug_file = sys.stdout):
         if debug:
             if isinstance(debug_file, file):
                 self.log_to_csv(debug_file)
@@ -311,7 +312,7 @@ class WordDeltaCounter (ItemCounterDelta):
             'accept': 'application/json; indent=4',
             'Fjord-Authorization': 'Token ' + _ALERT_TOKEN,
         }
-        timediff = timedelta(hours = _TIMEFRAME)
+        timediff = timedelta(hours = timeframe)
         start_time = self.end_time - timediff
         link_list = list(self.after.link_list)
         link_list.sort(key = lambda x:(x[1], x[0]), reverse=True)
@@ -338,7 +339,7 @@ class WordDeltaCounter (ItemCounterDelta):
             self.after_pct * 10,
             self.diff_abs * 10,
             self.diff_pct,
-            _TIMEFRAME,
+            timeframe,
             len(self.after.link_list)
             
         )).strip()
@@ -385,26 +386,26 @@ class WordDeltaCounter (ItemCounterDelta):
         return repr
         
     def __str__(self):
-        str = dedent('''
-            Severity %d counter for %s.
-            Words: %s
-            Before: %.2f/1000
-            After %.2f/1000
-            Absolute Difference: %.2f %%age points
-            Percent Difference: %.2f %%
-            Total feedback in the past %d hours: %d
-        '''%(
-            self.severity,
-            self.after.sorted_metadata[0],
-            ', '.join(self.after.sorted_metadata),
-            self.base_pct * 10,
-            self.after_pct * 10,
-            self.diff_abs * 10,
-            self.diff_pct,
-            _TIMEFRAME,
-            len(self.after.link_list)
-        )).strip()
-        return str
+        ret = dedent('''
+                    Severity             {severity} counter for {word}.
+                    Words:               {words}
+                    Before:              {before_pct}/1000
+                    After                {after_pct}/1000
+                    Absolute Difference: {abs_diff} %%age points
+                    Percent Difference:  {pct_diff} %%
+                    Total feedback in the latest timeframe: {count}
+                '''.format(
+                        severity     = self.severity,
+                        word         = self.after.sorted_metadata[0],
+                        words        = ', '.join(self.after.sorted_metadata),
+                        before_pct   = '%.2f' % (self.base_pct  * 10),
+                        after_pct    = '%.2f' % (self.after_pct * 10),
+                        abs_diff     = '%.2f' % (self.diff_abs  * 10),
+                        pct_diff     = '%.2f' % (self.diff_pct),
+                        count        = len(self.after.link_list)
+                    )
+            ).strip()
+        return ret
 
 
 def safe_log (value):
@@ -417,10 +418,14 @@ def main():
     parser = ArgumentParser(description='Input Alerts.')
     parser.add_argument('--product',
                         action = 'store',
-                        default = 'desktop', 
+                        default = 'both', 
                         help = 'Product to backfill for. e.g. "desktop"/"android"')
     args = parser.parse_args()
-    process_alerts(args.product)
+    if args.product == 'both':
+        process_alerts('desktop')
+        process_alerts('android')
+    else:
+        process_alerts(args.product)
     
 
 if __name__ == '__main__':
