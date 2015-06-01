@@ -68,7 +68,7 @@ function run() {
                 return e;
             })
             return d;
-        }).sortBy(['datetime', 'severity']).reverse().value();
+        }).sortBy(['datetime', 'severity']).value();
         updateChange(true, false);
     });
 
