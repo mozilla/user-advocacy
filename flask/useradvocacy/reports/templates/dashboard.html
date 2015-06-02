@@ -32,8 +32,9 @@
 {% with form=form  %}
 {% include "nav.html" %}
 {% endwith %}
-
-<header>{% block header %}{% endblock %}</header>
+{% if warning %}
+<div class="warning-banner">{{ warning }}</div>
+{% endif %}
 <div class="{% block content_class %}container{% endblock content_class %}">
 
   <div role="main">

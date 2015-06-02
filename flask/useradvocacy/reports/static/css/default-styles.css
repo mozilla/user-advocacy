@@ -6,24 +6,6 @@ body {
 	margin: 6px;
 }
 
-.holder > .warning-banner {
-    background: repeating-linear-gradient(
-        -45deg,
-        #E3BB03,
-        #E3BB03 7px,
-        #030303 7px,
-        #030303 14px
-    );
-    color: #fff;
-    text-align: center;
-    text-shadow:
-       -1px -1px 0 #000, 
-        1px -1px 0 #000,
-        -1px 1px 0 #000,
-         1px 1px 0 #000;
-    font-family: "Gill Sans","Gill Sans MT",Calibri,Tahoma,sans-serif;
-}
-
 .holder {
 	background: #d7d3c8;
 	float: left;
