@@ -34,7 +34,7 @@ _JOBLIST = [
             'python $CODE_PATH/pipelines/alert_pipeline/pull_input_alert.py >>/tmp/alert_pipe_cron 2>&1',
             'Fetch alerts'],
         ['0 */6 * * *',
-            'python $CODE_PATH/pipelines/alert_pipeline/word_alert.py --product android >/tmp/desktop_alert_cron 2>&1',
+            'python $CODE_PATH/pipelines/alert_pipeline/word_alert.py --product desktop >/tmp/desktop_alert_cron 2>&1',
             'Alert Pipeline'],
         ['0 5 * * *',
             'python $CODE_PATH/pipelines/alert_pipeline/word_alert.py --product android >/tmp/android_alert_cron 2>&1',
