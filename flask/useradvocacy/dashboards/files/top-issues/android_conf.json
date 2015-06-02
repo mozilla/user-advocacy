@@ -1,0 +1,34 @@
+{
+    "trends": [
+        {
+            "name":        "Slowness",
+            "shortname":   "android-slow",
+            "query":       "q=slow+speed+lag+laggy+fast+faster+fastest+slowest+slower",
+            "description": "Slowness in Firefox. Includes terms like slow, lag, etc."
+        },
+        {
+            "name":        "Crashing",
+            "shortname":   "android-crash",
+            "query":       "q=crash+crashing+\"shut+down\"",
+            "description": "Crashiness in Firefox. Includes terms like crash, etc."
+        },
+        {
+            "name":        "Freezing",
+            "shortname":   "android-freeze",
+            "query":       "q=freeze+froze+frozen+hang",
+            "description": "Freezing in Firefox. Includes terms like freeze, hang, etc."
+        },
+        {
+            "name":        "Video",
+            "shortname":   "android-video",
+            "query":       "q=video+html5+flash+flush+youtube+vimeo",
+            "description": "Video issues in Firefox. Includes terms like Flash, video, etc."
+        },
+        {
+            "name":        "Rendering",
+            "shortname":   "android-rendering",
+            "query":       "q=blank+text+black+boxes+scroll",
+            "description": "Rendering issues in Firefox. Includes terms like blank, text, scroll, etc."
+        }
+    ]
+}
