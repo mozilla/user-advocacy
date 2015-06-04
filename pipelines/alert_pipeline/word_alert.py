@@ -15,7 +15,7 @@ from os                      import path, environ
 from textwrap                import dedent
 
 import requests
-from argparse                import ArgumentParser
+from argparse                import ArgumentParser,FileType
 from pytz                    import timezone as tz
 from sqlalchemy              import sql
 from sqlalchemy.exc          import OperationalError
@@ -35,20 +35,20 @@ _ANDROID_TIMEFRAME   = 24  # Hours
 _PAST_TIMEFRAME      = 3   # Weeks
 
 # Constants for calculation of severity
-_DIFF_PCT_MIN        = 30  # Percentage increase for which we absolutely don't 
+_DIFF_PCT_MIN        = 30  # Percentage increase for which we absolutely don't
                            #   want to return sev.
-_DIFF_ABS_MIN        = 0.5 # Percentage point change for which we absolutely 
+_DIFF_ABS_MIN        = 0.5 # Percentage point change for which we absolutely
                            #   ignore
 _DIFF_ABS_SCALE      = 2   # Scaling factor between rel and abs diff
 _SEV_SCALE           = 8.5 # Factor for scaling things up to fit the range.
 _SEV_SUB             = 2.2 # Reduce this to alert more, increase to alert less
-_MAX_PCT_DIFF        = 50  # Infinity throws everything off, so we're capping 
-                           #   things. This is per piece of feedback, which should 
+_MAX_PCT_DIFF        = 50  # Infinity throws everything off, so we're capping
+                           #   things. This is per piece of feedback, which should
                            #   make the 0 before, 3 after case not trigger so bad.
 _MIN_COUNT_THRESHOLD = 3
 _MIN_DENOM_THRESHOLD = 20
 _EMAIL_SEV_MIN       = 5   # Severity level above which we send email
-_ALERT_SEV_MIN       = 2   # Severity level above which we send alerts 
+_ALERT_SEV_MIN       = 2   # Severity level above which we send alerts
                            #   (-1 = send everything)
 _MAX_ALERT_LINKS     = 25  # Send at most this number of links
 _MAX_EMAIL_LINKS     = 15  # Email at most this number of links
@@ -63,34 +63,33 @@ _ALERT_TOKEN         = environ['ALERT_TOKEN']
 _INPUT_DB            = None
 
 
-def process_alerts(product, 
-                   now = datetime.now(), old = _PAST_TIMEFRAME, new = None, 
+def process_alerts(product,
+                   now = datetime.now(), old = _PAST_TIMEFRAME, new = None,
                    debug = False, debug_file = sys.stdout,
                    email = True, address = None):
     delta = defaultdict(WordDeltaCounter)
-    
+
     # Resolve date
     if not isinstance(now, datetime) and isinstance(now, date):
         now = datetime.combine(now, time(0,0,0))
-    #if not isinstance(now, datetime): 
+    #if not isinstance(now, datetime):
         # I don't feel like checking this. It's not a likely exception.
         #raise Exception('"now" must me of type datetime or date.')
-    
+
     now_string = now.strftime('%Y-%m-%d %H:%M:%S')
     now = tz('US/Pacific').localize(now)
 
     # Product related vars
-    product = product.lower()
-    if product == 'desktop':
+    if product.lower() == 'desktop':
         new           = new if new else _DESKTOP_TIMEFRAME
-        where_product = ('product = "firefox"' + 
+        where_product = ('product = "firefox"' +
                          '\nAND LEFT(platform,7) IN("Windows","OS X","Linux")')
         flavor        = 'word-based'
         subject       = 'Desktop Input Alert'
         address       = address if address else _DESKTOP_EMAIL
-    elif product == 'android':
+    elif product.lower() == 'android':
         new           = new if new else _ANDROID_TIMEFRAME
-        where_product = 'product LIKE "Firefox for Android"'
+        where_product = 'product = "Firefox for Android"'
         flavor        = 'android-word-based'
         subject       = 'Android Input Alert'
         address       = address if address else _ANDROID_EMAIL
@@ -101,35 +100,38 @@ def process_alerts(product,
     if debug and not isinstance(debug_file, file):
             warn('Debug file should be type <file>, outputting to stdout.')
             debug_file = sys.stdout
-    if not debug or debug_file != sys.stdout:
+    is_print = not debug or debug_file != sys.stdout
+
+
+    if is_print:
         print 'Generating %s for %s' % (subject, now_string)
 
     # Retrieve old timeframe
-    where = (where_product + 
-             '\nAND created > DATE_SUB(:now, INTERVAL :old WEEK)' + 
+    where = (where_product +
+             '\nAND created > DATE_SUB(:now, INTERVAL :old WEEK)' +
              '\nAND created < DATE_SUB(:now, INTERVAL :new HOUR)')
     base_total = _aggregate(where, delta, True, now_string, old, new)
-    
+
     # Retrieve new timeframe
     after_comments = {}
-    where = (where_product + 
-             '\nAND created > DATE_SUB(:now, INTERVAL :new HOUR)' + 
+    where = (where_product +
+             '\nAND created > DATE_SUB(:now, INTERVAL :new HOUR)' +
              '\nAND created < :now')
     after_total = _aggregate(where, delta, False, now_string, old, new,
                              comments = after_comments)
-    
+
     if (after_total < _MIN_DENOM_THRESHOLD or
                 base_total < _MIN_DENOM_THRESHOLD):
-        warn('NOT ENOUGH FEEDBACK %d before and %d after' % (base_total, 
+        warn('NOT ENOUGH FEEDBACK %d before and %d after' % (base_total,
                                                              after_total))
         return
 
 
     #Generate alerts
-    
+
     alerted_feedback = {}
-    
-    # Determine if we should alert for each word and add the alert feedback to a 
+
+    # Determine if we should alert for each word and add the alert feedback to a
     # dict for spam detection
     for (k,v) in delta.iteritems():
         v.set_thresholds(diff_pct = _DIFF_PCT_MIN, diff_abs = _DIFF_ABS_MIN)
@@ -152,41 +154,44 @@ def process_alerts(product,
                 if s in v.after.link_list:
                     v.after.remove(link = (s, alerted_feedback[s]))
                     v.alert = False
-    
+
     # Reprocess alerts while removing spam
     has_alerts = False
     for (k,v) in delta.iteritems():
         v.set_potentials(base = base_total, after = after_total)
         if (v.is_significant and v.severity >= _ALERT_SEV_MIN
             and v.after.count >= _MIN_COUNT_THRESHOLD):
-            if (not debug or debug_file != sys.stdout):
+            if is_print:
                 print 'Emitting alert for %s' % v.after.sorted_metadata[0]
-            v.emit(timeframe = new, flavor = flavor, 
-                   debug = debug, debug_file = debug_file)
+            #v.emit(timeframe = new, flavor = flavor,
+            #       debug = debug, debug_file = debug_file)
             has_alerts = True
 
     if not has_alerts:
         # This is super fishy but technically valid usecase.
         # Might alert on this in the future
-        print 'No alerts today'
+        if is_print:
+            print 'No alerts today'
         return
 
     # Now send an email, looking up each piece of feedback.
     if email:
         email_list = set()
-    
+
         for (k,v) in delta.iteritems():
             v.set_thresholds(diff_pct = _DIFF_PCT_MIN, diff_abs = _DIFF_ABS_MIN)
             if (v.is_significant and v.severity >= _EMAIL_SEV_MIN
                 and v.after.count >= _MIN_COUNT_THRESHOLD):
                 email_list.add(v)
+        print email_list, subject, address
+        address = 'rrayborn@mozilla.com'
         _email_results(email_list, subject, address, after_comments)
 
 
 def _aggregate(where, delta, is_base, now,
                old, new, comments = None):
     global _INPUT_DB
-    _INPUT_DB = _INPUT_DB if _INPUT_DB else inputDb('input_mozilla_org_new') 
+    _INPUT_DB = _INPUT_DB if _INPUT_DB else inputDb('input_mozilla_org_new')
 
     sql = '''
         SELECT
@@ -203,7 +208,7 @@ def _aggregate(where, delta, is_base, now,
         ;
     ''' % where
     try:
-        results = _INPUT_DB.execute_sql(sql, old = old, new = new, 
+        results = _INPUT_DB.execute_sql(sql, old = old, new = new,
                                        now = now)
     except (OperationalError):
         #TODO(rrayborn): raise an alert instead of just warning.
@@ -223,7 +228,7 @@ def _aggregate(where, delta, is_base, now,
                 data_set = delta[key].base if is_base else delta[key].after
                 data_set.insert(key = key, link = (row.id, value),
                                 meta = word_set)
-            total += 1   
+            total += 1
     return total
 
 
@@ -251,27 +256,27 @@ def _email_results(email_list, subject, address, after_comments):
         link_list.sort(key = lambda x:(x[1], x[0]), reverse=True)
         link_list = link_list[:_MAX_EMAIL_LINKS]
         for link in link_list :
-            email_body += '\n<https://input.mozilla.org/dashboard/response/%s>:\n' % \
-                (str(link[0]))
+            email_body += '\n<https://input.mozilla.org/dashboard/response/' + \
+                    str(link[0]) + '%s>:\n'
             if len(after_comments[link[0]]) < 500:
                 email_body += after_comments[link[0]]
             else:
                 email_body += after_comments[link[0]][:450] + '...'
-                
+
         email_body += '\n\n'
         shortwords.append(v.after.sorted_metadata[0])
-    
+
     # Create email
     msg = MIMEText(email_body)
     msg['Subject'] = '[' + subject + '] ' + ', '.join(shortwords)
     msg['From']    = _ALERT_EMAIL_FROM
     msg['To']      = address
-    
+
     server = smtplib.SMTP('localhost')
     server.sendmail(_ALERT_EMAIL_FROM, address.split(','), msg.as_string())
     server.quit()
 
-    
+
 class WordDeltaCounter (ItemCounterDelta):
 
     def __init__ (self, *args, **kwargs):
@@ -284,8 +289,8 @@ class WordDeltaCounter (ItemCounterDelta):
     @property
     def severity (self):
         '''
-        This function is magic. I don't know if it's the right one or if we should
-        make a better one but whatever.
+        This function is magic. I don't know if it's the right one or if we
+        should make a better one but whatever.
         '''
         #TODO(rrayborn): experiment with other algorithms
         max_possible_count = self.after.count if (self.base.count <= 0) else 15
@@ -298,13 +303,14 @@ class WordDeltaCounter (ItemCounterDelta):
         if value > 10:
             return 10
         return int(floor(value))
-        
-    def emit(self, timeframe = None, flavor = 'unknown', debug = False, debug_file = sys.stdout):
+
+    def emit(self, timeframe = None, flavor = 'unknown',
+             debug = False, debug_file = sys.stdout):
         if debug:
             if isinstance(debug_file, file):
                 self.log_to_csv(debug_file)
             else:
-                warn('Debug file should be type <file>, outputting to stdout instead')
+                warn('Debug file should be type <file>, outputting to stdout')
                 self.log_to_csv(sys.stdout)
             return
         headers = {
@@ -320,13 +326,14 @@ class WordDeltaCounter (ItemCounterDelta):
         links = []
         for link in link_list:
             links.append({
-                'name'  : 'Input Link',
-                'url'   : 'http://input.mozilla.org/dashboard/response/'+str(link[0])
+                    'name': 'Input Link',
+                    'url' : 'http://input.mozilla.org/dashboard/response/' + \
+                            str(link[0])
             })
         description = dedent('''
-    
+
             Trending words: %s
-    
+
             Before: %.2f/1000
             After %.2f/1000
             Absolute Difference: %.2f %%age points
@@ -341,19 +348,19 @@ class WordDeltaCounter (ItemCounterDelta):
             self.diff_pct,
             timeframe,
             len(self.after.link_list)
-            
+
         )).strip()
         payload = {
-            'severity': self.severity,
+            'severity':         self.severity,
             'summary': '%s is trending up by %.2f'%\
                 (self.after.sorted_metadata[0], self.diff_pct),
-            'description': description,
-            'flavor': flavor,
-            'emitter_name': 'input_word_alert',
-            'emitter_version': _VERSION,
-            'links': links,
-            'start_time': start_time.isoformat(),
-            'end_time': self.end_time.isoformat()
+            'description':      description,
+            'flavor':           flavor,
+            'emitter_name':     'input_word_alert',
+            'emitter_version':  _VERSION,
+            'links':            links,
+            'start_time':       start_time.isoformat(),
+            'end_time':         self.end_time.isoformat()
         }
         resp = requests.post(
             'https://input.mozilla.org/api/v1/alerts/alert/',
@@ -364,11 +371,12 @@ class WordDeltaCounter (ItemCounterDelta):
             print 'All systems good. Submitted alert for %s' % \
                 (self.after.sorted_metadata[0])
         else:
-            print 'Failed to submit alert for %s' % (self.after.sorted_metadata[0])
+            print 'Failed to submit alert for %s' % \
+                    (self.after.sorted_metadata[0])
             print resp.json()['detail']
-            
+
     def log_to_csv(self, file):
-        
+
         output = '"%s","%s",%.10f,%.10f,%d,%d,%d'%(
             self.end_time.strftime('%Y-%m-%d %H:%M:%S'),
             self.after.sorted_metadata[0],
@@ -379,12 +387,12 @@ class WordDeltaCounter (ItemCounterDelta):
             self.severity
         )
         print >> file, output
-    
+
     def __repr__(self):
         repr = 'Word counter object for %s with %d before and %d after counts'%\
             (self.key, self.base.count, self.after.count)
         return repr
-        
+
     def __str__(self):
         ret = dedent('''
                     Severity             {severity} counter for {word}.
@@ -412,21 +420,111 @@ def safe_log (value):
     if value <= 0:
         return 0
     return log(value)
-    
+
 
 def main():
+
     parser = ArgumentParser(description='Input Alerts.')
+
     parser.add_argument('--product',
-                        action = 'store',
-                        default = 'both', 
-                        help = 'Product to backfill for. e.g. "desktop"/"android"')
+                        '-p',
+                        action  = 'store',
+                        default = 'both',
+                        help    = 'Product to backfill for. e.g. "desktop"/"android"/"both"')
+    parser.add_argument('--start_date',
+                        '-s',
+                        action  = 'store',
+                        default = None,
+                        help    = 'Start date for Alerts generation omit for running backfill')
+    parser.add_argument('--end_date',
+                        '-e',
+                        action  = 'store',
+                        default = None,
+                        help    = 'Start date for Alerts generation omit for running backfill')
+    parser.add_argument('--email',
+                        '-v',
+                        action  = 'store_true',
+                        default = False,
+                        help    = 'Whether we should emit alerts or write to a file instead')
+    parser.add_argument('--debug',
+                        '-d',
+                        action  = 'store_true',
+                        default = False,
+                        help    = 'Whether we should emit alerts or write to a file instead')
+    parser.add_argument('--outfile',
+                        '-o',
+                        type    = FileType('w'),
+                        default = sys.stdout,
+                        help    = 'File to write to')
+
     args = parser.parse_args()
-    if args.product == 'both':
-        process_alerts('desktop')
-        process_alerts('android')
+
+
+    # Product
+    if args.product in ['both','desktop']:
+        desktop_times = [time(0), time(6), time(12), time(18)]
     else:
-        process_alerts(args.product)
-    
+        desktop_times = None
+
+    if args.product in ['both','android']:
+        android_times = [time(5)]
+    else:
+        android_times = None
+
+    # Dates
+    now = datetime.now()
+    day_delta = timedelta(days = 1)
+    if args.start_date:
+        single_run = False
+        start_date = datetime.strptime(args.start_date, '%Y-%m-%d').date()
+        if args.end_date:
+            end_date = datetime.strptime(args.end_date,   '%Y-%m-%d').date()
+        else:
+            end_date = now - day_delta # yesterday
+    else:
+        single_run = True
+
+    # Email
+    email = args.email
+
+    # Debug
+    if args.debug:
+        debug   = True
+        outfile = args.outfile
+        print >> outfile, 'product,end_time,word,base_pct,after_pct,base_count,after_count,severity\n'
+    else:
+        debug   = False
+        outfile = None
+
+    # Single run
+    if single_run:
+        if desktop_times:
+            process_alerts('desktop', now = now,
+                           debug = debug, debug_file = outfile,
+                           email = email)
+        if android_times:
+            process_alerts('android', now = now,
+                           debug = debug, debug_file = outfile,
+                           email = email)
+    else: # Backfill
+        backfill_date = start_date
+        while backfill_date <= end_date:
+            for backfill_time in desktop_times:
+                backfill_dt = datetime.combine(backfill_date, backfill_time)
+                process_alerts('desktop', now = backfill_dt,
+                               debug = debug, debug_file = outfile,
+                               email = email)
+            for backfill_time in android_times:
+                backfill_dt = datetime.combine(backfill_date, backfill_time)
+                process_alerts('android', now = backfill_dt,
+                               debug = debug, debug_file = outfile,
+                               email = email)
+            backfill_date += increment
+
+    if outfile:
+        outfile.close()
+
+
 
 if __name__ == '__main__':
 
