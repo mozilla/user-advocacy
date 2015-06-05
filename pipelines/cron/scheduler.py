@@ -16,31 +16,38 @@ import os
 from crontab import CronTab
 
 _WRAPPER_PATH = '$CODE_PATH/pipelines/cron/backend_wrapper.sh'
+_LOG_PATH     = '/tmp/logs/'
 
 #TODO(rrayborn): this might need a csv or even a front end later
 _JOBLIST = [
-        #[cron_time_fmt, command, UNIQUE tag that must not be changed]
-        #['13 * * * *','echo "this is a new test: $CODE_PATH" >/tmp/test.txt', 'test']
+        #[cron_time_fmt, command, log_filename, UNIQUE tag that must not be changed]
         #[,,],
         ['0 3 * * *',
-            'python $CODE_PATH/pipelines/google_play/pipeline.py            >/tmp/google_play_cron 2>&1',
+            'python $CODE_PATH/pipelines/google_play/pipeline.py',
+            'google_play_cron',
             'Play Pipeline'],
         ['0 4 * * *',
-            'python $CODE_PATH/pipelines/stats_pipeline/pipeline.py         >/tmp/stats_cron       2>&1',
+            'python $CODE_PATH/pipelines/stats_pipeline/pipeline.py',
+            'stats_cron',
             'Stats Pipeline'],
         ['0 5 * * *',
-            'python $CODE_PATH/pipelines/hello_pipeline/pipeline.py         >/tmp/hello_cron       2>&1',
+            'python $CODE_PATH/pipelines/hello_pipeline/pipeline.py',
+            'hello_cron',
             'Hello Pipeline'],
         ['10 * * * *',
-            'python $CODE_PATH/pipelines/alert_pipeline/pull_input_alert.py >>/tmp/alert_pipe_cron 2>&1',
+            'python $CODE_PATH/pipelines/alert_pipeline/pull_input_alert.py',
+            'alert_pipe_cron',
             'Fetch alerts'],
         ['0 */6 * * *',
-            'python $CODE_PATH/pipelines/alert_pipeline/word_alert.py --product desktop >/tmp/desktop_alert_cron 2>&1',
+            'python $CODE_PATH/pipelines/alert_pipeline/word_alert.py --product desktop -v',
+            'desktop_alert_cron',
             'Alert Pipeline'],
-        ['0 5 * * *',
-            'python $CODE_PATH/pipelines/alert_pipeline/word_alert.py --product android >/tmp/android_alert_cron 2>&1',
+        ['0 6 * * *',
+            'python $CODE_PATH/pipelines/alert_pipeline/word_alert.py --product android -v',
+            'android_alert_cron',
             'Android Alert Pipeline']
     ]
+
 
 #TODO(rrayborn): this might need a csv or even a front end later
 _IGNORELIST = [
@@ -74,9 +81,10 @@ def update_cron(user = None):
     # Create/Replace jobs
     for entry in _JOBLIST:
         time     = entry[0]
-        command  = (_WRAPPER_PATH + ' ' + entry[1])
+        log_stmt = ' >' + _LOG_PATH + entry[2] + ' 2>&1 '
+        command  = (_WRAPPER_PATH + ' ' + entry[1] + log_stmt)
         command  = command.replace('$CODE_PATH', os.environ['CODE_PATH'])
-        tag      = entry[2]
+        tag      = entry[3]
         auto_tag = 'AUTOGENERATE: ' + tag
 
         # find existing jobs

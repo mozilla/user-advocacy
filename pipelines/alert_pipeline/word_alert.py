@@ -60,7 +60,7 @@ _ANDROID_EMAIL       = environ['ANDROID_ALERT_EMAIL']
 _ALERT_TOKEN         = environ['ALERT_TOKEN']
 
 _DESKTOP_TIMES       = [time(0), time(6), time(12), time(18)]
-_ANDROID_TIMES       = [time(5)]
+_ANDROID_TIMES       = [time(6)]
 
 # Database
 _INPUT_DB            = None
@@ -464,7 +464,7 @@ def main():
 
     # Times
     if args.now:
-        now = datetime.strptime(args.now, '%Y-%m-%d %H:%M')
+        now = datetime.strptime(args.now, '%Y-%m-%d-%H:%M')
     else:
         now = datetime.now()
 
@@ -480,20 +480,24 @@ def main():
             end_date = (now - day_delta).date() # yesterday
     else:
         start_date = now.date()
-        end_date   = start_date + day_delta
+        end_date   = start_date
         single_run = True
 
 
     # Product
-    if args.product in ['both','desktop']:
-        desktop_times = [now.time()] if single_run else _DESKTOP_TIMES
+    if args.product not in ['both','desktop']:
+        desktop_times = []
+    elif single_run:
+        desktop_times = [now.time()]
     else:
-        desktop_times = None
+        desktop_times = _DESKTOP_TIMES
 
-    if args.product in ['both','android']:
-        android_times = [now.time()] if single_run else _ANDROID_TIMES
+    if args.product not in ['both','android']:
+        android_times = []
+    elif single_run:
+        android_times = [now.time()]
     else:
-        android_times = None
+        android_times = _ANDROID_TIMES
 
 
     # Email
@@ -521,7 +525,7 @@ def main():
             process_alerts('android', now = backfill_dt,
                            debug = debug, debug_file = outfile,
                            send_email = email)
-        backfill_date += increment
+        backfill_date += day_delta
 
     if outfile:
         outfile.close()
