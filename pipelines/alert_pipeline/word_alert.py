@@ -59,6 +59,9 @@ _DESKTOP_EMAIL       = environ['ALERT_EMAIL']
 _ANDROID_EMAIL       = environ['ANDROID_ALERT_EMAIL']
 _ALERT_TOKEN         = environ['ALERT_TOKEN']
 
+_DESKTOP_TIMES       = [time(0), time(6), time(12), time(18)]
+_ANDROID_TIMES       = [time(5)]
+
 # Database
 _INPUT_DB            = None
 
@@ -435,7 +438,12 @@ def main():
                         '-e',
                         action  = 'store',
                         default = None,
-                        help    = 'Start date for Alerts generation omit for running backfill')
+                        help    = 'End date for Alerts generation omit for running backfill')
+    parser.add_argument('--now',
+                        '-n',
+                        action  = 'store',
+                        default = None,
+                        help    = 'Time to run the alert for each day.')
     parser.add_argument('--email',
                         '-v',
                         action  = 'store_true',
@@ -454,20 +462,14 @@ def main():
 
     args = parser.parse_args()
 
-
-    # Product
-    if args.product in ['both','desktop']:
-        desktop_times = [time(0), time(6), time(12), time(18)]
+    # Times
+    if args.now:
+        now = datetime.strptime(args.now, '%Y-%m-%d %H:%M')
     else:
-        desktop_times = None
+        now = datetime.now()
 
-    if args.product in ['both','android']:
-        android_times = [time(5)]
-    else:
-        android_times = None
 
     # Dates
-    now = datetime.now()
     day_delta = timedelta(days = 1)
     if args.start_date:
         single_run = False
@@ -475,9 +477,24 @@ def main():
         if args.end_date:
             end_date = datetime.strptime(args.end_date,   '%Y-%m-%d').date()
         else:
-            end_date = now - day_delta # yesterday
+            end_date = (now - day_delta).date() # yesterday
     else:
+        start_date = now.date()
+        end_date   = start_date + day_delta
         single_run = True
+
+
+    # Product
+    if args.product in ['both','desktop']:
+        desktop_times = [now.time()] if single_run else _DESKTOP_TIMES
+    else:
+        desktop_times = None
+
+    if args.product in ['both','android']:
+        android_times = [now.time()] if single_run else _ANDROID_TIMES
+    else:
+        android_times = None
+
 
     # Email
     email = args.email
@@ -491,30 +508,20 @@ def main():
         debug   = False
         outfile = None
 
-    # Single run
-    if single_run:
-        if desktop_times:
-            process_alerts('desktop', now = now,
+
+    backfill_date = start_date
+    while backfill_date <= end_date:
+        for backfill_time in desktop_times:
+            backfill_dt = datetime.combine(backfill_date, backfill_time)
+            process_alerts('desktop', now = backfill_dt,
                            debug = debug, debug_file = outfile,
                            send_email = email)
-        if android_times:
-            process_alerts('android', now = now,
+        for backfill_time in android_times:
+            backfill_dt = datetime.combine(backfill_date, backfill_time)
+            process_alerts('android', now = backfill_dt,
                            debug = debug, debug_file = outfile,
                            send_email = email)
-    else: # Backfill
-        backfill_date = start_date
-        while backfill_date <= end_date:
-            for backfill_time in desktop_times:
-                backfill_dt = datetime.combine(backfill_date, backfill_time)
-                process_alerts('desktop', now = backfill_dt,
-                               debug = debug, debug_file = outfile,
-                               send_email = email)
-            for backfill_time in android_times:
-                backfill_dt = datetime.combine(backfill_date, backfill_time)
-                process_alerts('android', now = backfill_dt,
-                               debug = debug, debug_file = outfile,
-                               send_email = email)
-            backfill_date += increment
+        backfill_date += increment
 
     if outfile:
         outfile.close()

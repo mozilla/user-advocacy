@@ -15,7 +15,7 @@ __status__     = 'Production'
 import os
 from crontab import CronTab
 
-_WRAPPER_PATH = '$CODE_PATH/pipelines/cron/backend_wrapper.sh'.replace('$CODE_PATH', os.environ['CODE_PATH'])
+_WRAPPER_PATH = '$CODE_PATH/pipelines/cron/backend_wrapper.sh'
 
 #TODO(rrayborn): this might need a csv or even a front end later
 _JOBLIST = [
@@ -74,7 +74,8 @@ def update_cron(user = None):
     # Create/Replace jobs
     for entry in _JOBLIST:
         time     = entry[0]
-        command  = _WRAPPER_PATH + ' ' + entry[1]
+        command  = (_WRAPPER_PATH + ' ' + entry[1])
+        command  = command.replace('$CODE_PATH', os.environ['CODE_PATH'])
         tag      = entry[2]
         auto_tag = 'AUTOGENERATE: ' + tag
 
