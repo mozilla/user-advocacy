@@ -15,22 +15,23 @@ __status__     = 'Production'
 import os
 from crontab import CronTab
 
+_WRAPPER_PATH = '$CODE_PATH/pipelines/cron/backend_wrapper.sh'.replace('$CODE_PATH', os.environ['CODE_PATH'])
 
 #TODO(rrayborn): this might need a csv or even a front end later
 _JOBLIST = [
         #[cron_time_fmt, command, UNIQUE tag that must not be changed]
         #['13 * * * *','echo "this is a new test: $CODE_PATH" >/tmp/test.txt', 'test']
         #[,,],
-        ['0 3 * * *', 
-            'python $CODE_PATH/pipelines/google_play/pipeline.py            >/tmp/google_play_cron 2>&1', 
+        ['0 3 * * *',
+            'python $CODE_PATH/pipelines/google_play/pipeline.py            >/tmp/google_play_cron 2>&1',
             'Play Pipeline'],
-        ['0 4 * * *', 
-            'python $CODE_PATH/pipelines/stats_pipeline/pipeline.py         >/tmp/stats_cron       2>&1', 
+        ['0 4 * * *',
+            'python $CODE_PATH/pipelines/stats_pipeline/pipeline.py         >/tmp/stats_cron       2>&1',
             'Stats Pipeline'],
-        ['0 5 * * *', 
+        ['0 5 * * *',
             'python $CODE_PATH/pipelines/hello_pipeline/pipeline.py         >/tmp/hello_cron       2>&1',
             'Hello Pipeline'],
-        ['10 * * * *', 
+        ['10 * * * *',
             'python $CODE_PATH/pipelines/alert_pipeline/pull_input_alert.py >>/tmp/alert_pipe_cron 2>&1',
             'Fetch alerts'],
         ['0 */6 * * *',
@@ -65,7 +66,7 @@ def update_cron(user = None):
     if not os.environ['CODE_PATH']:
         raise Exception('$CODE_PATH not populated. \
                         You should use the uabackend virtualenv.')
-    
+
     cron = CronTab(user=user)
 
     invalid_jobs = []
@@ -73,16 +74,14 @@ def update_cron(user = None):
     # Create/Replace jobs
     for entry in _JOBLIST:
         time     = entry[0]
-        command  = entry[1] \
-            .replace('python ', '$CODE_PATH/pipelines/cron/python_backend_wrapper.sh ') \
-            .replace('$CODE_PATH', os.environ['CODE_PATH'])
+        command  = _WRAPPER_PATH + ' ' + entry[1]
         tag      = entry[2]
         auto_tag = 'AUTOGENERATE: ' + tag
-        
+
         # find existing jobs
         existing_jobs = cron.find_comment(auto_tag)
         is_empty = True
-        
+
         # remove old jobs
         for job in existing_jobs:
             cron.remove(job)
@@ -93,7 +92,7 @@ def update_cron(user = None):
             print 'Creating job with tag: "%s"' % str(tag)
         else:
             print 'Replacing job(s) with tag: "%s"' % str(tag)
-        
+
         # create new jobs
         job = cron.new(command=command)
         job.setall(time)
@@ -102,7 +101,7 @@ def update_cron(user = None):
         # check validity
         if not job.is_valid(): #TODO(rrayborn): this never seems to be false.
             invalid_jobs.append(job)
-    
+
     # Update ignored jobs
     for tag in _IGNORELIST:
         auto_tag = 'AUTOGENERATE: ' + tag

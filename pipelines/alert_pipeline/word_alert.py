@@ -66,7 +66,7 @@ _INPUT_DB            = None
 def process_alerts(product,
                    now = datetime.now(), old = _PAST_TIMEFRAME, new = None,
                    debug = False, debug_file = sys.stdout,
-                   email = True, address = None):
+                   send_email = True, address = None):
     delta = defaultdict(WordDeltaCounter)
 
     # Resolve date
@@ -128,7 +128,6 @@ def process_alerts(product,
 
 
     #Generate alerts
-
     alerted_feedback = {}
 
     # Determine if we should alert for each word and add the alert feedback to a
@@ -157,15 +156,20 @@ def process_alerts(product,
 
     # Reprocess alerts while removing spam
     has_alerts = False
+
+    email_list = set()
     for (k,v) in delta.iteritems():
         v.set_potentials(base = base_total, after = after_total)
-        if (v.is_significant and v.severity >= _ALERT_SEV_MIN
-            and v.after.count >= _MIN_COUNT_THRESHOLD):
-            if is_print:
-                print 'Emitting alert for %s' % v.after.sorted_metadata[0]
-            #v.emit(timeframe = new, flavor = flavor,
-            #       debug = debug, debug_file = debug_file)
-            has_alerts = True
+        if v.is_significant and v.after.count >= _MIN_COUNT_THRESHOLD:
+            if v.severity >= _ALERT_SEV_MIN:
+                if is_print:
+                    print 'Emitting alert for %s' % v.after.sorted_metadata[0]
+                v.emit(timeframe = new, flavor = flavor,
+                       debug = debug, debug_file = debug_file)
+                has_alerts = True
+            if send_email and v.severity >= _EMAIL_SEV_MIN:
+                email_list.add(v)
+
 
     if not has_alerts:
         # This is super fishy but technically valid usecase.
@@ -175,16 +179,7 @@ def process_alerts(product,
         return
 
     # Now send an email, looking up each piece of feedback.
-    if email:
-        email_list = set()
-
-        for (k,v) in delta.iteritems():
-            v.set_thresholds(diff_pct = _DIFF_PCT_MIN, diff_abs = _DIFF_ABS_MIN)
-            if (v.is_significant and v.severity >= _EMAIL_SEV_MIN
-                and v.after.count >= _MIN_COUNT_THRESHOLD):
-                email_list.add(v)
-        print email_list, subject, address
-        address = 'rrayborn@mozilla.com'
+    if email_list:
         _email_results(email_list, subject, address, after_comments)
 
 
@@ -501,11 +496,11 @@ def main():
         if desktop_times:
             process_alerts('desktop', now = now,
                            debug = debug, debug_file = outfile,
-                           email = email)
+                           send_email = email)
         if android_times:
             process_alerts('android', now = now,
                            debug = debug, debug_file = outfile,
-                           email = email)
+                           send_email = email)
     else: # Backfill
         backfill_date = start_date
         while backfill_date <= end_date:
@@ -513,12 +508,12 @@ def main():
                 backfill_dt = datetime.combine(backfill_date, backfill_time)
                 process_alerts('desktop', now = backfill_dt,
                                debug = debug, debug_file = outfile,
-                               email = email)
+                               send_email = email)
             for backfill_time in android_times:
                 backfill_dt = datetime.combine(backfill_date, backfill_time)
                 process_alerts('android', now = backfill_dt,
                                debug = debug, debug_file = outfile,
-                               email = email)
+                               send_email = email)
             backfill_date += increment
 
     if outfile:
