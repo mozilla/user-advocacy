@@ -68,7 +68,21 @@ function run() {
                 return e;
             })
             return d;
-        }).sortBy(['datetime', 'severity']).value();
+        }).sort(function (a, b) {
+            if (a.datetime < b.datetime) {
+                return  1;
+            } else if (a.datetime > b.datetime) {
+                return -1;
+            } else {
+                if (a.severity < b.severity) {
+                    return  1;
+                } else if (a.severity > b.severity) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            }
+        }).value();  //.sortBy['datetime', 'severity']).value(); //TODO: why doesn't this work
         updateChange(true, false);
     });
 
@@ -110,13 +124,13 @@ function getReports() {
             .append('p')
             .text(function (d) {
                 var dt = new Date(d.updated);
-                return "Updated: " + dt.toLocaleFormat('%b %e %l:%M%p') 
+                return "Updated: " + dt.toLocaleFormat('%b %e %l:%M%p')
             })
             .classed({
                 'report-date': true,
                 'text-right': true
             });
-        
+
     });
 }
 
@@ -142,7 +156,7 @@ function drawTables() {
     var details = alerts.append('div').classed({'details': true});
     details.append('h5').text('Details:');
     var description = details.append("div").classed({"desc": true});
-    
+
     var desc_lines = description.selectAll(".desc_lines").data(function (d) {
         return d.split_desc;
     }).enter();
@@ -171,7 +185,7 @@ String.prototype.truncate =
          s_ = useWordBoundary && tooLong ? s_.substr(0,s_.lastIndexOf(' ')) : s_;
          return  tooLong ? s_ + '&hellip;' : s_;
       };
-      
+
 function escapeHtml(str) {
     return String(str)
         .replace(/&/g, "&amp;")
