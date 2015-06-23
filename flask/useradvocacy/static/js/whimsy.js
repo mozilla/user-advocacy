@@ -22,7 +22,7 @@
         'Go': 1,
         'KeyboardCat': 1,
         'Odin': 1,
-        'Congrats': 1,
+        'Congrats': 100,
         'Heartbeat': 10,
         'Rock': 1
     };
@@ -33,7 +33,7 @@
                         'Arrrrrrrrrrrrrrrrrrrrrvocacy'],
         'Canada'    :   ['Eh?vocacy'],
         'Go'        :   ['SFGiants', 'Niners', 'Warriors'],
-        'Congrats'  :   ['Matt&amp;Jess', 'Tyler&amp;Emily'],
+        'Congrats'  :   ['Tyler&amp;Emily'],
         'Heartbeat' :   [   '&#x2605;&#x2605;&#x2605;&#x2605;&#x2605',
                             '&#x2605;&#x2605;&#x2605;&#x2605;&#x2606',
                             '&#x2605;&#x2605;&#x2605;&#x2606;&#x2606',
