@@ -22,7 +22,6 @@
         'Go': 1,
         'KeyboardCat': 1,
         'Odin': 1,
-        'Congrats': 100,
         'Heartbeat': 10,
         'Rock': 1
     };
@@ -77,13 +76,17 @@
             
             var today = new Date();
             var wedding_start = new Date("2015-06-25");
-            var wedding_end = new Date("2015-07-13");
+            var wedding_end = new Date("2015-07-25");
             
             if(today < wedding_end && today > wedding_start) {
-                item = _.sample(['Pirate','&#9760;', 'Congrats']);
+                item = _.sample(['Pirate','Congrats', 'Unicorn', 'Welcome']);
                 if (item == 'Congrats') {
                     nav_grey.text(item);
                     nav_red.text('Matt&Jess');
+                }
+                else if (item == 'Welcome') {
+                    nav_grey.text(item);
+                    nav_red.text('Sawyer');
                 }
                 else if (exceptions[item]) {
                     nav_grey.text(item);
