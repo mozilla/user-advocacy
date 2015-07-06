@@ -14,14 +14,23 @@ First, set your app's secret key as an environment variable. For example, exampl
 
     export USERADVOCACY_SECRET = 'something-really-secret'
 
+Then set some other environment variables.
+
+.. code-block:: bash
+
+    export UPLOAD_PATH=''
+    export SQLALCHEMY_DATABASE_URI='sqlite:////tmp/useradvocacy.db'
+
+
 
 Then run the following commands to bootstrap your environment.
 
 
 ::
 
-    git clone https://github.com/chengwang/useradvocacy
-    cd useradvocacy
+    git clone https://github.com/mozilla/user-advocacy
+    cd user-advocacy/flask
+    . bin/activate
     pip install -r requirements/dev.txt
     python manage.py db init
     python manage.py db migrate
