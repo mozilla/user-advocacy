@@ -32,6 +32,7 @@ Then run the following commands to bootstrap your environment.
     cd user-advocacy/flask
     . bin/activate
     pip install -r requirements/dev.txt
+    bower install
     python manage.py db init
     python manage.py db migrate
     python manage.py db upgrade
