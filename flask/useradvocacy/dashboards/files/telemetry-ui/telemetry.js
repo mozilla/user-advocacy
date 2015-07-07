@@ -641,8 +641,8 @@ function showHideVersionWeek() {
 
 function getAvailDates() {
     d3.json('/data/api/v1/telemetry/params', function (error, json) {
-        if (error) {
-            console.log(error);
+        if (error || json.error) {
+            console.log(error || json.error);
             return;
         }
         var valid_weeks = json.weeks.reverse();
