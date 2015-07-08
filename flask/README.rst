@@ -19,7 +19,7 @@ Then set some other environment variables.
 .. code-block:: bash
 
     export UPLOAD_PATH=''
-    export SQLALCHEMY_DATABASE_URI='sqlite:////tmp/useradvocacy.db'
+    export SQLALCHEMY_DATABASE_URI='mysql://ua:test@localhost/useradvocacy'
 
 
 
@@ -33,11 +33,39 @@ Then run the following commands to bootstrap your environment.
     . bin/activate
     pip install -r requirements/dev.txt
     bower install
+
+
+Database
+--------
+
+Install MySQL.
+
+run ```mysql -uroot`` and enter the following.
+
+::
+
+    CREATE USER 'ua'@'localhost' IDENTIFIED BY 'test';
+    CREATE DATABASE telemetry CHARACTER SET utf8;
+    GRANT ALL ON telemetry.* TO 'ua'@'localhost' IDENTIFIED BY 'test';
+    CREATE DATABASE sentiment CHARACTER SET utf8;
+    GRANT ALL ON sentiment.* TO 'ua'@'localhost' IDENTIFIED BY 'test';
+
+
+Exit with ``^D`` and then load the data.
+
+ ::
+
+    mysql -u ua -p telemetry < test_data/telemetry.sql
+    mysql -u ua -p sentiment < test_data/sentiment.sql
+
+Finally, to bootstrap the database and run the server, type the following.
+
+::
+
     python manage.py db init
     python manage.py db migrate
     python manage.py db upgrade
     python manage.py server
-
 
 
 Deployment
