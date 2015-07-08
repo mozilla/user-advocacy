@@ -70,7 +70,7 @@ def _resolve_oss(target_os_str, base_os_str = None, messages = None):
     if not target_os_str and not base_os_str:
         return 'all', 'all', messages
     return _resolve_params('os', target_os_str, base_os_str, messages)
-    
+
 def _resolve_channels(target_channel_str, base_channel_str = None, messages = None):
     return _resolve_params('channel', target_channel_str, base_channel_str, messages)
 
@@ -137,7 +137,7 @@ def _resolve_param(param, param_string, messages = None, is_base = False):
 def _resolve_date(old_date, messages = None, is_base = False, maxes = None):
     return _resolve_time(
             'date',
-            old_date, 
+            old_date,
             messages = messages,
             is_base = is_base,
             maxes = maxes
@@ -147,14 +147,14 @@ def _resolve_date(old_date, messages = None, is_base = False, maxes = None):
 def _resolve_version(old_version, messages = None, is_base = False, maxes = None):
     return _resolve_time(
             'version',
-            old_version, 
+            old_version,
             messages = messages,
             is_base = is_base,
             maxes = maxes
         )
 
 
-def _resolve_time(time_type, old_time, 
+def _resolve_time(time_type, old_time,
                   messages = None, is_base = False, maxes = None):
     keywords = ['latest','previous']
 
@@ -178,7 +178,7 @@ def _resolve_time(time_type, old_time,
             except ValueError:
                 label = ('base_' if is_base else '') + time_type
                 messages[label] = '%s not recognized: %s' % (label, old_time)
-                
+
     return new_time, messages
 
 
@@ -286,28 +286,28 @@ def telemetry_stat(args):
     # dates
     end_date_str = args.pop('end_date', None)
     end_date, messages = _resolve_date(
-            end_date_str, 
-            messages = messages, 
+            end_date_str,
+            messages = messages,
             maxes = maxes
         )
 
     start_date_str = args.pop('start_date', None)
     start_date, messages = _resolve_date(
-            start_date_str, 
+            start_date_str,
             messages = messages,
             maxes = maxes
         )
     # version
     end_version_str = args.pop('end_version', maxes['version']['latest'])
     end_version, messages = _resolve_version(
-            end_version_str,  
-            messages = messages, 
+            end_version_str,
+            messages = messages,
             maxes = maxes
         )
 
     start_version_str = args.pop('start_version', None)
     start_version, messages = _resolve_version(
-            start_version_str,  
+            start_version_str,
             messages = messages,
             maxes = maxes
         )
@@ -378,17 +378,17 @@ def telemetry_stat(args):
 
     ret['results'] = _stat_query(
             measures, elements, groupings, os, channel, timestep,
-            start_date, end_date, 
+            start_date, end_date,
             start_version, end_version
         )
 
     ret['count'] = len(ret['results'])
 
     return json.jsonify(ret) #TODO(rrayborn): throw code: , 200
-    
+
 
 def _stat_query(measures, elements, groupings, os, channel, timestep,
-                 start_date, end_date, 
+                 start_date, end_date,
                  start_version, end_version):
     # Query
     where_statements = []
@@ -423,7 +423,7 @@ def _stat_query(measures, elements, groupings, os, channel, timestep,
         where_clause = ''
 
     query = '''
-            SELECT 
+            SELECT
                 %s,
                 stats.measure_name         AS measure,
                 measures.type              AS type,
@@ -449,11 +449,11 @@ def _stat_query(measures, elements, groupings, os, channel, timestep,
                 SUM(stats.users)           AS `count`
             FROM
                 telemetry.weekly_telemetry_stats       stats
-                LEFT JOIN telemetry.telemetry_measures measures 
+                LEFT JOIN telemetry.telemetry_measures measures
                         ON(stats.measure_name = measures.name)
                 LEFT JOIN telemetry.telemetry_elements elements
                         ON(measures.element_id = elements.id)
-                LEFT JOIN telemetry.telemetry_screens  screens  
+                LEFT JOIN telemetry.telemetry_screens  screens
                         ON(elements.screen_id = screens.id)
             %s
             GROUP BY %s,measures.id,elements.id,stats.measure_name,stats.measure_value
@@ -483,7 +483,7 @@ def _stat_query(measures, elements, groupings, os, channel, timestep,
                 results[measure]['screenshot_w']     = row['screenshot_w']
                 results[measure]['screenshot_h']     = row['screenshot_h']
                 results[measure]['screenshot_file']  = row['screenshot_file']
-        
+
         time_value = row['time']
         time_dict = results[measure]['times']
 
@@ -495,9 +495,9 @@ def _stat_query(measures, elements, groupings, os, channel, timestep,
             time_dict[time_value]['average']         = row['average']
             time_dict[time_value]['nonzero_average'] = row['nonzero_average']
             time_dict[time_value]['users'] = {}
-        
+
         user_dict = time_dict[time_value]['users']
-        
+
         value = row['value']
         range_regex = '^[0-9]+\-[0-9]+$'
         if search(range_regex, value) and int(value.partition('-')[0]) >= 16:
@@ -534,33 +534,33 @@ def telemetry_stats(args):
     # dates
     target_date_str = args.pop('date', None)
     target_date, messages = _resolve_date(
-            target_date_str, 
-            messages = messages, 
-            is_base = False, 
+            target_date_str,
+            messages = messages,
+            is_base = False,
             maxes = maxes
         )
 
     base_date_str = args.pop('base_date', None)
     base_date, messages = _resolve_date(
-            base_date_str, 
-            messages = messages, 
-            is_base = True, 
+            base_date_str,
+            messages = messages,
+            is_base = True,
             maxes = maxes
         )
     # version
     target_version_str = args.pop('version', None)
     target_version, messages = _resolve_version(
-            target_version_str,  
-            messages = messages, 
-            is_base = False, 
+            target_version_str,
+            messages = messages,
+            is_base = False,
             maxes = maxes
         )
 
     base_version_str = args.pop('base_version', None)
     base_version, messages = _resolve_version(
-            base_version_str,  
-            messages = messages, 
-            is_base = True, 
+            base_version_str,
+            messages = messages,
+            is_base = True,
             maxes = maxes
         )
     # date/version
@@ -581,7 +581,7 @@ def telemetry_stats(args):
                 messages['versions'] = 'version is less than base_version.'
 
             ret['resolved_parameters']['base_version'] = base_version
-            ret['parameters']['base_version'] = base_version_str            
+            ret['parameters']['base_version'] = base_version_str
             is_diff = True
 
     elif target_date:
@@ -594,7 +594,7 @@ def telemetry_stats(args):
         base_version   = None
 
         ret['resolved_parameters']['date'] = target_date
-        ret['parameters']['date'] = target_date_str 
+        ret['parameters']['date'] = target_date_str
 
         if base_date:
             if base_date > target_date:
@@ -656,7 +656,7 @@ def telemetry_stats(args):
         ret['parameters'][str(k)] = v
 
 #    return ret #TODO DELETE
-    
+
     # Do the queries
     data = _stats_query(
             target_date, target_version, target_os, target_channel
@@ -689,7 +689,7 @@ def _stats_query(week, version, os, channel, target = None):
     else:
         where_clause = ''
     query = '''
-            SELECT 
+            SELECT
                 stats.measure_name         AS measure,
                 measures.type              AS type,
                 measures.table             AS `table`,
@@ -714,11 +714,11 @@ def _stats_query(week, version, os, channel, target = None):
                 COALESCE(SUM(stats.users),0) AS `count`
             FROM
                 telemetry.weekly_telemetry_stats       stats
-                LEFT JOIN telemetry.telemetry_measures measures 
+                LEFT JOIN telemetry.telemetry_measures measures
                         ON(stats.measure_name = measures.name)
                 LEFT JOIN telemetry.telemetry_elements elements
                         ON(measures.element_id = elements.id)
-                LEFT JOIN telemetry.telemetry_screens  screens  
+                LEFT JOIN telemetry.telemetry_screens  screens
                         ON(elements.screen_id = screens.id)
             %s
             GROUP BY measures.id,elements.id,stats.measure_name,stats.measure_value
@@ -734,7 +734,7 @@ def _stats_query(week, version, os, channel, target = None):
         ret           = {}
         status_label  = 'new'
         prefix        = ''
-       
+
     potential_users_label = prefix + 'potential_users'
     active_users_label    = prefix + 'active_users'
     average_label         = prefix + 'average'
@@ -761,7 +761,7 @@ def _stats_query(week, version, os, channel, target = None):
                 ret[measure]['screenshot_w']     = row['screenshot_w']
                 ret[measure]['screenshot_h']     = row['screenshot_h']
                 ret[measure]['screenshot_file']  = row['screenshot_file']
-            
+
         if potential_users_label not in ret[measure].keys():
             ret[measure][potential_users_label] = row['potential_users']
             ret[measure][active_users_label]    = row['active_users']
@@ -771,8 +771,8 @@ def _stats_query(week, version, os, channel, target = None):
                 ret[measure]['measure_status'] = status_label
             elif ret[measure]['measure_status'] != status_label:
                 ret[measure]['measure_status'] = 'both'
-        
-        
+
+
         value = row['value']
         range_regex = '^[0-9]+\-[0-9]+$'
         if search(range_regex, value) and int(value.partition('-')[0]) >= 16:
@@ -783,7 +783,7 @@ def _stats_query(week, version, os, channel, target = None):
         if count_label not in ret[measure]['users'][value].keys():
             ret[measure]['users'][value][count_label] = 0
         ret[measure]['users'][value][count_label] += row['count']
-    
+
     return ret
 
 
