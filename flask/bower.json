@@ -1,0 +1,23 @@
+{
+  "name": "useradvocacy",
+  "version": "1.0.0",
+  "homepage": "https://github.com/mozilla/user-advocacy",
+  "authors": [],
+  "description": "The front-facing user advocacy server.",
+  "main": "manage.py",
+  "license": "MPL-2.0",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.5",
+    "d3": "~3.5.6",
+    "lodash": "~3.10.0",
+    "font-awesome": "~4.3.0"
+  }
+}
