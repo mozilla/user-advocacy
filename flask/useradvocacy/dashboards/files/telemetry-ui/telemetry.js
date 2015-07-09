@@ -342,7 +342,7 @@ function run() {
                   });
               }
               values = values.filter(function (d) {
-                      return (!(d.sort_key === '|' || d.name.substr(-1) === '+')
+                      return (!(d.sort_key === '|' || (d.name || '').substr(-1) === '+')
                           || d.percent > 0.01);
                   })
                   .value();
