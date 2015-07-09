@@ -348,8 +348,9 @@ function run() {
                   .value();
               if (full_table) {
                   _.forEach(uniq_values[table], function (v, j) {
-                      if (_.contains(_.pluck(values, 'name'), j)) {}
-                      else if (diff) {
+                      if (_.contains(_.pluck(values, 'name'), j)) {
+                        // Do nothing here.
+                      } else if (diff) {
                           values.push({
                               'name': j,
                               'sort_key': v,
@@ -642,7 +643,7 @@ function showHideVersionWeek() {
 function getAvailDates() {
     d3.json('/data/api/v1/telemetry/params', function (error, json) {
         if (error || json.error) {
-            console.log(error || json.error);
+            console.log(error || json.error); // eslint-disable-line no-console
             return;
         }
         var valid_weeks = json.weeks.reverse();
