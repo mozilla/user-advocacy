@@ -255,7 +255,7 @@ def _email_results(email_list, subject, address, after_comments):
         link_list = link_list[:_MAX_EMAIL_LINKS]
         for link in link_list :
             email_body += '\n<https://input.mozilla.org/dashboard/response/' + \
-                    str(link[0]) + '%s>:\n'
+                    str(link[0]) + '>:\n'
             if len(after_comments[link[0]]) < 500:
                 email_body += after_comments[link[0]]
             else:
