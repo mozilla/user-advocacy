@@ -28,7 +28,7 @@ def bootstrap():
 def run(date_str, channel, file_in):
     """
     Pulls in CSV for a given date/channel and generates a measure list for it.
-    
+
     date_str = 'YYYY-MM-DD'
     file_in = '<PATH>/<FILE>'
     """
@@ -51,7 +51,7 @@ def run(date_str, channel, file_in):
 def _telem_parsed_to_sql(date_str,
                          channel,
                          measure_iter,
-                         version    = None, 
+                         version    = None,
                          query_file = _UPDATE_SQL_FILE):
     """ Loads _INTERMEDIATE_CSV into the sentiment database """
 
@@ -62,7 +62,7 @@ def _telem_parsed_to_sql(date_str,
         query = """
                 SELECT
                     version
-                FROM 
+                FROM
                     sentiment.release_info ri
                 WHERE
                     '{date}' >= ri.{channel}_start_date
@@ -70,8 +70,12 @@ def _telem_parsed_to_sql(date_str,
             ;""".format(date=date_str, channel=channel)
         version = str(db.execute_sql(query).first()[0])
 
-    
-    query ='''CREATE TEMPORARY TABLE tmp_weekly_stats (
+    # TODO(rrayborn): figure out why this won't work as a temp table with our
+    # consistency rules + sqlalchemy's implicit transactions
+    query ='''DROP TABLE IF EXISTS tmp_weekly_stats;'''
+    db.execute_sql(query)
+
+    query ='''CREATE TABLE tmp_weekly_stats (
             os                       ENUM('Windows','Mac','Linux'),
             measure                  VARCHAR(200),
             measure_value            VARCHAR(200),
@@ -79,7 +83,7 @@ def _telem_parsed_to_sql(date_str,
             measure_average          FLOAT,
             measure_nonzero_average  FLOAT,
             active_users             FLOAT,
-            potential_users          INT         
+            potential_users          INT
         );'''
     db.execute_sql(query)
     mappings = {
@@ -97,7 +101,7 @@ def _telem_parsed_to_sql(date_str,
     with open(query_file, 'r') as query_sql:
         if query_sql:
             query = query_sql.read()
-    
+
     db.execute_sql(query, {'week':date_str, 'channel':channel, 'version':version})
 
 # ===== MUNGING ================================================================
@@ -105,11 +109,11 @@ def _telem_parsed_to_sql(date_str,
 
 class MeasureList:
     """
-    Contains a dict of Measures with values and a dict that stores how many sessions have 
+    Contains a dict of Measures with values and a dict that stores how many sessions have
     been seen for each OS. Use the load_csv method to parse a CSV (talk to Ilana about
-    formatting of said CSV.) 
+    formatting of said CSV.)
     """
-    
+
     _typo_dict = {'bookmark3Bar': 'bookmarksBar'} #TODO(rrayborn): Make this non-static??
     _os_map = {'winnt': 'windows', 'darwin': 'mac', 'linux': 'linux'}
 
@@ -130,7 +134,7 @@ class MeasureList:
         reAddons         = re.compile('^addonToolbars')
         reCustomAction   = re.compile('^customize-')
         reTour           = re.compile('^seenPage-')
-        
+
         # Set defaults
         os = row[0]
         if os.lower() in self._os_map:
@@ -155,13 +159,13 @@ class MeasureList:
             # featurelist  = ['features_kept','new','window','button']
             # value        = 'kept'
             # measure_name = 'window-button'
-#            print "features"
+            #print "features"
             featurelist  = raw_value.partition('-')
             value        = featurelist[0].rpartition('_')[2]
             measure_name = featurelist[2]
 
-            self.insert(measure_name, 'string', 
-                        os, os_total,  
+            self.insert(measure_name, 'string',
+                        os, os_total,
                         value = value, total = total)
         elif reToolbars.search(raw_value):
             # raw_value    = titleBarEnabled-True
@@ -176,19 +180,19 @@ class MeasureList:
             else:
                 raise Warning('Toolbar value %s unknown' % featurelist[2])
                 value = None
-#            print "toolbar"
+            #print "toolbar"
             measure_name = featurelist[0]
-            
-            self.insert(measure_name, 'string', 
-                        os, os_total,  
+
+            self.insert(measure_name, 'string',
+                        os, os_total,
                         value = value, total = total)
         elif reScreen.search(raw_value):
             measure_name = 'sizemode'
             value        = raw_value.rpartition('-')[-1]
-#            print "screen"
-            
-            self.insert(measure_name, 'string', 
-                        os, os_total,  
+            #print "screen"
+
+            self.insert(measure_name, 'string',
+                        os, os_total,
                         value = value, total = total)
         elif reLeftClick.search(raw_value) \
                 or reCustomize.search(raw_value) \
@@ -197,10 +201,10 @@ class MeasureList:
             # featurelist  = ['click','menu','button','button','left']
             # value        = 'count'
             # measure_name = <yield>
-#            print "buckets"
+            #print "buckets"
             measure_name = raw_value
-            self.insert(measure_name, 'bucket', 
-                        os, os_total,  
+            self.insert(measure_name, 'bucket',
+                        os, os_total,
                         values = values)
         elif reClicks.search(raw_value) \
                 or reCustomAction.search(raw_value) \
@@ -212,7 +216,7 @@ class MeasureList:
 
     def insert(
                 self, measure_name, measure_type,
-                os, os_total, 
+                os, os_total,
                 values = None,
                 value = None, total = None
             ):
@@ -221,7 +225,7 @@ class MeasureList:
 
         if measure_name in self._typo_dict:
             measure_name = self._typo_dict[measure_name]
-    
+
         if value and total:
             values = {value:total}
 
@@ -253,7 +257,7 @@ class MeasureList:
             next(csvreader, None)
 
             for row in csvreader:
-#                print row
+            #    print row
                 self._append_row(row)
 
 
@@ -270,12 +274,12 @@ class MeasureList:
 
 
 class Measure:
-    """ 
+    """
     Contains different kinds of measures, the type of measure and values therefor.
     Each measure consists of a dict of OSMeasure objects which contain values for a single
     OS.
     """
-    
+
     _other_dict = {
             'bucket':  '0-0',
             'string': 'other',
@@ -294,7 +298,7 @@ class Measure:
         self.total        = 0
 
 
-    def insert(self, os, os_total, 
+    def insert(self, os, os_total,
                 values = None,
                 value = None, total = None):
         if value and total:
@@ -314,7 +318,7 @@ class Measure:
                 self.os_measures[os] = OSMeasure(
                         self.measure_name, os, self.other_value, self.is_numeric
                     )
-            
+
             self.os_measures[os].insert(
                     value, total, numeric_value = numeric_value
                 )
@@ -325,7 +329,7 @@ class Measure:
             return '0-0'
         lower_bound = int(pow(2,floor(log(int(input), 2))))
         return '-'.join([str(lower_bound), str(lower_bound*2-1)])
-     
+
     @staticmethod
     def get_header():
         return [
@@ -379,10 +383,10 @@ class OSMeasure:
         self.values          = {}
 
     def insert(self, value, total, numeric_value = None):
-        
+
         self.running_total += total
 
-        if value not in self._inactive_types: 
+        if value not in self._inactive_types:
             self.active_total += total
             # increment weighted total
             if numeric_value:
@@ -441,7 +445,7 @@ class OSMeasure:
 
 if __name__ == "__main__":
     queue = [
-        ["2015-01-27", "nightly",  _DATA_PATH + "week_of_20150127_nightly.csv"]#,
+        ["2015-01-06","aurora", _DATA_PATH + "week_of_20150106_aurora.csv"]#,
         #["2014-07-01", "aurora",  _DATA_PATH + "week_of_20140701_aurora.csv"],
         #["2014-07-08", "aurora",  _DATA_PATH + "week_of_20140708_aurora.csv"],
         #["2014-07-15", "aurora",  _DATA_PATH + "week_of_20140715_aurora.csv"],
