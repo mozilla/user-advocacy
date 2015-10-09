@@ -70,6 +70,7 @@ def _telem_parsed_to_sql(date_str,
             ;""".format(date=date_str, channel=channel)
         version = str(db.execute_sql(query).first()[0])
 
+
     # TODO(rrayborn): figure out why this won't work as a temp table with our
     # consistency rules + sqlalchemy's implicit transactions
     query ='''DROP TABLE IF EXISTS tmp_weekly_stats;'''
