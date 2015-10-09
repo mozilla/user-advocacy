@@ -23,7 +23,8 @@
         'KeyboardCat': 1,
         'Odin': 1,
         'Heartbeat': 10,
-        'Rock': 1
+        'Rock': 1,
+        'fa-graduation-cap': 2
     };
     
     var exceptions = {
@@ -32,7 +33,6 @@
                         'Arrrrrrrrrrrrrrrrrrrrrvocacy'],
         'Canada'    :   ['Eh?vocacy'],
         'Go'        :   ['SFGiants', 'Niners', 'Warriors'],
-        'Congrats'  :   ['Tyler&amp;Emily'],
         'Heartbeat' :   [   '&#x2605;&#x2605;&#x2605;&#x2605;&#x2605',
                             '&#x2605;&#x2605;&#x2605;&#x2605;&#x2606',
                             '&#x2605;&#x2605;&#x2605;&#x2606;&#x2606',
@@ -70,34 +70,6 @@
                 nav_grey.text(item);
                 nav_red.text('Advocacy');
             }
-            
-            // Here is the code for Matt's wedding! Don't delete until Matt gets
-            // back from his wedding.
-            
-            var today = new Date();
-            var wedding_start = new Date("2015-06-25");
-            var wedding_end = new Date("2015-07-25");
-            
-            if(today < wedding_end && today > wedding_start) {
-                item = _.sample(['Pirate','Congrats', 'Unicorn', 'Welcome']);
-                if (item == 'Congrats') {
-                    nav_grey.text(item);
-                    nav_red.text('Matt&Jess');
-                }
-                else if (item == 'Welcome') {
-                    nav_grey.text(item);
-                    nav_red.text('Sawyer');
-                }
-                else if (exceptions[item]) {
-                    nav_grey.text(item);
-                    nav_red.html(_.sample(exceptions[item]));
-                } else if (item.match('^\&\#')) {
-                    nav_grey.html('<span style="font-weight: 300">'+item+'</span> ');
-                    nav_red.text('Advocacy');
-                }
-            }
-            
-            // end code for Matt's wedding
             
         } else {
             nav_grey.text('User');
